@@ -9,17 +9,24 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as QuizRouteImport } from './routes/quiz'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedVidaRouteImport } from './routes/_authenticated/vida'
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
+import { Route as AuthenticatedEstudosRouteImport } from './routes/_authenticated/estudos'
 import { Route as AuthenticatedEstatisticasRouteImport } from './routes/_authenticated/estatisticas'
 import { Route as AuthenticatedDesafiosRouteImport } from './routes/_authenticated/desafios'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
 import { Route as AuthenticatedBibliaRouteImport } from './routes/_authenticated/biblia'
 
+const QuizRoute = QuizRouteImport.update({
+  id: '/quiz',
+  path: '/quiz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -42,6 +49,11 @@ const AuthenticatedVidaRoute = AuthenticatedVidaRouteImport.update({
 const AuthenticatedOnboardingRoute = AuthenticatedOnboardingRouteImport.update({
   id: '/onboarding',
   path: '/onboarding',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEstudosRoute = AuthenticatedEstudosRouteImport.update({
+  id: '/estudos',
+  path: '/estudos',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedEstatisticasRoute =
@@ -75,22 +87,26 @@ const AuthenticatedBibliaRoute = AuthenticatedBibliaRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/quiz': typeof QuizRoute
   '/biblia': typeof AuthenticatedBibliaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/desafios': typeof AuthenticatedDesafiosRoute
   '/estatisticas': typeof AuthenticatedEstatisticasRoute
+  '/estudos': typeof AuthenticatedEstudosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vida': typeof AuthenticatedVidaRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/quiz': typeof QuizRoute
   '/biblia': typeof AuthenticatedBibliaRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/desafios': typeof AuthenticatedDesafiosRoute
   '/estatisticas': typeof AuthenticatedEstatisticasRoute
+  '/estudos': typeof AuthenticatedEstudosRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
   '/vida': typeof AuthenticatedVidaRoute
 }
@@ -99,11 +115,13 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/quiz': typeof QuizRoute
   '/_authenticated/biblia': typeof AuthenticatedBibliaRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/desafios': typeof AuthenticatedDesafiosRoute
   '/_authenticated/estatisticas': typeof AuthenticatedEstatisticasRoute
+  '/_authenticated/estudos': typeof AuthenticatedEstudosRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
   '/_authenticated/vida': typeof AuthenticatedVidaRoute
 }
@@ -112,22 +130,26 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/quiz'
     | '/biblia'
     | '/configuracoes'
     | '/dashboard'
     | '/desafios'
     | '/estatisticas'
+    | '/estudos'
     | '/onboarding'
     | '/vida'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/quiz'
     | '/biblia'
     | '/configuracoes'
     | '/dashboard'
     | '/desafios'
     | '/estatisticas'
+    | '/estudos'
     | '/onboarding'
     | '/vida'
   id:
@@ -135,11 +157,13 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/quiz'
     | '/_authenticated/biblia'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/desafios'
     | '/_authenticated/estatisticas'
+    | '/_authenticated/estudos'
     | '/_authenticated/onboarding'
     | '/_authenticated/vida'
   fileRoutesById: FileRoutesById
@@ -148,10 +172,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  QuizRoute: typeof QuizRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/quiz': {
+      id: '/quiz'
+      path: '/quiz'
+      fullPath: '/quiz'
+      preLoaderRoute: typeof QuizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -185,6 +217,13 @@ declare module '@tanstack/react-router' {
       path: '/onboarding'
       fullPath: '/onboarding'
       preLoaderRoute: typeof AuthenticatedOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/estudos': {
+      id: '/_authenticated/estudos'
+      path: '/estudos'
+      fullPath: '/estudos'
+      preLoaderRoute: typeof AuthenticatedEstudosRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/estatisticas': {
@@ -231,6 +270,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDesafiosRoute: typeof AuthenticatedDesafiosRoute
   AuthenticatedEstatisticasRoute: typeof AuthenticatedEstatisticasRoute
+  AuthenticatedEstudosRoute: typeof AuthenticatedEstudosRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
   AuthenticatedVidaRoute: typeof AuthenticatedVidaRoute
 }
@@ -241,6 +281,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDesafiosRoute: AuthenticatedDesafiosRoute,
   AuthenticatedEstatisticasRoute: AuthenticatedEstatisticasRoute,
+  AuthenticatedEstudosRoute: AuthenticatedEstudosRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,
   AuthenticatedVidaRoute: AuthenticatedVidaRoute,
 }
@@ -252,6 +293,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  QuizRoute: QuizRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

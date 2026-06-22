@@ -7,10 +7,21 @@ import * as THREE from "three";
  * Low-poly floating-island scene inspired by Monument Valley.
  * Pure procedural — no external assets needed.
  */
+const FALLBACK = (
+  <div
+    className="absolute inset-0"
+    style={{
+      background: "linear-gradient(to bottom, #1a1340 0%, #3d2a6b 50%, #f6a06b 100%)",
+    }}
+  />
+);
+
 export function LowPolyWorld({ interactive = true }: { interactive?: boolean }) {
   const [mounted, setMounted] = useState(false);
+  const [webglLost, setWebglLost] = useState(false);
+
   useEffect(() => setMounted(true), []);
-  if (!mounted) return <div className="absolute inset-0 bg-gradient-to-b from-[#1a1340] via-[#3d2a6b] to-[#f6a06b]" />;
+  if (!mounted || webglLost) return FALLBACK;
 
   return (
     <Canvas
@@ -23,6 +34,9 @@ export function LowPolyWorld({ interactive = true }: { interactive?: boolean }) 
         gl.toneMappingExposure = 1.05;
         scene.fog = new THREE.FogExp2(0xf3b48a, 0.05);
         scene.background = new THREE.Color(0xf3b48a);
+
+        // Quando o contexto WebGL for perdido, cai no fallback do gradiente
+        gl.domElement.addEventListener("webglcontextlost", () => setWebglLost(true));
       }}
     >
       <SkyGradient />

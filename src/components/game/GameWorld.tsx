@@ -211,6 +211,16 @@ export function GameWorld({ userName, percent, streak, onLogout }: Props) {
       </Hotspot>
 
       <Hotspot
+        x={48}
+        y={66}
+        label="Estudos Bíblicos"
+        sub="Iniciar um estudo"
+        onClick={() => go("/estudos", "Vamos aprofundar! 📖", "read")}
+      >
+        <StudyLantern />
+      </Hotspot>
+
+      <Hotspot
         x={80}
         y={70}
         label="Telescópio"
@@ -636,6 +646,28 @@ function Tower() {
       <polygon points="18,40 40,15 62,40" fill="#dc2626" stroke="#7f1d1d" />
       <rect x="34" y="55" width="12" height="16" rx="2" fill="#1e3a8a" />
       <circle cx="40" cy="30" r="2.5" fill="#fde047" />
+    </svg>
+  );
+}
+
+function StudyLantern() {
+  return (
+    <svg width="70" height="100" viewBox="0 0 70 100">
+      {/* Cabo */}
+      <rect x="32" y="70" width="6" height="25" rx="2" fill="#78350f" />
+      {/* Corpo da lanterna */}
+      <rect x="18" y="30" width="34" height="42" rx="6" fill="#a16207" stroke="#713f12" strokeWidth="1.5" />
+      {/* Vidro com luz */}
+      <rect x="23" y="35" width="24" height="32" rx="4" fill="#fef9c3" opacity="0.9">
+        <animate attributeName="opacity" values="0.9;0.6;0.9" dur="2s" repeatCount="indefinite" />
+      </rect>
+      {/* Cruz */}
+      <line x1="35" y1="39" x2="35" y2="63" stroke="#92400e" strokeWidth="2" />
+      <line x1="27" y1="49" x2="43" y2="49" stroke="#92400e" strokeWidth="2" />
+      {/* Topo */}
+      <polygon points="18,30 35,14 52,30" fill="#78350f" />
+      {/* Alça */}
+      <path d="M28 14 Q35 4 42 14" fill="none" stroke="#78350f" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
