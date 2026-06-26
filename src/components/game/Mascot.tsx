@@ -1,6 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 
-type Mood = "idle" | "happy" | "wave" | "sleep" | "celebrate" | "read" | "yawn";
+export type Mood =
+  | "idle"
+  | "happy"
+  | "very_happy"
+  | "excited"
+  | "wink"
+  | "wave"
+  | "pray"
+  | "think"
+  | "read"
+  | "evolve"
+  | "celebrate"
+  | "sleepy"
+  | "sad"
+  | "crying"
+  | "sleep";
 
 interface Props {
   mood?: Mood;
@@ -13,8 +28,9 @@ interface Props {
 }
 
 /**
- * Lumi — companheiro de aventura. Pequena criatura luminosa, fofa, com olhos
- * grandes que acompanham o cursor, piscadas, bocejos e expressões.
+ * Mascot — Chibi Jesus.
+ * Um companheiro ilustrativo, amigável e extremamente expressivo
+ * com olhos grandes que acompanham o cursor, piscadas, lágrimas e expressões.
  */
 export function Mascot({
   mood = "idle",
@@ -37,7 +53,7 @@ export function Mascot({
     return () => clearTimeout(t);
   }, []);
 
-  // eye-track the mouse
+  // eye-track the mouse (only for round-eye states)
   useEffect(() => {
     function onMove(e: MouseEvent) {
       const el = ref.current;
@@ -47,10 +63,10 @@ export function Mascot({
       const cy = r.top + r.height / 2;
       const dx = (e.clientX - cx) / window.innerWidth;
       const dy = (e.clientY - cy) / window.innerHeight;
-      const max = 2.4;
+      const max = 2.0;
       setLook({
-        x: Math.max(-max, Math.min(max, dx * 12)),
-        y: Math.max(-max, Math.min(max, dy * 10)),
+        x: Math.max(-max, Math.min(max, dx * 10)),
+        y: Math.max(-max, Math.min(max, dy * 8)),
       });
     }
     window.addEventListener("mousemove", onMove);
@@ -80,14 +96,14 @@ export function Mascot({
     function loop() {
       if (!alive) return;
       const r = Math.random();
-      if (r < 0.5) {
+      if (r < 0.4) {
         setYawn(true);
         setTimeout(() => setYawn(false), 1200);
       } else {
         setHop(true);
         setTimeout(() => setHop(false), 700);
       }
-      setTimeout(loop, 5000 + Math.random() * 7000);
+      setTimeout(loop, 6000 + Math.random() * 8000);
     }
     const t = setTimeout(loop, 4000);
     return () => {
@@ -96,11 +112,18 @@ export function Mascot({
     };
   }, [mood]);
 
-  const sleeping = mood === "sleep";
-  const celebrating = mood === "celebrate";
-  const reading = mood === "read";
-  const waving = mood === "wave";
-  const showYawn = yawn || mood === "yawn";
+  const isSleeping = mood === "sleep";
+  const isPraying = mood === "pray";
+  const isReading = mood === "read";
+  const isWaving = mood === "wave";
+  const isSad = mood === "sad";
+  const isCrying = mood === "crying";
+  const isSleepy = mood === "sleepy" || yawn;
+  const isThink = mood === "think";
+  const isHappy = mood === "happy" || mood === "very_happy" || mood === "excited" || mood === "evolve" || mood === "celebrate";
+  const isWink = mood === "wink";
+
+  const animatingHop = hop || mood === "excited" || mood === "evolve" || mood === "celebrate";
 
   return (
     <div
@@ -115,45 +138,46 @@ export function Mascot({
         left: `${x}%`,
         top: `${y}%`,
         transform: `translate(-50%, -50%) scale(${scale})`,
+        transition: "left 0.8s ease-out, top 0.8s ease-out",
       }}
-      aria-label="Lumi — seu companheiro de caminhada"
+      aria-label="Jesus — seu companheiro de caminhada"
     >
       {/* ground shadow */}
       <div
         className="absolute left-1/2 -translate-x-1/2"
         style={{
-          bottom: -8,
-          width: 90,
-          height: 14,
+          bottom: -6,
+          width: 80,
+          height: 10,
           background:
-            "radial-gradient(ellipse at center, rgba(20,30,60,0.35), transparent 70%)",
-          filter: "blur(4px)",
+            "radial-gradient(ellipse at center, rgba(10,15,40,0.4), transparent 70%)",
+          filter: "blur(3px)",
         }}
       />
 
       {/* speech bubble */}
       {message && (
         <div
-          className="absolute -top-14 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-2xl text-xs font-medium animate-fade-up"
+          className="absolute -top-16 left-1/2 -translate-x-1/2 whitespace-nowrap px-4 py-2 rounded-2xl text-xs font-semibold animate-fade-up border border-white/10"
           style={{
-            background: "rgba(255,255,255,0.92)",
-            color: "#1f2937",
-            boxShadow: "0 8px 24px -10px rgba(30,60,120,.45)",
+            background: "rgba(255,255,255,0.96)",
+            color: "#1e293b",
+            boxShadow: "0 10px 30px -10px rgba(0,0,0,0.5)",
           }}
         >
           {message}
           <span
-            className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-3 h-3 rotate-45"
-            style={{ background: "rgba(255,255,255,0.92)" }}
+            className="absolute left-1/2 -translate-x-1/2 -bottom-1 w-2.5 h-2.5 rotate-45"
+            style={{ background: "rgba(255,255,255,0.96)" }}
           />
         </div>
       )}
 
       {/* sleeping Z */}
-      {sleeping && (
+      {isSleeping && (
         <div
-          className="absolute -top-6 right-2 text-2xl font-display"
-          style={{ color: "white", textShadow: "0 1px 0 #2563eb" }}
+          className="absolute -top-10 right-0 text-xl font-display text-sky-300 font-bold"
+          style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
         >
           <span
             style={{ animation: "zfloat 3s ease-out infinite", display: "inline-block" }}
@@ -163,7 +187,7 @@ export function Mascot({
           <span
             style={{
               animation: "zfloat 3s ease-out infinite",
-              animationDelay: ".7s",
+              animationDelay: ".8s",
               display: "inline-block",
               marginLeft: 4,
               fontSize: ".8em",
@@ -174,225 +198,301 @@ export function Mascot({
         </div>
       )}
 
-      {/* celebrate stars */}
-      {celebrating && (
+      {/* evolve / celebrate particles */}
+      {(mood === "celebrate" || mood === "evolve") && (
         <>
           {[0, 1, 2, 3, 4].map((i) => (
             <span
               key={i}
-              className="absolute"
+              className="absolute text-yellow-300 font-bold"
               style={{
-                left: `${20 + i * 15}%`,
-                top: -10,
-                fontSize: 18,
-                color: "#facc15",
-                animation: "starpop 1.4s ease-out infinite",
-                animationDelay: `${i * 0.12}s`,
+                left: `${15 + i * 18}%`,
+                top: -20,
+                fontSize: i % 2 === 0 ? 18 : 14,
+                animation: "starpop 1.5s ease-out infinite",
+                animationDelay: `${i * 0.15}s`,
               }}
             >
-              ✦
+              {mood === "evolve" ? "✨" : "✦"}
             </span>
           ))}
         </>
       )}
 
-      {/* body */}
+      {/* body container */}
       <div
         style={{
-          width: 130,
-          height: 130,
+          width: 120,
+          height: 120,
           position: "relative",
           animation: intro
             ? "lumi-runin .9s cubic-bezier(.2,.9,.3,1.2) both"
-            : hop
+            : animatingHop
               ? "lumi-hop .65s cubic-bezier(.2,.9,.3,1.3)"
-              : "lumi-breath 3.4s ease-in-out infinite",
+              : "lumi-breath 3.6s ease-in-out infinite",
         }}
       >
-        <svg viewBox="0 0 140 140" width="130" height="130">
+        <svg viewBox="0 0 140 140" width="120" height="120">
           <defs>
-            <radialGradient id="lumiBody" cx="50%" cy="40%" r="65%">
-              <stop offset="0%" stopColor="#fef9c3" />
-              <stop offset="55%" stopColor="#fde68a" />
-              <stop offset="100%" stopColor="#f59e0b" />
-            </radialGradient>
-            <radialGradient id="lumiGlow" cx="50%" cy="50%" r="60%">
-              <stop offset="0%" stopColor="#fff7cc" stopOpacity=".95" />
+            <radialGradient id="jesusGlow" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stopColor="#fff7cc" stopOpacity=".9" />
               <stop offset="100%" stopColor="#fff7cc" stopOpacity="0" />
             </radialGradient>
-            <linearGradient id="lumiCheek" x1="0" x2="0" y1="0" y2="1">
-              <stop offset="0%" stopColor="#fda4af" stopOpacity=".0" />
-              <stop offset="100%" stopColor="#fb7185" stopOpacity=".55" />
-            </linearGradient>
+            <radialGradient id="jesusSkin" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stopColor="#ffedd5" />
+              <stop offset="100%" stopColor="#fed7aa" />
+            </radialGradient>
+            <radialGradient id="jesusHair" cx="50%" cy="30%" r="70%">
+              <stop offset="0%" stopColor="#78350f" />
+              <stop offset="100%" stopColor="#451a03" />
+            </radialGradient>
           </defs>
 
-          {/* aura */}
-          <circle cx="70" cy="70" r="62" fill="url(#lumiGlow)" />
-          {/* halo */}
+          {/* 1. Aura glow */}
+          <circle cx="70" cy="70" r="62" fill="url(#jesusGlow)" />
+
+          {/* 2. Floating Golden Halo */}
           <ellipse
             cx="70"
-            cy="22"
-            rx="22"
-            ry="5"
+            cy="16"
+            rx="20"
+            ry="4.5"
             fill="none"
-            stroke="#fde68a"
-            strokeWidth="2"
-            opacity=".85"
+            stroke="#facc15"
+            strokeWidth="2.2"
+            opacity=".9"
+            className="animate-float-slow"
           />
 
-          {/* ears / spark tufts */}
+          {/* 3. Hair Back (Long wavy hair behind head) */}
           <path
-            d="M40 38 C 38 22, 50 18, 56 30 Z"
-            fill="url(#lumiBody)"
-            stroke="#b45309"
-            strokeOpacity=".35"
+            d="M 36,68 C 26,92 34,112 50,114 C 60,116 80,116 90,114 C 106,112 114,92 104,68 C 104,45 36,45 36,68 Z"
+            fill="url(#jesusHair)"
+            stroke="#1f2937"
+            strokeOpacity=".15"
+            strokeWidth="1"
+          />
+
+          {/* 4. Robe / Tunic (Body) */}
+          {/* Main White Tunic */}
+          <path
+            d="M 46,95 L 94,95 C 99,108 102,122 100,126 L 40,126 C 38,122 41,108 46,95 Z"
+            fill="#ffffff"
+            stroke="#cbd5e1"
             strokeWidth="1.2"
           />
+          {/* Diagonal Red Sash (Faixa transversal) */}
           <path
-            d="M100 38 C 102 22, 90 18, 84 30 Z"
-            fill="url(#lumiBody)"
-            stroke="#b45309"
-            strokeOpacity=".35"
-            strokeWidth="1.2"
+            d="M 52,95 L 68,95 C 80,108 86,122 83,126 L 67,126 C 58,122 55,108 52,95 Z"
+            fill="#ef4444"
+            stroke="#b91c1c"
+            strokeWidth="0.8"
           />
 
-          {/* head/body — single round drop */}
+          {/* 5. Chibi Head (Skin) */}
+          <circle cx="70" cy="62" r="32" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.8" />
+
+          {/* 6. Hair Front (Framing fringe/bangs and sideburns) */}
           <path
-            d="M70 30
-               C 105 30, 120 60, 115 90
-               C 110 120, 90 128, 70 128
-               C 50 128, 30 120, 25 90
-               C 20 60, 35 30, 70 30 Z"
-            fill="url(#lumiBody)"
-            stroke="#b45309"
-            strokeOpacity=".35"
-            strokeWidth="1.4"
+            d="M 35,58 C 36,44 48,32 70,32 C 92,32 104,44 105,58 C 102,52 94,48 88,52 C 82,56 78,54 70,48 C 62,54 58,56 52,52 C 46,48 38,52 35,58 Z"
+            fill="url(#jesusHair)"
+            stroke="#451a03"
+            strokeWidth="0.8"
           />
 
-          {/* cheeks */}
-          <ellipse cx="44" cy="82" rx="9" ry="6" fill="url(#lumiCheek)" />
-          <ellipse cx="96" cy="82" rx="9" ry="6" fill="url(#lumiCheek)" />
+          {/* 7. Cute Chibi Beard */}
+          <path
+            d="M 48,82 C 48,94 56,98 70,98 C 84,98 92,94 92,82 C 92,88 84,91 70,91 C 56,91 48,88 48,82 Z"
+            fill="url(#jesusHair)"
+            stroke="#451a03"
+            strokeWidth="0.8"
+          />
 
-          {/* eyes */}
-          <g transform={`translate(${look.x}, ${look.y})`}>
-            {/* left */}
-            <ellipse
-              cx="54"
-              cy="68"
-              rx="9"
-              ry={sleeping || blink ? 1.2 : 11}
-              fill="#1f2937"
-            />
-            {!sleeping && !blink && (
-              <>
-                <circle cx="57" cy="64" r="3" fill="#fff" />
-                <circle cx="52" cy="72" r="1.2" fill="#fff" opacity=".8" />
-              </>
-            )}
-            {/* right */}
-            <ellipse
-              cx="86"
-              cy="68"
-              rx="9"
-              ry={sleeping || blink ? 1.2 : 11}
-              fill="#1f2937"
-            />
-            {!sleeping && !blink && (
-              <>
-                <circle cx="89" cy="64" r="3" fill="#fff" />
-                <circle cx="84" cy="72" r="1.2" fill="#fff" opacity=".8" />
-              </>
-            )}
-          </g>
+          {/* 8. Pink Cheeks */}
+          <ellipse cx="48" cy="74" rx="6" ry="4.5" fill="#fda4af" opacity=".6" />
+          <ellipse cx="92" cy="74" rx="6" ry="4.5" fill="#fda4af" opacity=".6" />
 
-          {/* eyebrows for celebrate */}
-          {celebrating && (
+          {/* 9. Expressive Chibi Eyes */}
+          {/* Blink overlay overrides eyes completely */}
+          {blink && !isSleeping && !isPraying ? (
             <>
-              <path
-                d="M46 54 Q54 49 62 54"
-                stroke="#7c2d12"
-                strokeWidth="2.2"
-                fill="none"
-                strokeLinecap="round"
-              />
-              <path
-                d="M78 54 Q86 49 94 54"
-                stroke="#7c2d12"
-                strokeWidth="2.2"
-                fill="none"
-                strokeLinecap="round"
-              />
+              {/* Closed squinting/blinking eyes */}
+              <path d="M 46,71 Q 54,75 62,71" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" />
+              <path d="M 78,71 Q 86,75 94,71" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" />
+            </>
+          ) : isSleeping || isPraying ? (
+            <>
+              {/* Sleeping/Praying peaceful curved eyes */}
+              <path d="M 46,70 Q 54,77 62,70" fill="none" stroke="#1f2937" strokeWidth="2.8" strokeLinecap="round" />
+              <path d="M 78,70 Q 86,77 94,70" fill="none" stroke="#1f2937" strokeWidth="2.8" strokeLinecap="round" />
+            </>
+          ) : isHappy ? (
+            <>
+              {/* Happy arched squinting eyes (^ ^) */}
+              <path d="M 46,72 Q 54,64 62,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+              <path d="M 78,72 Q 86,64 94,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+            </>
+          ) : isWink ? (
+            <>
+              {/* Winking left eye, open right eye */}
+              <path d="M 46,72 Q 54,64 62,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+              <ellipse cx="86" cy="69" rx="8" ry="8" fill="#1f2937" />
+              <circle cx="88.5" cy="66.5" r="2.2" fill="#fff" />
+            </>
+          ) : isSleepy ? (
+            <>
+              {/* Droopy/Sleepy eyes */}
+              <ellipse cx="54" cy="70" rx="8" ry="4" fill="#1f2937" />
+              <ellipse cx="86" cy="70" rx="8" ry="4" fill="#1f2937" />
+            </>
+          ) : (
+            /* Default tracking round eyes (idle, sad, crying, think) */
+            <g transform={`translate(${look.x}, ${look.y})`}>
+              {/* Left eye */}
+              <ellipse cx="54" cy="70" rx="8" ry="8" fill="#1f2937" />
+              <circle cx="56.5" cy="67.5" r="2.2" fill="#fff" />
+              <circle cx="52.2" cy="72.2" r="0.9" fill="#fff" opacity=".8" />
+              
+              {/* Right eye */}
+              <ellipse cx="86" cy="70" rx="8" ry="8" fill="#1f2937" />
+              <circle cx="88.5" cy="67.5" r="2.2" fill="#fff" />
+              <circle cx="84.2" cy="72.2" r="0.9" fill="#fff" opacity=".8" />
+            </g>
+          )}
+
+          {/* 10. Expressive Mouth */}
+          {isSleepy ? (
+            /* Yawning circle */
+            <circle cx="70" cy="88" r="6" fill="#451a03" />
+          ) : mood === "excited" || mood === "very_happy" || mood === "celebrate" || mood === "evolve" ? (
+            /* Open laughing mouth */
+            <path d="M 62,83 Q 70,98 78,83 Z" fill="#fda4af" stroke="#7c2d12" strokeWidth="1.8" />
+          ) : isSad || isCrying ? (
+            /* Sad downward curve */
+            <path d="M 64,88 Q 70,83 76,88" stroke="#7c2d12" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          ) : isThink ? (
+            /* Side smirk thinking line */
+            <path d="M 66,85 Q 71,83 74,86" stroke="#7c2d12" strokeWidth="2" fill="none" strokeLinecap="round" />
+          ) : isPraying || isSleeping ? (
+            /* Peaceful closed mouth line */
+            <path d="M 66,85 Q 70,87 74,85" stroke="#7c2d12" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+          ) : (
+            /* Default happy smile */
+            <path d="M 62,84 Q 70,92 78,84" stroke="#7c2d12" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+          )}
+
+          {/* 11. Tears for Crying State */}
+          {isCrying && (
+            <>
+              {/* Dripping tears under the eyes */}
+              <path d="M 50,78 C 50,87 53,91 53,91 C 53,91 56,87 56,78 Z" fill="#3b82f6" opacity=".85" className="animate-pulse" />
+              <path d="M 84,78 C 84,87 87,91 87,91 C 87,91 90,87 90,78 Z" fill="#3b82f6" opacity=".85" className="animate-pulse" />
             </>
           )}
 
-          {/* mouth */}
-          {showYawn ? (
-            <ellipse cx="70" cy="96" rx="10" ry="12" fill="#7c2d12" />
-          ) : celebrating ? (
-            <path
-              d="M55 92 Q70 110 85 92"
-              stroke="#7c2d12"
-              strokeWidth="2.6"
-              fill="#fda4af"
-              strokeLinecap="round"
-            />
-          ) : sleeping ? (
-            <path
-              d="M62 96 Q70 100 78 96"
-              stroke="#7c2d12"
-              strokeWidth="2.2"
-              fill="none"
-              strokeLinecap="round"
-            />
+          {/* 12. Arms / Hands */}
+          {isPraying ? (
+            /* Praying hands: joined together in the center */
+            <>
+              <path d="M 60,108 Q 70,98 80,108" fill="none" stroke="url(#jesusSkin)" strokeWidth="6" strokeLinecap="round" />
+              <path d="M 60,108 Q 70,98 80,108" fill="none" stroke="#fed7aa" strokeWidth="1.5" strokeLinecap="round" />
+            </>
+          ) : mood === "celebrate" || mood === "excited" || mood === "evolve" ? (
+            /* Waving/Cheering arms raised up */
+            <>
+              {/* Left Sleeve & Hand */}
+              <ellipse
+                cx="24"
+                cy="86"
+                rx="6"
+                ry="8"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+                style={{ transformOrigin: "32px 86px", transform: "rotate(45deg)" }}
+              />
+              <circle cx="16" cy="78" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+
+              {/* Right Sleeve & Hand */}
+              <ellipse
+                cx="116"
+                cy="86"
+                rx="6"
+                ry="8"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+                style={{ transformOrigin: "108px 86px", transform: "rotate(-45deg)" }}
+              />
+              <circle cx="124" cy="78" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+            </>
+          ) : isThink ? (
+            /* Thinking state: one hand resting, other hand at chin */
+            <>
+              {/* Left sleeve and hand touching chin */}
+              <ellipse
+                cx="40"
+                cy="92"
+                rx="5"
+                ry="8"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+                style={{ transformOrigin: "46px 92px", transform: "rotate(-35deg)" }}
+              />
+              <circle cx="48" cy="81" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              
+              {/* Right resting arm */}
+              <ellipse cx="118" cy="94" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
+              <circle cx="124" cy="94" r="4" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+            </>
           ) : (
-            <path
-              d="M60 92 Q70 102 80 92"
-              stroke="#7c2d12"
-              strokeWidth="2.4"
-              fill="none"
-              strokeLinecap="round"
-            />
+            /* Default: arms resting on the sides */
+            <>
+              {/* Left arm sleeve + hand */}
+              <ellipse
+                cx="22"
+                cy="94"
+                rx="7"
+                ry="5"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+                style={{
+                  transformOrigin: "28px 94px",
+                  animation: isWaving ? "lumi-wave 1.2s ease-in-out infinite" : "none",
+                }}
+              />
+              <circle
+                cx="16"
+                cy="94"
+                r="4"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+                style={{
+                  transformOrigin: "28px 94px",
+                  animation: isWaving ? "lumi-wave 1.2s ease-in-out infinite" : "none",
+                }}
+              />
+
+              {/* Right arm sleeve + hand */}
+              <ellipse cx="118" cy="94" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
+              <circle cx="124" cy="94" r="4" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+            </>
           )}
 
-          {/* tiny arms */}
-          <ellipse
-            cx="22"
-            cy="92"
-            rx="7"
-            ry="5"
-            fill="url(#lumiBody)"
-            style={{
-              transformOrigin: "28px 92px",
-              animation: waving
-                ? "lumi-wave 1.2s ease-in-out infinite"
-                : celebrating
-                  ? "lumi-cheer 0.6s ease-in-out infinite"
-                  : "none",
-            }}
-          />
-          <ellipse
-            cx="118"
-            cy="92"
-            rx="7"
-            ry="5"
-            fill="url(#lumiBody)"
-            style={{
-              transformOrigin: "112px 92px",
-              animation: celebrating
-                ? "lumi-cheer 0.6s ease-in-out infinite"
-                : "none",
-            }}
-          />
-
-          {/* tiny book if reading */}
-          {reading && (
-            <g transform="translate(50 100)">
-              <rect width="40" height="22" rx="3" fill="#fff" stroke="#1f2937" strokeWidth="1.2" />
-              <line x1="20" y1="2" x2="20" y2="20" stroke="#1f2937" strokeWidth="1" />
-              <line x1="4" y1="8" x2="16" y2="8" stroke="#94a3b8" strokeWidth=".8" />
-              <line x1="4" y1="12" x2="16" y2="12" stroke="#94a3b8" strokeWidth=".8" />
-              <line x1="24" y1="8" x2="36" y2="8" stroke="#94a3b8" strokeWidth=".8" />
-              <line x1="24" y1="12" x2="36" y2="12" stroke="#94a3b8" strokeWidth=".8" />
+          {/* 13. Tiny Gospel Book if reading */}
+          {isReading && (
+            <g transform="translate(50 96)" className="animate-pulse">
+              <rect width="40" height="24" rx="3" fill="#ffffff" stroke="#7f1d1d" strokeWidth="1.4" />
+              <line x1="20" y1="2" x2="20" y2="22" stroke="#7f1d1d" strokeWidth="1.2" />
+              <line x1="4" y1="8" x2="16" y2="8" stroke="#cbd5e1" strokeWidth="1" />
+              <line x1="4" y1="13" x2="16" y2="13" stroke="#cbd5e1" strokeWidth="1" />
+              <line x1="4" y1="18" x2="14" y2="18" stroke="#cbd5e1" strokeWidth="1" />
+              <line x1="24" y1="8" x2="36" y2="8" stroke="#cbd5e1" strokeWidth="1" />
+              <line x1="24" y1="13" x2="36" y2="13" stroke="#cbd5e1" strokeWidth="1" />
+              <line x1="24" y1="18" x2="34" y2="18" stroke="#cbd5e1" strokeWidth="1" />
             </g>
           )}
         </svg>

@@ -2,13 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
-import { BIBLE_BOOKS, SAMPLE_CHAPTER, getBook } from "@/lib/bible-data";
+import { BIBLE_BOOKS, getBook, TRANSLATIONS, getVerses } from "@/lib/bible-data";
+import { getChapterQuiz, BibleQuestion, recordAnswer, recordQuizCompletion } from "@/lib/quiz-data";
+import { useAudio } from "@/components/audio/AudioProvider";
 import {
   BookOpen, ChevronLeft, ChevronRight, Minus, Plus,
-  X, StickyNote, Check, Search, ChevronDown,
+  X, StickyNote, Check, Search, ChevronDown, BookMarked, Info, Award, HelpCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
+import { logActivity } from "@/lib/activity";
 
 export const Route = createFileRoute("/_authenticated/biblia")({ component: Bible });
 
@@ -16,63 +19,89 @@ type HighlightColor = "green" | "yellow" | "red";
 interface Highlight { verse: number; color: HighlightColor }
 interface VerseNote  { verse: number; content: string }
 
-const COLORS: Record<HighlightColor, { dot: string; bg: string; label: string }> = {
-  yellow: { dot: "bg-amber-400",  bg: "bg-amber-400/15 ring-1 ring-amber-400/30", label: "Ouro"    },
-  green:  { dot: "bg-emerald-400",bg: "bg-emerald-400/15 ring-1 ring-emerald-400/30", label: "Verde" },
-  red:    { dot: "bg-rose-400",   bg: "bg-rose-400/15 ring-1 ring-rose-400/30",   label: "Rosa"    },
+const COLORS: Record<HighlightColor, { dot: string; bg: string; label: string; explanation: string }> = {
+  green: {
+    dot: "bg-emerald-400",
+    bg: "bg-emerald-400/15 ring-1 ring-emerald-400/30",
+    label: "Verde — Entendi e marcou meu coração",
+    explanation: "Usado para versículos que o usuário compreendeu e que falaram diretamente ao seu coração. São textos que ele deseja lembrar, aplicar ou revisitar futuramente."
+  },
+  yellow: {
+    dot: "bg-amber-400",
+    bg: "bg-amber-400/15 ring-1 ring-amber-400/30",
+    label: "Amarelo — Quero revisar depois",
+    explanation: "Para passagens que despertaram curiosidade ou que ainda não ficaram totalmente claras. O usuário entende parte do texto, mas sente que precisa voltar e estudá-lo com mais calma."
+  },
+  red: {
+    dot: "bg-rose-400",
+    bg: "bg-rose-400/15 ring-1 ring-rose-400/30",
+    label: "Vermelho — Preciso estudar profundamente",
+    explanation: "Para versículos que geraram dúvidas importantes, possuem um contexto difícil ou exigem um estudo mais aprofundado. Esses versículos ficarão separados para que o usuário possa retornar a eles posteriormente com auxílio da IA exegética."
+  },
 };
 
-function useHighlights(uid: string|null, ver: string, book: string, ch: number) {
+function useHighlights(uid: string|null, book: string, ch: number) {
   const [data, setData] = useState<Highlight[]>([]);
+  const audio = useAudio();
+  
   useEffect(() => {
     if (!uid) return;
     supabase.from("highlights").select("verse,color")
-      .eq("user_id",uid).eq("version",ver).eq("book",book).eq("chapter",ch)
+      .eq("user_id", uid).eq("version", "GLOBAL").eq("book", book).eq("chapter", ch)
       .then(({ data: d }) => { if (d) setData(d as Highlight[]); });
-  }, [uid, ver, book, ch]);
+  }, [uid, book, ch]);
+
   const toggle = useCallback(async (verse: number, color: HighlightColor) => {
     if (!uid) return;
+    audio.play("marker");
     const ex = data.find(h => h.verse === verse);
     if (ex?.color === color) {
       await supabase.from("highlights").delete()
-        .eq("user_id",uid).eq("version",ver).eq("book",book).eq("chapter",ch).eq("verse",verse);
+        .eq("user_id", uid).eq("version", "GLOBAL").eq("book", book).eq("chapter", ch).eq("verse", verse);
       setData(d => d.filter(x => x.verse !== verse));
     } else {
-      await supabase.from("highlights").upsert({ user_id:uid, version:ver, book, chapter:ch, verse, color });
+      await supabase.from("highlights").upsert({ user_id: uid, version: "GLOBAL", book, chapter: ch, verse, color });
       setData(d => [...d.filter(x => x.verse !== verse), { verse, color }]);
     }
-  }, [uid, ver, book, ch, data]);
+  }, [uid, book, ch, data, audio]);
+
   return { data, toggle };
 }
 
-function useNotes(uid: string|null, ver: string, book: string, ch: number) {
+function useNotes(uid: string|null, book: string, ch: number) {
   const [data, setData] = useState<VerseNote[]>([]);
+  
   useEffect(() => {
     if (!uid) return;
     supabase.from("verse_notes").select("verse,content")
-      .eq("user_id",uid).eq("version",ver).eq("book",book).eq("chapter",ch)
+      .eq("user_id", uid).eq("version", "GLOBAL").eq("book", book).eq("chapter", ch)
       .then(({ data: d }) => { if (d) setData(d as VerseNote[]); });
-  }, [uid, ver, book, ch]);
+  }, [uid, book, ch]);
+
   const save = useCallback(async (verse: number, content: string) => {
     if (!uid) return;
     if (!content.trim()) {
       await supabase.from("verse_notes").delete()
-        .eq("user_id",uid).eq("version",ver).eq("book",book).eq("chapter",ch).eq("verse",verse);
+        .eq("user_id", uid).eq("version", "GLOBAL").eq("book", book).eq("chapter", ch).eq("verse", verse);
       setData(d => d.filter(x => x.verse !== verse));
       return;
     }
-    await supabase.from("verse_notes").upsert({ user_id:uid, version:ver, book, chapter:ch, verse, content });
+    await supabase.from("verse_notes").upsert({ user_id: uid, version: "GLOBAL", book, chapter: ch, verse, content });
     setData(d => [...d.filter(x => x.verse !== verse), { verse, content }]);
     toast.success("Anotação salva!");
-  }, [uid, ver, book, ch]);
+  }, [uid, book, ch]);
+
   return { data, save };
 }
 
 export default function Bible() {
+  const audio = useAudio();
   const [uid, setUid]       = useState<string|null>(null);
   const [abbr, setAbbr]     = useState("jo");
   const [ch, setCh]         = useState(1);
-  const ver = "NVI";
+  const [translation, setTranslation] = useState(() => localStorage.getItem("bible.translation") || "NVI");
+  const [showTranslations, setShowTranslations] = useState(false);
+  const [showLegend, setShowLegend] = useState(true);
   const [fs, setFs]         = useState(() => Number(localStorage.getItem("bible.font") || 18));
   const [showBooks, setShowBooks] = useState(false);
   const [showChs,  setShowChs]  = useState(false);
@@ -81,20 +110,96 @@ export default function Bible() {
   const [noteVerse, setNoteVerse] = useState<number|null>(null);
   const [noteDraft, setNoteDraft] = useState("");
 
+  useEffect(() => {
+    audio.setContext("biblia");
+    audio.play("page");
+  }, []);
+
+  useEffect(() => {
+    if (uid) {
+      audio.play("page");
+    }
+  }, [ch, abbr]);
+
+  // Quiz states
+  const [showQuiz, setShowQuiz] = useState(false);
+  const [quizQuestions, setQuizQuestions] = useState<BibleQuestion[]>([]);
+  const [quizStep, setQuizStep] = useState(0);
+  const [selectedAns, setSelectedAns] = useState<string | null>(null);
+  const [hasSubmittedAns, setHasSubmittedAns] = useState(false);
+  const [quizScore, setQuizScore] = useState(0);
+
   const book = getBook(abbr)!;
-  const { data: hl, toggle: toggleHL } = useHighlights(uid, ver, book.name, ch);
-  const { data: notes, save: saveNote } = useNotes(uid, ver, book.name, ch);
+  const { data: hl, toggle: toggleHL } = useHighlights(uid, book.name, ch);
+  const { data: notes, save: saveNote } = useNotes(uid, book.name, ch);
+
+  useEffect(() => {
+    localStorage.setItem("bible.translation", translation);
+  }, [translation]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
       if (!data.user) return;
-      setUid(data.user.id);
-      supabase.from("reading_progress").upsert({ user_id: data.user.id, version: ver, book: book.name, chapter: ch, verse: 1 });
+      const userId = data.user.id;
+      setUid(userId);
+      
+      // Update reading progress (last read position) in Supabase
+      supabase.from("reading_progress").upsert({ 
+        user_id: userId, 
+        version: translation, 
+        book: book.name, 
+        chapter: ch, 
+        verse: 1 
+      }).then(() => {});
+
+      // Record chapter read in localStorage
+      try {
+        const readChKey = `bible.readChapters_${userId}`;
+        const readChapters = JSON.parse(localStorage.getItem(readChKey) || "[]");
+        const entry = `${book.name}-${ch}`;
+        
+        if (!readChapters.includes(entry)) {
+          readChapters.push(entry);
+          localStorage.setItem(readChKey, JSON.stringify(readChapters));
+          
+          // Also save a timestamped log for the constancy calendar
+          const chapterHistoryKey = `bible.readChaptersHistory_${userId}`;
+          const readHistory = JSON.parse(localStorage.getItem(chapterHistoryKey) || "[]");
+          readHistory.push({
+            book: book.name,
+            chapter: ch,
+            readAt: new Date().toISOString()
+          });
+          localStorage.setItem(chapterHistoryKey, JSON.stringify(readHistory));
+
+          // Log public activity for the reading completion
+          logActivity(userId, "reading", { book: book.name, chapter: ch });
+
+          // Sync total unique chapters read to walk_progress in Supabase
+          const totalRead = readChapters.length;
+          supabase.from("walk_progress").select("percent, streak_days")
+            .eq("user_id", userId).maybeSingle()
+            .then(({ data: wp }) => {
+              const newPercent = Math.min(100, Math.round(totalRead * 1.5)); // 1.5% progress per chapter
+              if (wp) {
+                supabase.from("walk_progress")
+                  .update({ 
+                    chapters_read: totalRead,
+                    percent: newPercent
+                  })
+                  .eq("user_id", userId).then(() => {});
+              }
+            });
+        }
+      } catch (e) {
+        console.error("Error updating read chapters tracking:", e);
+      }
     });
-  }, [abbr, ch]);
+  }, [abbr, ch, translation]);
+
   useEffect(() => { localStorage.setItem("bible.font", String(fs)); }, [fs]);
 
-  const verses = SAMPLE_CHAPTER;
+  const verses = getVerses(translation, book.abbr, ch);
   const atBooks = BIBLE_BOOKS.filter(b => b.testament==="AT" && b.name.toLowerCase().includes(bookQ.toLowerCase()));
   const ntBooks = BIBLE_BOOKS.filter(b => b.testament==="NT" && b.name.toLowerCase().includes(bookQ.toLowerCase()));
 
@@ -111,13 +216,68 @@ export default function Bible() {
     }
   }
 
+  // Quiz helper handlers
+  const handleStartChapterQuiz = () => {
+    const questions = getChapterQuiz(book.name, ch, 3);
+    setQuizQuestions(questions);
+    setQuizStep(0);
+    setSelectedAns(null);
+    setHasSubmittedAns(false);
+    setQuizScore(0);
+    setShowQuiz(true);
+  };
+
+  const handleSubmitAnswer = () => {
+    if (!selectedAns || hasSubmittedAns) return;
+    const q = quizQuestions[quizStep];
+    const correct = selectedAns.toLowerCase().trim() === q.correctAnswer.toLowerCase().trim();
+    
+    if (correct) {
+      setQuizScore(s => s + 1);
+      toast.success("Resposta Correta! 🎉");
+      
+      const unlocked = recordAnswer(true);
+      unlocked.forEach(achName => {
+        toast.success(`🏆 Conquista Desbloqueada: ${achName}!`);
+      });
+    } else {
+      toast.error("Resposta incorreta.");
+      
+      // Save incorrect question to review list in localStorage
+      const reviewListRaw = localStorage.getItem("bible.reviewList") || "[]";
+      try {
+        const list: BibleQuestion[] = JSON.parse(reviewListRaw);
+        if (!list.some(x => x.id === q.id)) {
+          list.push(q);
+          localStorage.setItem("bible.reviewList", JSON.stringify(list));
+        }
+      } catch (err) {
+        localStorage.setItem("bible.reviewList", JSON.stringify([q]));
+      }
+    }
+    setHasSubmittedAns(true);
+  };
+
+  const handleNextQuizStep = () => {
+    if (quizStep === quizQuestions.length - 1) {
+      const unlocked = recordQuizCompletion(book.name, ch, quizScore, quizQuestions.length);
+      unlocked.forEach(achName => {
+        toast.success(`🏆 Conquista Desbloqueada: ${achName}!`);
+      });
+    }
+    setSelectedAns(null);
+    setHasSubmittedAns(false);
+    setQuizStep(s => s + 1);
+  };
+
+
   return (
     <AppShell>
       {/* ── Controls bar ── */}
       <div className="flex items-center justify-between gap-3 mb-5">
         <div className="flex items-center gap-2 flex-wrap">
           <button
-            onClick={() => { setShowBooks(true); setBookQ(""); setShowChs(false); }}
+            onClick={() => { setShowBooks(true); setBookQ(""); setShowChs(false); setShowTranslations(false); }}
             className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition-all hover:brightness-125"
             style={{ background: "oklch(0.55 0.18 85 / 0.2)", border: "1px solid oklch(0.55 0.18 85 / 0.35)" }}
           >
@@ -127,19 +287,60 @@ export default function Bible() {
           </button>
 
           <button
-            onClick={() => { setShowChs(v => !v); setShowBooks(false); }}
+            onClick={() => { setShowChs(v => !v); setShowBooks(false); setShowTranslations(false); }}
             className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-white/80 transition-all hover:text-white"
             style={{ background: "oklch(1 0 0 / 0.07)", border: "1px solid oklch(1 0 0 / 0.12)" }}
           >
             Cap. {ch} <ChevronDown className="w-3.5 h-3.5 opacity-50" />
           </button>
 
-          <span
-            className="text-[11px] rounded-full px-2.5 py-1 font-mono text-white/50"
-            style={{ background: "oklch(1 0 0 / 0.06)", border: "1px solid oklch(1 0 0 / 0.08)" }}
-          >
-            {ver}
-          </span>
+          <div className="relative">
+            <button
+              onClick={() => { setShowTranslations(v => !v); setShowBooks(false); setShowChs(false); }}
+              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-white/80 transition-all hover:text-white"
+              style={{ background: "oklch(1 0 0 / 0.07)", border: "1px solid oklch(1 0 0 / 0.12)" }}
+            >
+              <BookMarked className="w-3.5 h-3.5 text-amber-300" />
+              <span>{translation}</span>
+              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
+            </button>
+            <AnimatePresence>
+              {showTranslations && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setShowTranslations(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute left-0 mt-2 w-56 rounded-2xl p-2 z-20 shadow-2xl flex flex-col gap-1 text-left"
+                    style={{
+                      background: "oklch(0.14 0.03 260 / 0.96)",
+                      border: "1px solid oklch(1 0 0 / 0.15)",
+                      backdropFilter: "blur(24px)",
+                    }}
+                  >
+                    {TRANSLATIONS.map(t => (
+                      <button
+                        key={t.id}
+                        onClick={() => {
+                          setTranslation(t.id);
+                          setShowTranslations(false);
+                        }}
+                        className="w-full text-left rounded-xl px-3 py-2 text-xs transition-all flex flex-col gap-0.5 hover:bg-white/10"
+                        style={t.id === translation ? {
+                          background: "oklch(1 0 0 / 0.08)",
+                          borderLeft: "2px solid oklch(0.65 0.18 255)",
+                        } : {}}
+                      >
+                        <span className="font-semibold text-white">{t.name}</span>
+                        <span className="text-[10px] text-white/55">{t.description}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div
@@ -154,6 +355,58 @@ export default function Bible() {
             <Plus className="w-3.5 h-3.5" />
           </button>
         </div>
+      </div>
+
+      {/* ── Legend/Tip Box ── */}
+      <div className="mb-5">
+        <button
+          onClick={() => setShowLegend(v => !v)}
+          className="flex items-center gap-2 text-xs text-white/60 hover:text-white transition-all rounded-xl px-3 py-1.5"
+          style={{ background: "oklch(1 0 0 / 0.05)", border: "1px solid oklch(1 0 0 / 0.08)" }}
+        >
+          <Info className="w-3.5 h-3.5 text-amber-300" />
+          <span>Guia de Cores dos Marcadores</span>
+          <ChevronDown className={`w-3 h-3 transition-transform ${showLegend ? "rotate-180" : ""}`} />
+        </button>
+
+        <AnimatePresence>
+          {showLegend && (
+            <motion.div
+              initial={{ height: 0, opacity: 0, marginTop: 0 }}
+              animate={{ height: "auto", opacity: 1, marginTop: 12 }}
+              exit={{ height: 0, opacity: 0, marginTop: 0 }}
+              className="overflow-hidden rounded-2xl"
+            >
+              <div
+                className="p-4 sm:p-5 space-y-3.5 animate-in fade-in duration-300 text-left"
+                style={{
+                  background: "linear-gradient(135deg, oklch(0.18 0.04 260 / 0.8), oklch(0.14 0.03 260 / 0.9))",
+                  border: "1px solid oklch(1 0 0 / 0.1)",
+                  backdropFilter: "blur(12px)",
+                }}
+              >
+                <div className="flex items-center gap-2 border-b border-white/5 pb-2">
+                  <span className="text-[11px] font-semibold text-amber-300 uppercase tracking-wider">Como utilizar os marcadores?</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {(["green", "yellow", "red"] as HighlightColor[]).map(colorKey => (
+                    <div
+                      key={colorKey}
+                      className="flex items-start gap-2.5 p-3 rounded-xl transition-all hover:bg-white/5"
+                      style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.05)" }}
+                    >
+                      <span className={`w-3.5 h-3.5 rounded-full mt-0.5 shrink-0 ${COLORS[colorKey].dot}`} />
+                      <div>
+                        <p className="text-xs font-semibold text-white/90">{COLORS[colorKey].label}</p>
+                        <p className="text-[11px] text-white/60 leading-normal mt-0.5">{COLORS[colorKey].explanation}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* ── Chapter picker ── */}
@@ -190,19 +443,19 @@ export default function Bible() {
           border: "1px solid oklch(0.55 0.18 85 / 0.2)",
           boxShadow: "0 0 0 1px oklch(0.55 0.18 85 / 0.08) inset, 0 32px 80px -20px oklch(0.55 0.18 85 / 0.15)",
         }}
-        onClick={() => { setSelVerse(null); setShowChs(false); }}
+        onClick={() => { setSelVerse(null); setShowChs(false); setShowTranslations(false); }}
       >
         {/* Header */}
         <div className="mb-8">
-          <p className="text-[10px] uppercase tracking-[0.35em] text-amber-400/60 mb-1">{ver}</p>
-          <h1 className="font-display text-3xl sm:text-4xl">
+          <p className="text-[10px] uppercase tracking-[0.35em] text-amber-400/60 mb-1">{translation}</p>
+          <h1 className="font-display text-3xl sm:text-4xl text-left">
             <span className="text-amber-300">{book.name}</span>{" "}
             <span className="text-white/40 font-normal">{ch}</span>
           </h1>
         </div>
 
         {/* Verses */}
-        <article className="leading-[1.9] space-y-3" style={{ fontSize: fs }}>
+        <article className="leading-[1.9] space-y-3 text-left" style={{ fontSize: fs }}>
           {Object.entries(verses).map(([vn, text]) => {
             const v = Number(vn);
             const h = hl.find(x => x.verse === v);
@@ -211,18 +464,34 @@ export default function Bible() {
             return (
               <p
                 key={v}
-                onClick={e => { e.stopPropagation(); setSelVerse(isSel ? null : v); setShowChs(false); }}
+                onClick={e => { e.stopPropagation(); setSelVerse(isSel ? null : v); setShowChs(false); setShowTranslations(false); }}
                 className={`group relative cursor-pointer rounded-xl px-3 py-2 -mx-3 transition-all text-white/80 ${
                   h ? COLORS[h.color].bg : "hover:bg-white/5"
                 } ${isSel ? "ring-1 ring-blue-400/40 bg-blue-400/5" : ""}`}
               >
                 <sup className="text-amber-400/70 mr-2 text-[0.68em] font-bold">{v}</sup>
                 {text}
-                {hasNote && <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 align-middle" />}
+                {hasNote && <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 align-middle animate-pulse" />}
               </p>
             );
           })}
         </article>
+
+        {/* Chapter test button */}
+        <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); handleStartChapterQuiz(); }}
+            className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
+            style={{
+              background: "linear-gradient(135deg, oklch(0.65 0.18 255 / 0.2), oklch(0.58 0.2 280 / 0.1))",
+              border: "1px solid oklch(0.65 0.18 255 / 0.35)",
+              boxShadow: "0 4px 20px oklch(0.65 0.18 255 / 0.15)",
+            }}
+          >
+            <Award className="w-4 h-4 text-violet-300" />
+            <span>🎯 Testar meus conhecimentos (Cap. {ch})</span>
+          </button>
+        </div>
 
         {/* Verse action menu */}
         <AnimatePresence>
@@ -241,11 +510,11 @@ export default function Bible() {
               onClick={e => e.stopPropagation()}
             >
               <span className="text-[11px] text-white/40 mr-1">v.{selVerse}</span>
-              {(["yellow","green","red"] as HighlightColor[]).map(c => (
+              {(["green", "yellow", "red"] as HighlightColor[]).map(c => (
                 <button
                   key={c}
                   onClick={() => toggleHL(selVerse, c)}
-                  title={COLORS[c].label}
+                  title={COLORS[c].explanation}
                   className={`w-7 h-7 rounded-full transition-all hover:scale-110 ${COLORS[c].dot} ${
                     hl.find(h => h.verse === selVerse)?.color === c ? "ring-2 ring-white/50 scale-110" : "opacity-70"
                   }`}
@@ -292,6 +561,46 @@ export default function Bible() {
         </button>
       </div>
 
+      {/* ── Chapter notes list ── */}
+      {notes.length > 0 && (
+        <div
+          className="mt-6 rounded-3xl p-6 sm:p-8 animate-in fade-in slide-in-from-bottom-5 duration-300 text-left"
+          style={{
+            background: "linear-gradient(160deg, oklch(0.15 0.03 260 / 0.9), oklch(0.12 0.02 260 / 0.95))",
+            border: "1px solid oklch(0.55 0.18 85 / 0.2)",
+            boxShadow: "0 16px 40px -10px oklch(0 0 0 / 0.4)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-4 border-b border-white/5 pb-3">
+            <StickyNote className="w-4 h-4 text-violet-400" />
+            <h3 className="font-display text-lg text-white font-medium">Suas Anotações deste Capítulo</h3>
+          </div>
+          <div className="space-y-3.5">
+            {notes.slice().sort((a,b) => a.verse - b.verse).map(note => (
+              <div
+                key={note.verse}
+                className="group relative rounded-2xl p-4 transition-all hover:bg-white/5"
+                style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.05)" }}
+              >
+                <div className="flex items-center justify-between gap-2 mb-1.5">
+                  <span className="text-xs font-semibold text-violet-300">Versículo {note.verse}</span>
+                  <button
+                    onClick={() => {
+                      setNoteDraft(note.content);
+                      setNoteVerse(note.verse);
+                    }}
+                    className="text-[11px] text-violet-400 hover:text-violet-300 transition-all sm:opacity-0 sm:group-hover:opacity-100 font-medium"
+                  >
+                    Editar Anotação
+                  </button>
+                </div>
+                <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{note.content}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* ── Book picker modal ── */}
       <AnimatePresence>
         {showBooks && (
@@ -302,7 +611,7 @@ export default function Bible() {
             <motion.div
               initial={{ opacity:0, y:40 }} animate={{ opacity:1, y:0 }} exit={{ opacity:0, y:40 }}
               transition={{ type:"spring", stiffness:300, damping:28 }}
-              className="fixed inset-x-4 bottom-4 top-20 z-50 rounded-3xl p-5 flex flex-col max-w-md mx-auto"
+              className="fixed inset-x-4 bottom-4 top-20 z-50 rounded-3xl p-5 flex flex-col max-w-md mx-auto text-left"
               style={{
                 background: "oklch(0.13 0.03 260 / 0.97)",
                 border: "1px solid oklch(1 0 0 / 0.12)",
@@ -372,7 +681,7 @@ export default function Bible() {
               onClick={() => setNoteVerse(null)} />
             <motion.div
               initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
-              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-md mx-auto"
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-md mx-auto text-left"
               style={{
                 background: "oklch(0.14 0.03 270 / 0.97)",
                 border: "1px solid oklch(0.65 0.18 280 / 0.3)",
@@ -407,6 +716,181 @@ export default function Bible() {
                   <Check className="w-3.5 h-3.5" /> Salvar
                 </button>
               </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Chapter Quiz Modal ── */}
+      <AnimatePresence>
+        {showQuiz && quizQuestions.length > 0 && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md"
+              onClick={() => setShowQuiz(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[60] rounded-3xl p-6 max-w-md mx-auto space-y-4 text-left"
+              style={{
+                background: "oklch(0.14 0.03 270 / 0.98)",
+                border: "1px solid oklch(0.65 0.18 280 / 0.3)",
+                boxShadow: "0 32px 80px oklch(0 0 0 / 0.7)",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <h3 className="font-display text-md text-white font-medium flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-violet-400" />
+                  Quiz: {book.name} {ch}
+                </h3>
+                <span className="text-[10px] font-mono text-white/40">
+                  {quizStep < quizQuestions.length ? `${quizStep + 1} de ${quizQuestions.length}` : "Concluído"}
+                </span>
+              </div>
+
+              {/* Quiz Body */}
+              {quizStep < quizQuestions.length ? (
+                // Active question step
+                <div className="space-y-4">
+                  <h4 className="text-sm font-semibold text-white leading-relaxed">
+                    {quizQuestions[quizStep].question}
+                  </h4>
+
+                  {/* Render options if they exist */}
+                  {quizQuestions[quizStep].options && (
+                    <div className="space-y-2">
+                      {quizQuestions[quizStep].options!.map(opt => {
+                        const isSelected = selectedAns === opt;
+                        const isCorrect = opt === quizQuestions[quizStep].correctAnswer;
+                        let optionStyle: React.CSSProperties = {
+                          background: "oklch(1 0 0 / 0.04)",
+                          border: "1px solid oklch(1 0 0 / 0.08)",
+                          color: "oklch(1 0 0 / 0.8)",
+                        };
+
+                        if (hasSubmittedAns) {
+                          if (isCorrect) {
+                            optionStyle = {
+                              background: "oklch(0.65 0.18 155 / 0.15)",
+                              border: "1px solid oklch(0.65 0.18 155 / 0.4)",
+                              color: "oklch(0.85 0.15 155)",
+                            };
+                          } else if (isSelected) {
+                            optionStyle = {
+                              background: "oklch(0.65 0.22 355 / 0.15)",
+                              border: "1px solid oklch(0.65 0.22 355 / 0.4)",
+                              color: "oklch(0.85 0.22 355)",
+                            };
+                          }
+                        } else if (isSelected) {
+                          optionStyle = {
+                            background: "oklch(0.65 0.18 255 / 0.15)",
+                            border: "1px solid oklch(0.65 0.18 255 / 0.4)",
+                            color: "oklch(0.85 0.1 255)",
+                          };
+                        }
+
+                        return (
+                          <button
+                            key={opt}
+                            disabled={hasSubmittedAns}
+                            onClick={() => setSelectedAns(opt)}
+                            className="w-full text-left rounded-xl px-4 py-3 text-xs transition-all hover:bg-white/5 disabled:pointer-events-none"
+                            style={optionStyle}
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* For fill-blank questions (No options) */}
+                  {!quizQuestions[quizStep].options && (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        disabled={hasSubmittedAns}
+                        value={selectedAns || ""}
+                        onChange={(e) => setSelectedAns(e.target.value)}
+                        placeholder="Digite sua resposta..."
+                        className="w-full rounded-xl px-4 py-2.5 text-xs bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
+                      />
+                      {hasSubmittedAns && (
+                        <p className="text-xs text-white/50 mt-1">
+                          Resposta correta: <span className="text-emerald-400 font-semibold">{quizQuestions[quizStep].correctAnswer}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Feedback and Explanation */}
+                  {hasSubmittedAns && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 rounded-xl bg-white/3 border border-white/5 space-y-1.5 text-xs text-white/70"
+                    >
+                      <p className="font-semibold text-white">
+                        {selectedAns?.toLowerCase().trim() === quizQuestions[quizStep].correctAnswer.toLowerCase().trim()
+                          ? "🎉 Resposta Correta!"
+                          : "❌ Resposta Incorreta!"}
+                      </p>
+                      <p className="leading-relaxed">{quizQuestions[quizStep].explanation}</p>
+                      <p className="text-[10px] text-white/40 font-mono">Leitura sugerida: {quizQuestions[quizStep].suggestedReading}</p>
+                    </motion.div>
+                  )}
+
+                  {/* Footer actions */}
+                  <div className="flex justify-end gap-2 pt-2">
+                    {!hasSubmittedAns ? (
+                      <button
+                        onClick={handleSubmitAnswer}
+                        disabled={!selectedAns}
+                        className="rounded-xl px-4 py-2 text-xs font-medium text-white hover:brightness-110 disabled:opacity-40 transition-all"
+                        style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))" }}
+                      >
+                        Verificar Resposta
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleNextQuizStep}
+                        className="rounded-xl px-4 py-2 text-xs font-medium text-white hover:brightness-110 transition-all"
+                        style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))" }}
+                      >
+                        {quizStep === quizQuestions.length - 1 ? "Ver Resultados" : "Próxima Pergunta"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                // Final score step
+                <div className="space-y-4 text-center py-4">
+                  <div className="text-5xl animate-bounce">🏆</div>
+                  <h4 className="font-display text-lg text-white font-semibold">Desafio Concluído!</h4>
+                  <p className="text-xs text-white/50">
+                    Você acertou <span className="text-violet-300 font-bold">{quizScore}</span> de{" "}
+                    <span className="text-white font-bold">{quizQuestions.length}</span> perguntas do capítulo.
+                  </p>
+
+                  <div className="flex justify-center gap-2 pt-4">
+                    <button
+                      onClick={() => setShowQuiz(false)}
+                      className="rounded-xl px-5 py-2 text-xs font-semibold text-white transition-all hover:scale-105"
+                      style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))" }}
+                    >
+                      Fechar Desafio
+                    </button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           </>
         )}

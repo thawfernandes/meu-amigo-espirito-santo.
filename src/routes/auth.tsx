@@ -5,12 +5,30 @@ import { supabase } from "@/integrations/supabase/client";
 import { LowPolyWorld } from "@/components/world/LowPolyWorld";
 import { useAudio } from "@/components/audio/AudioProvider";
 import { toast } from "sonner";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, ChevronDown } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({ meta: [{ title: "Entrar — Amigo, Espírito Santo" }] }),
   component: AuthPage,
 });
+
+// ── Denominações mais comuns no Brasil ────────────────────────────────────
+const DENOMINACOES = [
+  "Assembleia de Deus",
+  "Batista",
+  "Católica",
+  "Congregação Cristã",
+  "Episcopal Anglicana",
+  "Evangelho Quadrangular",
+  "Luterana",
+  "Metodista",
+  "O Brasil Para Cristo",
+  "Presbiteriana",
+  "Renascer em Cristo",
+  "Sara Nossa Terra",
+  "Universal do Reino de Deus",
+  "Outras / Independente",
+];
 
 // ── Partículas leves ────────────────────────────────────────────────────
 function Particles() {
@@ -43,7 +61,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-const INPUT_STYLE: React.CSSProperties = {
+const INPUT_BASE: React.CSSProperties = {
   width: "100%",
   borderRadius: "14px",
   padding: "13px 16px",
@@ -76,7 +94,7 @@ function InputField({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           style={{
-            ...INPUT_STYLE,
+            ...INPUT_BASE,
             paddingRight: isPwd ? "48px" : "16px",
             borderColor: focused ? "oklch(0.75 0.18 290 / 0.6)" : "oklch(1 0 0 / 0.12)",
             background: focused ? "oklch(1 0 0 / 0.1)" : "oklch(1 0 0 / 0.07)",
@@ -94,6 +112,46 @@ function InputField({
   );
 }
 
+function SelectField({
+  label, value, onChange, options,
+}: {
+  label: string; value: string; onChange: (v: string) => void; options: string[];
+}) {
+  const [focused, setFocused] = useState(false);
+
+  return (
+    <Field label={label}>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          style={{
+            ...INPUT_BASE,
+            paddingRight: "40px",
+            appearance: "none",
+            cursor: "pointer",
+            borderColor: focused ? "oklch(0.75 0.18 290 / 0.6)" : "oklch(1 0 0 / 0.12)",
+            background: focused ? "oklch(1 0 0 / 0.1)" : "oklch(1 0 0 / 0.07)",
+            boxShadow: focused ? "0 0 0 3px oklch(0.65 0.2 280 / 0.18), 0 0 20px oklch(0.65 0.2 280 / 0.12)" : "none",
+          }}
+        >
+          <option value="" disabled style={{ background: "#1a1535", color: "#aaa" }}>
+            Selecione sua denominação…
+          </option>
+          {options.map(opt => (
+            <option key={opt} value={opt} style={{ background: "#1a1535", color: "white" }}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+      </div>
+    </Field>
+  );
+}
+
 function AuthPage() {
   const navigate = useNavigate();
   const audio = useAudio();
@@ -101,6 +159,7 @@ function AuthPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [denominacao, setDenominacao] = useState("");
   const [busy, setBusy] = useState(false);
 
   // Quiz answers vindas do sessionStorage
@@ -114,7 +173,6 @@ function AuthPage() {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session) navigate({ to: "/dashboard" });
     });
-    // Se vier com ?mode=signup na URL, ir para signup
     const params = new URLSearchParams(window.location.search);
     if (params.get("mode") === "signup") setMode("signup");
   }, [navigate]);
@@ -122,6 +180,10 @@ function AuthPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!email.trim() || !password.trim()) return;
+    if (mode === "signup" && !denominacao) {
+      toast.error("Por favor, selecione sua denominação.");
+      return;
+    }
     setBusy(true);
     try {
       if (mode === "signup") {
@@ -131,11 +193,17 @@ function AuthPage() {
           options: {
             data: {
               full_name: name.trim() || email.split("@")[0],
+              denominacao,
               quiz_profile: quizProfile,
             },
           },
         });
         if (error) throw error;
+
+        // Salvar denominação no perfil
+        if (data.user) {
+          await supabase.from("profiles").update({ denominacao }).eq("id", data.user.id);
+        }
 
         // Salvar respostas do quiz no banco se existirem
         if (quizAnswers && data.user) {
@@ -168,16 +236,25 @@ function AuthPage() {
         setMode("signin");
       }
     } catch (err: any) {
-      const msg = err?.message ?? "Não foi possível continuar.";
-      toast.error(
-        msg.includes("Email not confirmed") || msg.includes("email_not_confirmed")
-          ? "⚠️ E-mail não confirmado. Vá ao painel do Supabase → Authentication → Providers → Email → desative 'Confirm email' e salve."
-          : msg.includes("invalid_credentials")
+      const msg: string = err?.message ?? "";
+      console.error("[Auth] erro:", err);
+      const friendly =
+        msg.includes("invalid_credentials") || msg.includes("Invalid login credentials")
           ? "E-mail ou senha incorretos."
-          : msg.includes("User already registered")
+          : msg.includes("email_not_confirmed") || msg.includes("Email not confirmed")
+          ? "E-mail ainda não confirmado. Desative a confirmação no painel do Supabase → Authentication → Providers → Email → 'Confirm email'."
+          : msg.includes("User already registered") || msg.includes("already registered")
           ? "Este e-mail já possui uma conta."
-          : msg
-      );
+          : msg.includes("Password should be") || msg.includes("password")
+          ? "A senha deve ter no mínimo 6 caracteres."
+          : msg.includes("signup_disabled")
+          ? "Novos cadastros estão desabilitados no momento."
+          : msg.includes("over_email_send_rate_limit")
+          ? "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+          : msg.includes("network") || msg.includes("fetch")
+          ? "Erro de conexão. Verifique sua internet."
+          : msg || "Não foi possível continuar. Tente novamente.";
+      toast.error(friendly);
     } finally {
       setBusy(false);
     }
@@ -212,7 +289,7 @@ function AuthPage() {
           transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           className="w-full max-w-md"
         >
-          {/* Quiz profile badge (se vier do quiz) */}
+          {/* Quiz profile badge */}
           <AnimatePresence>
             {cameFromQuiz && mode === "signup" && (
               <motion.div
@@ -250,43 +327,74 @@ function AuthPage() {
               </motion.div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4 mt-7">
-                {mode === "signup" && (
-                  <InputField label="Como podemos te chamar?" value={name} onChange={setName}
-                    placeholder="Seu nome" autoFocus />
-                )}
+              <AnimatePresence mode="wait">
+                <motion.form
+                  key={mode}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.25 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-4 mt-7"
+                >
+                  {mode === "signup" && (
+                    <>
+                      <InputField
+                        label="Como podemos te chamar?"
+                        value={name}
+                        onChange={setName}
+                        placeholder="Seu nome"
+                        autoFocus
+                      />
+                      <SelectField
+                        label="Sua denominação / igreja"
+                        value={denominacao}
+                        onChange={setDenominacao}
+                        options={DENOMINACOES}
+                      />
+                    </>
+                  )}
 
-                <InputField
-                  label={mode === "signin" ? "E-mail" : "E-mail para login"}
-                  type="email" value={email} onChange={setEmail}
-                  placeholder="voce@exemplo.com"
-                  autoFocus={mode !== "signup"}
-                />
+                  <InputField
+                    label={mode === "signin" ? "E-mail" : "E-mail para login"}
+                    type="email"
+                    value={email}
+                    onChange={setEmail}
+                    placeholder="voce@exemplo.com"
+                    autoFocus={mode !== "signup"}
+                  />
 
-                {mode !== "reset" && (
-                  <InputField label="Senha" type="password" value={password} onChange={setPassword}
-                    placeholder="••••••••" />
-                )}
+                  {mode !== "reset" && (
+                    <InputField
+                      label="Senha"
+                      type="password"
+                      value={password}
+                      onChange={setPassword}
+                      placeholder="••••••••"
+                    />
+                  )}
 
-                {/* Submit */}
-                <div className="pt-2">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={busy}
-                    className="w-full rounded-2xl py-4 text-base font-semibold text-white flex items-center justify-center gap-2 relative overflow-hidden transition-all"
-                    style={{
-                      background: busy
-                        ? "oklch(1 0 0 / 0.1)"
-                        : "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.68 0.18 260), oklch(0.55 0.2 295))",
-                      boxShadow: busy ? "none" : "0 8px 40px oklch(0.65 0.2 280 / 0.45)",
-                      opacity: busy ? 0.7 : 1,
-                    }}
-                  >
-                    {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : l.btn}
-                  </motion.button>
-                </div>
-              </form>
+                  {/* Submit */}
+                  <div className="pt-2">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={busy}
+                      id="auth-submit-btn"
+                      className="w-full rounded-2xl py-4 text-base font-semibold text-white flex items-center justify-center gap-2 relative overflow-hidden transition-all"
+                      style={{
+                        background: busy
+                          ? "oklch(1 0 0 / 0.1)"
+                          : "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.68 0.18 260), oklch(0.55 0.2 295))",
+                        boxShadow: busy ? "none" : "0 8px 40px oklch(0.65 0.2 280 / 0.45)",
+                        opacity: busy ? 0.7 : 1,
+                      }}
+                    >
+                      {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : l.btn}
+                    </motion.button>
+                  </div>
+                </motion.form>
+              </AnimatePresence>
 
               {/* Footer links */}
               <div className="mt-5 flex flex-col gap-2 text-center">

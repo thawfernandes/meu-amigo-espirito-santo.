@@ -162,6 +162,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          denominacao: string | null
           display_name: string | null
           font_size: string
           id: string
@@ -173,6 +174,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          denominacao?: string | null
           display_name?: string | null
           font_size?: string
           id: string
@@ -184,6 +186,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          denominacao?: string | null
           display_name?: string | null
           font_size?: string
           id?: string
