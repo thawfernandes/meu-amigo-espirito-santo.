@@ -10,7 +10,7 @@ export const getRouter = () => {
     context: { queryClient },
     scrollRestoration: true,
     defaultPreloadStaleTime: 0,
-    basepath: "/meu-amigo-espirito-santo",
+    basepath: "/meu-amigo-espirito-santo.",
   });
 
   return router;
