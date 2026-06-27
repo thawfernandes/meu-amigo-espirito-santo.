@@ -97,18 +97,53 @@ function useNotes(uid: string|null, book: string, ch: number) {
 export default function Bible() {
   const audio = useAudio();
   const [uid, setUid]       = useState<string|null>(null);
-  const [abbr, setAbbr]     = useState("jo");
-  const [ch, setCh]         = useState(1);
-  const [translation, setTranslation] = useState(() => localStorage.getItem("bible.translation") || "NVI");
+  const [abbr, setAbbr]     = useState(() => typeof window !== "undefined" ? localStorage.getItem("bible.last_book") || "jo" : "jo");
+  const [ch, setCh]         = useState(() => typeof window !== "undefined" ? Number(localStorage.getItem("bible.last_chapter")) || 1 : 1);
+  const [translation, setTranslation] = useState(() => typeof window !== "undefined" ? localStorage.getItem("bible.translation") || "NVI" : "NVI");
   const [showTranslations, setShowTranslations] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
-  const [fs, setFs]         = useState(() => Number(localStorage.getItem("bible.font") || 18));
+  const [fs, setFs]         = useState(() => typeof window !== "undefined" ? Number(localStorage.getItem("bible.font") || 18) : 18);
   const [showBooks, setShowBooks] = useState(false);
   const [showChs,  setShowChs]  = useState(false);
   const [bookQ, setBookQ]   = useState("");
   const [selVerse, setSelVerse] = useState<number|null>(null);
   const [noteVerse, setNoteVerse] = useState<number|null>(null);
   const [noteDraft, setNoteDraft] = useState("");
+  const [fetchedBibles, setFetchedBibles] = useState<Record<string, any>>({});
+  const [loadingTranslation, setLoadingTranslation] = useState(false);
+
+  useEffect(() => {
+    if (["NVI", "ACF", "AA", "ORIGINAL"].includes(translation)) {
+      if (!fetchedBibles[translation]) {
+        setLoadingTranslation(true);
+        const fetchId = translation === "ORIGINAL" ? "acf" : translation.toLowerCase();
+        fetch(`https://raw.githubusercontent.com/thiagobodruk/biblia/master/json/${fetchId}.json`)
+          .then(r => r.json())
+          .then(data => {
+            setFetchedBibles(prev => ({ ...prev, [translation]: data }));
+            setLoadingTranslation(false);
+          })
+          .catch(e => {
+            console.error(e);
+            setLoadingTranslation(false);
+          });
+      }
+    } else if (translation === "AVE") {
+      if (!fetchedBibles["AVE"]) {
+        setLoadingTranslation(true);
+        fetch(`https://raw.githubusercontent.com/fidalgobr/bibliaAveMariaJSON/main/bibliaAveMaria.json`)
+          .then(r => r.json())
+          .then(data => {
+            setFetchedBibles(prev => ({ ...prev, AVE: [...data.antigoTestamento, ...data.novoTestamento] }));
+            setLoadingTranslation(false);
+          })
+          .catch(e => {
+            console.error(e);
+            setLoadingTranslation(false);
+          });
+      }
+    }
+  }, [translation]);
 
   useEffect(() => {
     audio.setContext("biblia");
@@ -136,6 +171,11 @@ export default function Bible() {
   useEffect(() => {
     localStorage.setItem("bible.translation", translation);
   }, [translation]);
+
+  useEffect(() => {
+    localStorage.setItem("bible.last_book", abbr);
+    localStorage.setItem("bible.last_chapter", String(ch));
+  }, [abbr, ch]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -199,7 +239,47 @@ export default function Bible() {
 
   useEffect(() => { localStorage.setItem("bible.font", String(fs)); }, [fs]);
 
-  const verses = getVerses(translation, book.abbr, ch);
+  let verses: Record<number, string> = {};
+  if (["NVI", "ACF", "AA", "AVE", "ORIGINAL"].includes(translation)) {
+    if (loadingTranslation && !fetchedBibles[translation]) {
+      verses = { 1: "Carregando tradução, aguarde..." };
+    } else {
+      const bibleData = fetchedBibles[translation];
+      if (bibleData) {
+        if (translation === "AVE") {
+          const normalizedName = book.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+          const bookData = bibleData.find((b: any) => {
+            const bName = b.nome.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            return bName === normalizedName || bName.includes(normalizedName) || normalizedName.includes(bName);
+          });
+          if (bookData) {
+            const cap = bookData.capitulos.find((c: any) => c.capitulo === ch);
+            if (cap) {
+              cap.versiculos.forEach((v: any) => {
+                verses[v.versiculo] = v.texto;
+              });
+            } else {
+              verses = { 1: "Capítulo não encontrado na tradução selecionada." };
+            }
+          } else {
+            verses = { 1: "Livro não encontrado na tradução selecionada." };
+          }
+        } else {
+          const bookData = bibleData.find((b: any) => b.abbrev === abbr);
+          if (bookData && bookData.chapters[ch - 1]) {
+            bookData.chapters[ch - 1].forEach((text: string, i: number) => {
+              verses[i + 1] = text;
+            });
+          } else {
+             verses = { 1: "Capítulo não encontrado na tradução selecionada." };
+          }
+        }
+      }
+    }
+  } else {
+    verses = getVerses(translation, book.abbr, ch);
+  }
+
   const atBooks = BIBLE_BOOKS.filter(b => b.testament==="AT" && b.name.toLowerCase().includes(bookQ.toLowerCase()));
   const ntBooks = BIBLE_BOOKS.filter(b => b.testament==="NT" && b.name.toLowerCase().includes(bookQ.toLowerCase()));
 

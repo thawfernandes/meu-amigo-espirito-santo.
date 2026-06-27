@@ -162,11 +162,11 @@ function AuthPage() {
   const [denominacao, setDenominacao] = useState("");
   const [busy, setBusy] = useState(false);
 
-  // Quiz answers vindas do sessionStorage
-  const quizAnswers = (() => {
+  const [quizAnswers, setQuizAnswers] = useState<any>(() => {
+    if (typeof window === "undefined") return null;
     try { return JSON.parse(sessionStorage.getItem("quiz_answers") ?? "null"); } catch { return null; }
-  })();
-  const quizProfile = sessionStorage.getItem("quiz_profile") ?? "beginner";
+  });
+  const quizProfile = typeof window !== "undefined" ? sessionStorage.getItem("quiz_profile") ?? "beginner" : "beginner";
   const cameFromQuiz = !!quizAnswers;
 
   useEffect(() => {
