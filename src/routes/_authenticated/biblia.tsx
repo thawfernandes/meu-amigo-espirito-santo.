@@ -1,13 +1,15 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useCallback, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useCallback, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
 import { BIBLE_BOOKS, getBook, TRANSLATIONS, getVerses } from "@/lib/bible-data";
+import { getOriginalVerse } from "@/lib/original-translation";
 import { getChapterQuiz, BibleQuestion, recordAnswer, recordQuizCompletion } from "@/lib/quiz-data";
 import { useAudio } from "@/components/audio/AudioProvider";
 import {
   BookOpen, ChevronLeft, ChevronRight, Minus, Plus,
-  X, StickyNote, Check, Search, ChevronDown, BookMarked, Info, Award, HelpCircle
+  X, StickyNote, Check, Search, ChevronDown, BookMarked, Info, Award, HelpCircle,
+  BookPlus, Scroll
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -94,12 +96,24 @@ function useNotes(uid: string|null, book: string, ch: number) {
   return { data, save };
 }
 
+// Debounce helper for preference sync
+function useDebouncedCallback(fn: (...args: any[]) => void, delay: number) {
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  return useCallback((...args: any[]) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => fn(...args), delay);
+  }, [fn, delay]);
+}
+
 export default function Bible() {
   const audio = useAudio();
+  const navigate = useNavigate();
   const [uid, setUid]       = useState<string|null>(null);
+  // Start with localStorage values as instant fallback while Supabase loads
   const [abbr, setAbbr]     = useState(() => typeof window !== "undefined" ? localStorage.getItem("bible.last_book") || "jo" : "jo");
   const [ch, setCh]         = useState(() => typeof window !== "undefined" ? Number(localStorage.getItem("bible.last_chapter")) || 1 : 1);
-  const [translation, setTranslation] = useState(() => typeof window !== "undefined" ? localStorage.getItem("bible.translation") || "NVI" : "NVI");
+  const [translation] = useState("ORIGINAL");
+  const setTranslation = () => {};
   const [showTranslations, setShowTranslations] = useState(false);
   const [showLegend, setShowLegend] = useState(true);
   const [fs, setFs]         = useState(() => typeof window !== "undefined" ? Number(localStorage.getItem("bible.font") || 18) : 18);
@@ -111,6 +125,38 @@ export default function Bible() {
   const [noteDraft, setNoteDraft] = useState("");
   const [fetchedBibles, setFetchedBibles] = useState<Record<string, any>>({});
   const [loadingTranslation, setLoadingTranslation] = useState(false);
+  const [showOriginalNote, setShowOriginalNote] = useState<number|null>(null);
+  // For "Add to notebook" feature
+  const [addToNotebookVerse, setAddToNotebookVerse] = useState<number|null>(null);
+  const [notebooks, setNotebooks] = useState<{id:string;title:string}[]>([]);
+  const [originalVerses, setOriginalVerses] = useState<Record<number, { text: string; notes: string | null; originalLang: string | null }>>({});
+  const prefsLoadedRef = useRef(false);
+
+  useEffect(() => {
+    async function loadOriginalVerses() {
+      if (!abbr || !ch) return;
+      const { data, error } = await supabase
+        .from("original_bible_verses")
+        .select("verse, text, notes, original_lang")
+        .eq("book_abbr", abbr)
+        .eq("chapter", ch);
+        
+      if (!error && data) {
+        const map: Record<number, { text: string; notes: string | null; originalLang: string | null }> = {};
+        data.forEach(row => {
+          map[row.verse] = {
+            text: row.text,
+            notes: row.notes,
+            originalLang: row.original_lang
+          };
+        });
+        setOriginalVerses(map);
+      } else {
+        setOriginalVerses({});
+      }
+    }
+    loadOriginalVerses();
+  }, [abbr, ch]);
 
   useEffect(() => {
     if (["NVI", "ACF", "AA", "ORIGINAL"].includes(translation)) {
@@ -168,22 +214,64 @@ export default function Bible() {
   const { data: hl, toggle: toggleHL } = useHighlights(uid, book.name, ch);
   const { data: notes, save: saveNote } = useNotes(uid, book.name, ch);
 
+  // Sync preferences to localStorage (instant) and Supabase (debounced)
+  const syncPrefsToSupabase = useCallback((userId: string, newAbbr: string, newCh: number, newTranslation: string, newFs: number) => {
+    supabase.from("reader_preferences").upsert({
+      user_id: userId,
+      last_book: newAbbr,
+      last_chapter: newCh,
+      translation: newTranslation,
+      font_size: newFs
+    }, { onConflict: "user_id" }).then(() => {});
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("bible.translation", translation);
+    if (uid) syncPrefsToSupabase(uid, abbr, ch, translation, fs);
   }, [translation]);
 
   useEffect(() => {
     localStorage.setItem("bible.last_book", abbr);
     localStorage.setItem("bible.last_chapter", String(ch));
+    if (uid) syncPrefsToSupabase(uid, abbr, ch, translation, fs);
   }, [abbr, ch]);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    localStorage.setItem("bible.font", String(fs));
+    if (uid) syncPrefsToSupabase(uid, abbr, ch, translation, fs);
+  }, [fs]);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
       const userId = data.user.id;
       setUid(userId);
+
+      // ── On first load, pull preferences from Supabase ────────────────
+      if (!prefsLoadedRef.current) {
+        prefsLoadedRef.current = true;
+        const { data: prefs } = await supabase
+          .from("reader_preferences")
+          .select("last_book, last_chapter, translation, font_size")
+          .eq("user_id", userId)
+          .maybeSingle();
+        if (prefs) {
+          // Only update if different from current (avoids spurious re-renders)
+          if (prefs.last_book && prefs.last_book !== abbr) setAbbr(prefs.last_book);
+          if (prefs.last_chapter && prefs.last_chapter !== ch) setCh(prefs.last_chapter);
+          if (prefs.translation && prefs.translation !== translation) setTranslation(prefs.translation);
+          if (prefs.font_size && prefs.font_size !== fs) setFs(prefs.font_size);
+        }
+        // Load notebooks list for "Add to notebook" feature
+        const { data: nbs } = await supabase
+          .from("study_notebooks")
+          .select("id, title")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+        if (nbs) setNotebooks(nbs);
+      }
       
-      // Update reading progress (last read position) in Supabase
+      // ── Update reading_progress (last position) ───────────────────────
       supabase.from("reading_progress").upsert({ 
         user_id: userId, 
         version: translation, 
@@ -192,52 +280,42 @@ export default function Bible() {
         verse: 1 
       }).then(() => {});
 
-      // Record chapter read in localStorage
-      try {
-        const readChKey = `bible.readChapters_${userId}`;
-        const readChapters = JSON.parse(localStorage.getItem(readChKey) || "[]");
-        const entry = `${book.name}-${ch}`;
-        
-        if (!readChapters.includes(entry)) {
-          readChapters.push(entry);
-          localStorage.setItem(readChKey, JSON.stringify(readChapters));
-          
-          // Also save a timestamped log for the constancy calendar
-          const chapterHistoryKey = `bible.readChaptersHistory_${userId}`;
-          const readHistory = JSON.parse(localStorage.getItem(chapterHistoryKey) || "[]");
-          readHistory.push({
-            book: book.name,
-            chapter: ch,
-            readAt: new Date().toISOString()
-          });
-          localStorage.setItem(chapterHistoryKey, JSON.stringify(readHistory));
+      // ── Record chapter as read in Supabase (cross-device sync) ────────
+      const { error: rcErr } = await supabase
+        .from("read_chapters")
+        .upsert({ user_id: userId, book: book.name, chapter: ch }, { onConflict: "user_id,book,chapter" });
 
-          // Log public activity for the reading completion
-          logActivity(userId, "reading", { book: book.name, chapter: ch });
+      if (!rcErr) {
+        // It was a new chapter — update walk_progress
+        const { count: totalRead } = await supabase
+          .from("read_chapters")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId);
 
-          // Sync total unique chapters read to walk_progress in Supabase
-          const totalRead = readChapters.length;
-          supabase.from("walk_progress").select("percent, streak_days")
-            .eq("user_id", userId).maybeSingle()
-            .then(({ data: wp }) => {
-              const newPercent = Math.min(100, Math.round(totalRead * 1.5)); // 1.5% progress per chapter
-              if (wp) {
-                supabase.from("walk_progress")
-                  .update({ 
-                    chapters_read: totalRead,
-                    percent: newPercent
-                  })
-                  .eq("user_id", userId).then(() => {});
-              }
-            });
-        }
-      } catch (e) {
-        console.error("Error updating read chapters tracking:", e);
+        const chaptersRead = totalRead || 0;
+        const newPercent = Math.min(100, Math.round(chaptersRead * 1.5));
+
+        supabase.from("walk_progress")
+          .update({ chapters_read: chaptersRead, percent: newPercent })
+          .eq("user_id", userId).then(() => {});
+
+        // Also keep localStorage mirror for offline fallback
+        try {
+          const readChKey = `bible.readChapters_${userId}`;
+          const readChapters = JSON.parse(localStorage.getItem(readChKey) || "[]");
+          const entry = `${book.name}-${ch}`;
+          if (!readChapters.includes(entry)) {
+            readChapters.push(entry);
+            localStorage.setItem(readChKey, JSON.stringify(readChapters));
+          }
+        } catch (_) {}
+
+        logActivity(userId, "reading", { book: book.name, chapter: ch });
       }
     });
   }, [abbr, ch, translation]);
 
-  useEffect(() => { localStorage.setItem("bible.font", String(fs)); }, [fs]);
+  // Note: font sync is handled in the dedicated useEffect above
 
   let verses: Record<number, string> = {};
   if (["NVI", "ACF", "AA", "AVE", "ORIGINAL"].includes(translation)) {
@@ -373,54 +451,6 @@ export default function Bible() {
           >
             Cap. {ch} <ChevronDown className="w-3.5 h-3.5 opacity-50" />
           </button>
-
-          <div className="relative">
-            <button
-              onClick={() => { setShowTranslations(v => !v); setShowBooks(false); setShowChs(false); }}
-              className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm text-white/80 transition-all hover:text-white"
-              style={{ background: "oklch(1 0 0 / 0.07)", border: "1px solid oklch(1 0 0 / 0.12)" }}
-            >
-              <BookMarked className="w-3.5 h-3.5 text-amber-300" />
-              <span>{translation}</span>
-              <ChevronDown className="w-3.5 h-3.5 opacity-50" />
-            </button>
-            <AnimatePresence>
-              {showTranslations && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setShowTranslations(false)} />
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute left-0 mt-2 w-56 rounded-2xl p-2 z-20 shadow-2xl flex flex-col gap-1 text-left"
-                    style={{
-                      background: "oklch(0.14 0.03 260 / 0.96)",
-                      border: "1px solid oklch(1 0 0 / 0.15)",
-                      backdropFilter: "blur(24px)",
-                    }}
-                  >
-                    {TRANSLATIONS.map(t => (
-                      <button
-                        key={t.id}
-                        onClick={() => {
-                          setTranslation(t.id);
-                          setShowTranslations(false);
-                        }}
-                        className="w-full text-left rounded-xl px-3 py-2 text-xs transition-all flex flex-col gap-0.5 hover:bg-white/10"
-                        style={t.id === translation ? {
-                          background: "oklch(1 0 0 / 0.08)",
-                          borderLeft: "2px solid oklch(0.65 0.18 255)",
-                        } : {}}
-                      >
-                        <span className="font-semibold text-white">{t.name}</span>
-                        <span className="text-[10px] text-white/55">{t.description}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                </>
-              )}
-            </AnimatePresence>
-          </div>
         </div>
 
         <div
@@ -534,25 +564,82 @@ export default function Bible() {
           </h1>
         </div>
 
+        {/* Original translation banner */}
+        {translation === "ORIGINAL" && (
+          <div className="mb-6 px-4 py-3 rounded-2xl text-xs leading-relaxed" style={{ background: "oklch(0.55 0.18 85 / 0.08)", border: "1px solid oklch(0.55 0.18 85 / 0.25)" }}>
+            <p className="text-amber-300/90 font-semibold mb-1 flex items-center gap-1.5">
+              <Scroll className="w-3.5 h-3.5" /> Linguagem Próxima do Original
+            </p>
+            <p className="text-white/55">
+              Tradução com máxima fidelidade aos idiomas originais (hebraico, aramaico e grego).
+              Toque nos versículos para visualizar notas exegéticas e detalhes dos idiomas originais onde disponíveis.
+            </p>
+          </div>
+        )}
+
         {/* Verses */}
         <article className="leading-[1.9] space-y-3 text-left" style={{ fontSize: fs }}>
-          {Object.entries(verses).map(([vn, text]) => {
+          {Object.entries(verses).map(([vn, rawText]) => {
             const v = Number(vn);
             const h = hl.find(x => x.verse === v);
             const hasNote = notes.some(n => n.verse === v);
             const isSel = selVerse === v;
+
+            // For ORIGINAL translation: try to get literal verse
+            let displayText = rawText;
+            let originalData = null;
+            let hasLiteralTranslation = false;
+            if (translation === "ORIGINAL") {
+              const dbVerse = originalVerses[v];
+              if (dbVerse) {
+                displayText = dbVerse.text;
+                hasLiteralTranslation = true;
+                originalData = {
+                  text: dbVerse.text,
+                  notes: dbVerse.notes,
+                  originalLang: dbVerse.originalLang
+                };
+              } else {
+                const localOverride = getOriginalVerse(abbr, ch, v);
+                if (localOverride) {
+                  displayText = localOverride.text;
+                  hasLiteralTranslation = true;
+                  originalData = localOverride;
+                }
+              }
+            }
+
+            const isShowingOriginalNote = showOriginalNote === v;
+
             return (
-              <p
-                key={v}
-                onClick={e => { e.stopPropagation(); setSelVerse(isSel ? null : v); setShowChs(false); setShowTranslations(false); }}
-                className={`group relative cursor-pointer rounded-xl px-3 py-2 -mx-3 transition-all text-white/80 ${
-                  h ? COLORS[h.color].bg : "hover:bg-white/5"
-                } ${isSel ? "ring-1 ring-blue-400/40 bg-blue-400/5" : ""}`}
-              >
-                <sup className="text-amber-400/70 mr-2 text-[0.68em] font-bold">{v}</sup>
-                {text}
-                {hasNote && <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 align-middle animate-pulse" />}
-              </p>
+              <div key={v}>
+                <p
+                  onClick={e => { e.stopPropagation(); setSelVerse(isSel ? null : v); setShowChs(false); setShowTranslations(false); if (translation === "ORIGINAL" && hasLiteralTranslation) setShowOriginalNote(isShowingOriginalNote ? null : v); }}
+                  className={`group relative cursor-pointer rounded-xl px-3 py-2 -mx-3 transition-all text-white/80 ${
+                    h ? COLORS[h.color].bg : "hover:bg-white/5"
+                  } ${isSel ? "ring-1 ring-blue-400/40 bg-blue-400/5" : ""}`}
+                >
+                  <sup className="text-amber-400/70 mr-2 text-[0.68em] font-bold">{v}</sup>
+                  {displayText}
+                  {hasNote && <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 align-middle animate-pulse" />}
+                </p>
+                {/* Exegetical notes panel */}
+                <AnimatePresence>
+                  {isShowingOriginalNote && originalData?.notes && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mx-3 mb-2 p-4 rounded-2xl text-xs text-white/70 leading-relaxed" style={{ background: "oklch(0.55 0.18 85 / 0.06)", border: "1px solid oklch(0.55 0.18 85 / 0.2)", borderLeft: "3px solid oklch(0.55 0.18 85 / 0.6)" }}>
+                        <p className="text-amber-300/80 font-semibold text-[10px] uppercase tracking-wider mb-1.5">📜 Nota Exegética • {originalData.originalLang}</p>
+                        <p>{originalData.notes}</p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             );
           })}
         </article>
@@ -607,6 +694,14 @@ export default function Bible() {
               >
                 <StickyNote className="w-3.5 h-3.5" /> Anotar
               </button>
+              {notebooks.length > 0 && (
+                <button
+                  onClick={() => { setAddToNotebookVerse(selVerse); setSelVerse(null); }}
+                  className="flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-xs text-white/70 hover:bg-white/10 hover:text-white transition-all"
+                >
+                  <BookPlus className="w-3.5 h-3.5" /> Caderno
+                </button>
+              )}
               <button onClick={() => setSelVerse(null)} className="p-1 rounded-full hover:bg-white/10 text-white/30">
                 <X className="w-3.5 h-3.5" />
               </button>
@@ -971,6 +1066,86 @@ export default function Bible() {
                   </div>
                 </div>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+      {/* ── Add to Notebook modal ── */}
+      <AnimatePresence>
+        {addToNotebookVerse !== null && (
+          <>
+            <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+              className="fixed inset-0 z-40" style={{ background:"oklch(0 0 0 / 0.7)", backdropFilter:"blur(8px)" }}
+              onClick={() => setAddToNotebookVerse(null)} />
+            <motion.div
+              initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-sm mx-auto text-left"
+              style={{
+                background: "oklch(0.14 0.03 270 / 0.97)",
+                border: "1px solid oklch(0.65 0.18 280 / 0.3)",
+                boxShadow: "0 32px 80px oklch(0 0 0 / 0.7)",
+                backdropFilter: "blur(32px)",
+              }}
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display text-lg text-white flex items-center gap-2">
+                  <BookPlus className="w-4 h-4 text-amber-400" />
+                  Adicionar ao Caderno
+                </h2>
+                <button onClick={() => setAddToNotebookVerse(null)} className="p-1.5 rounded-full hover:bg-white/10 text-white/30">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <p className="text-xs text-white/50 mb-4">
+                Referência: <span className="text-amber-300 font-semibold">{book.name} {ch}:{addToNotebookVerse}</span><br/>
+                Selecione o caderno de destino:
+              </p>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {notebooks.map(nb => (
+                  <button
+                    key={nb.id}
+                    onClick={async () => {
+                      // Insert a new page in the notebook with the verse reference
+                      const verseText = verses[addToNotebookVerse!] || "";
+                      const refText = `${book.name} ${ch}:${addToNotebookVerse}`;
+                      const content = {
+                        type: "doc",
+                        content: [
+                          { type: "heading", attrs: { level: 3 }, content: [{ type: "text", text: refText }] },
+                          { type: "blockquote", content: [{ type: "paragraph", content: [{ type: "text", text: verseText }] }] },
+                          { type: "paragraph", content: [{ type: "text", text: "" }] }
+                        ]
+                      };
+                      if (uid) {
+                        const { error } = await supabase.from("study_pages").insert({
+                          notebook_id: nb.id,
+                          user_id: uid,
+                          title: refText,
+                          content
+                        });
+                        if (!error) {
+                          toast.success(`Adicionado a "${nb.title}" ✓`);
+                          setAddToNotebookVerse(null);
+                        } else {
+                          toast.error("Erro ao adicionar ao caderno.");
+                        }
+                      }
+                    }}
+                    className="w-full text-left rounded-2xl px-4 py-3 text-sm text-white/80 hover:text-white hover:bg-white/10 transition-all flex items-center gap-3"
+                    style={{ background: "oklch(1 0 0 / 0.04)", border: "1px solid oklch(1 0 0 / 0.08)" }}
+                  >
+                    <BookMarked className="w-4 h-4 text-amber-400/70 shrink-0" />
+                    {nb.title}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => { setAddToNotebookVerse(null); navigate({ to: "/estudos" }); }}
+                className="mt-4 w-full text-center text-xs text-amber-400/70 hover:text-amber-300 transition-all"
+              >
+                + Criar novo caderno em Estudos
+              </button>
             </motion.div>
           </>
         )}

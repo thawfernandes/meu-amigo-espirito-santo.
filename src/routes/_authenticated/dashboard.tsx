@@ -145,9 +145,31 @@ function Dashboard() {
         .select("*", { count: "exact", head: true })
         .eq("user_id", userId);
 
-      // Load local storage values
-      const correctAnswersCount = Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0");
-      const completedMonthlyChallenges = JSON.parse(localStorage.getItem(`local_monthly_challenges_${userId}`) || "[]");
+      // Load quiz stats from Supabase (fallback to localStorage)
+      let correctAnswersCount = 0;
+      const { data: quizStatsData } = await supabase
+        .from("quiz_stats")
+        .select("correct_answers")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (quizStatsData) {
+        correctAnswersCount = quizStatsData.correct_answers || 0;
+      } else {
+        correctAnswersCount = Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0");
+      }
+
+      // Load monthly challenge completions from Supabase (fallback to localStorage)
+      let completedMonthlyChallengesCount = 0;
+      const { count: monthlyCount } = await supabase
+        .from("monthly_challenge_completions")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      if (monthlyCount !== null) {
+        completedMonthlyChallengesCount = monthlyCount;
+      } else {
+        const localMC = JSON.parse(localStorage.getItem(`local_monthly_challenges_${userId}`) || "[]");
+        completedMonthlyChallengesCount = localMC.length;
+      }
 
       // Determine initial XP offset based on Quiz Profile
       // beginner = Lvl 1 (0 XP)
@@ -178,7 +200,7 @@ function Dashboard() {
         (chaptersRead * 15) +
         (studiesCount * 50) +
         (correctAnswersCount * 10) +
-        (completedMonthlyChallenges.length * 100) +
+        (completedMonthlyChallengesCount * 100) +
         ((notesCount || 0) * 10) +
         ((highlightsCount || 0) * 5) +
         (prayersCount * 15) +

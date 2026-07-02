@@ -180,7 +180,25 @@ function Challenges() {
   const [celebratingChallenge, setCelebratingChallenge] = useState<MonthlyChallenge | null>(null);
   const [showHistory, setShowHistory] = useState(false);
 
-  const loadCompletedChallenges = useCallback((userId: string): CompletedMonthlyChallenge[] => {
+  const loadCompletedChallenges = useCallback(async (userId: string): Promise<CompletedMonthlyChallenge[]> => {
+    try {
+      // Try Supabase first (source of truth)
+      const { data, error } = await supabase
+        .from("monthly_challenge_completions")
+        .select("challenge_id, experience, completed_at")
+        .eq("user_id", userId);
+      if (!error && data) {
+        const list: CompletedMonthlyChallenge[] = data.map(r => ({
+          id: r.challenge_id,
+          completedAt: r.completed_at,
+          experience: r.experience || undefined
+        }));
+        // Mirror to localStorage for offline fallback
+        localStorage.setItem(`local_monthly_challenges_${userId}`, JSON.stringify(list));
+        return list;
+      }
+    } catch (_) {}
+    // Fallback to localStorage
     try {
       const stored = localStorage.getItem(`local_monthly_challenges_${userId}`);
       return stored ? JSON.parse(stored) : [];
@@ -189,10 +207,14 @@ function Challenges() {
     }
   }, []);
 
-  const saveCompletedChallenges = useCallback((userId: string, list: CompletedMonthlyChallenge[]) => {
-    try {
-      localStorage.setItem(`local_monthly_challenges_${userId}`, JSON.stringify(list));
-    } catch (e) {}
+  const saveCompletedChallenge = useCallback(async (userId: string, completion: CompletedMonthlyChallenge) => {
+    // Save to Supabase
+    await supabase.from("monthly_challenge_completions").upsert({
+      user_id: userId,
+      challenge_id: completion.id,
+      experience: completion.experience || null,
+      completed_at: completion.completedAt
+    }, { onConflict: "user_id,challenge_id" });
   }, []);
 
   // Stats & Achievements
@@ -255,21 +277,36 @@ function Challenges() {
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
-      setUid(data.user.id);
+      const userId = data.user.id;
+      setUid(userId);
       
       // Load difficulty level
       const profileDiff = data.user.user_metadata?.quiz_profile;
       if (profileDiff === "beginner" || profileDiff === "walking" || profileDiff === "deepening") {
         setDifficulty(profileDiff);
       } else {
-        const { data: quizData } = await supabase.from("onboarding_quiz").select("answers").eq("user_id", data.user.id).maybeSingle();
+        const { data: quizData } = await supabase.from("onboarding_quiz").select("answers").eq("user_id", userId).maybeSingle();
         const answersObj = quizData?.answers as Record<string, string> | undefined;
         if (answersObj?.profile === "beginner" || answersObj?.profile === "walking" || answersObj?.profile === "deepening") {
           setDifficulty(answersObj.profile as any);
         }
       }
       
-      const localCompleted = loadCompletedChallenges(data.user.id);
+      // Load quiz stats from Supabase
+      const { data: stats } = await supabase.from("quiz_stats").select("correct_answers").eq("user_id", userId).maybeSingle();
+      if (stats) {
+        setStatsCorrect(stats.correct_answers || 0);
+        localStorage.setItem("bible.stats.correctAnswersCount", String(stats.correct_answers || 0));
+      }
+
+      // Load unlocked badges from profiles
+      const { data: pData } = await supabase.from("profiles").select("completed_challenges").eq("id", userId).maybeSingle();
+      if (pData?.completed_challenges && Array.isArray(pData.completed_challenges)) {
+        setUnlockedBadges(pData.completed_challenges);
+        localStorage.setItem("bible.completedChallenges", JSON.stringify(pData.completed_challenges));
+      }
+
+      const localCompleted = await loadCompletedChallenges(userId);
       setCompletedChallenges(localCompleted);
       setLoading(false);
     });
@@ -317,7 +354,25 @@ function Challenges() {
     
     const updated = [newCompletion, ...completedChallenges.filter(x => x.id !== challengeId)];
     setCompletedChallenges(updated);
-    saveCompletedChallenges(uid, updated);
+    // Sync to localStorage mirror
+    try {
+      localStorage.setItem(`local_monthly_challenges_${uid}`, JSON.stringify(updated));
+    } catch (_) {}
+    // Sync to Supabase
+    saveCompletedChallenge(uid, newCompletion);
+    
+    // Update walk_progress challenges_done counter
+    supabase.from("walk_progress")
+      .select("challenges_done")
+      .eq("user_id", uid)
+      .maybeSingle()
+      .then(({ data: wp }) => {
+        if (wp) {
+          supabase.from("walk_progress")
+            .update({ challenges_done: (wp.challenges_done || 0) + 1 })
+            .eq("user_id", uid).then(() => {});
+        }
+      });
     
     try {
       audio.play("achievement");

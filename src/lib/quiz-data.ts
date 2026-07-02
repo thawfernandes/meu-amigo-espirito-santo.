@@ -228,29 +228,73 @@ export function getAdaptiveQuiz(difficulty: "beginner" | "walking" | "deepening"
 }
 
 // Helper: Record individual answer status and update stats / simple achievements
+// Also syncs to Supabase quiz_stats for cross-device persistence
 export function recordAnswer(isCorrect: boolean): string[] {
   if (typeof window === "undefined") return [];
   
-  // Track total questions answered
+  // Track total questions answered (local cache for instant UI)
   const currentTotal = Number(localStorage.getItem("bible.stats.totalQuestionsCount") || "0");
-  localStorage.setItem("bible.stats.totalQuestionsCount", String(currentTotal + 1));
+  const newTotal = currentTotal + 1;
+  localStorage.setItem("bible.stats.totalQuestionsCount", String(newTotal));
 
-  // Append entry to questionHistory
-  try {
-    const history = JSON.parse(localStorage.getItem("bible.stats.questionHistory") || "[]");
-    history.push({
-      date: new Date().toISOString(),
-      isCorrect
-    });
-    localStorage.setItem("bible.stats.questionHistory", JSON.stringify(history));
-  } catch (e) {}
+  let newCorrect = Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0");
 
   if (isCorrect) {
-    const currentCorrect = Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0");
-    const newCorrect = currentCorrect + 1;
+    newCorrect += 1;
     localStorage.setItem("bible.stats.correctAnswersCount", String(newCorrect));
-    
-    // Check achievements
+  }
+
+  // Sync to Supabase asynchronously (fire-and-forget)
+  import("@/integrations/supabase/client").then(({ supabase }) => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) return;
+      
+      // Update quiz stats
+      supabase.from("quiz_stats").upsert({
+        user_id: data.user.id,
+        correct_answers: newCorrect,
+        total_answers: newTotal
+      }, { onConflict: "user_id" }).then(() => {});
+
+      // Log quiz activity
+      import("@/lib/activity").then(({ logActivity }) => {
+        logActivity(data.user.id, "quiz", { isCorrect, total: newTotal, correct: newCorrect });
+      });
+
+      if (isCorrect) {
+        // Check achievements
+        const completedChallengesRaw = localStorage.getItem("bible.completedChallenges") || "[]";
+        let completed: string[] = [];
+        try {
+          completed = JSON.parse(completedChallengesRaw);
+        } catch (e) {
+          completed = [];
+        }
+
+        let newlyUnlocked: string[] = [];
+
+        if (newCorrect >= 1 && !completed.includes("first_step")) {
+          completed.push("first_step");
+          newlyUnlocked.push("Primeiro Passo");
+        }
+        if (newCorrect >= 10 && !completed.includes("constancy")) {
+          completed.push("constancy");
+          newlyUnlocked.push("Constância");
+        }
+
+        if (newlyUnlocked.length > 0) {
+          localStorage.setItem("bible.completedChallenges", JSON.stringify(completed));
+          // Sync achievements to Supabase profiles
+          supabase.from("profiles").update({
+            completed_challenges: completed
+          }).eq("id", data.user.id).then(() => {});
+        }
+      }
+    });
+  }).catch(() => {});
+
+  if (isCorrect) {
+    // Check achievements (local check for instant return)
     const completedChallengesRaw = localStorage.getItem("bible.completedChallenges") || "[]";
     let completed: string[] = [];
     try {
@@ -270,9 +314,6 @@ export function recordAnswer(isCorrect: boolean): string[] {
       newlyUnlocked.push("Constância");
     }
 
-    if (newlyUnlocked.length > 0) {
-      localStorage.setItem("bible.completedChallenges", JSON.stringify(completed));
-    }
     return newlyUnlocked;
   } else {
     return [];
@@ -306,6 +347,15 @@ export function recordQuizCompletion(book: string, chapter: number, score: numbe
 
   if (newlyUnlocked.length > 0) {
     localStorage.setItem("bible.completedChallenges", JSON.stringify(completed));
+    // Sync achievements to Supabase profiles
+    import("@/integrations/supabase/client").then(({ supabase }) => {
+      supabase.auth.getUser().then(({ data }) => {
+        if (!data.user) return;
+        supabase.from("profiles").update({
+          completed_challenges: completed
+        }).eq("id", data.user.id).then(() => {});
+      });
+    }).catch(() => {});
   }
   return newlyUnlocked;
 }

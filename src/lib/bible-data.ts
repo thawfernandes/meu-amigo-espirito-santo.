@@ -93,12 +93,7 @@ export interface Translation {
 }
 
 export const TRANSLATIONS: Translation[] = [
-  { id: "ORIGINAL", name: "Linguagem Próxima do Original", description: "Tradução literal dos textos originais" },
-  { id: "NVI", name: "NVI", description: "Nova Versão Internacional" },
-  { id: "ARA", name: "ARA", description: "Almeida Revista e Atualizada" },
-  { id: "ACF", name: "ACF", description: "Almeida Corrigida Fiel" },
-  { id: "AA", name: "AA", description: "Almeida Atualizada" },
-  { id: "AVE", name: "Ave Maria", description: "Tradução Católica" },
+  { id: "ORIGINAL", name: "Linguagem Próxima do Original", description: "Tradução literal dos textos originais com base em hebraico, aramaico e grego" },
 ];
 
 const BIBLE_TEXTS: Record<string, Record<string, Record<number, Record<number, string>>>> = {

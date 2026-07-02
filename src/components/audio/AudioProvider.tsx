@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 
 export type Sfx =
   | "hover"
@@ -246,6 +247,7 @@ function createNoiseBuffer(ac: AudioContext) {
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
+  const [uid, setUid] = useState<string | null>(null);
 
   // Settings states loaded from localStorage
   const [musicEnabled, setMusicEnabledState] = useState(() => {
@@ -280,6 +282,59 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const v = localStorage.getItem("audio.muted");
     return v === null ? true : v === "true";
   });
+
+  // Fetch settings from Supabase on mount
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
+      if (!data.user) return;
+      const userId = data.user.id;
+      setUid(userId);
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("settings")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (profile?.settings && typeof profile.settings === "object") {
+        const s = profile.settings as any;
+        if (s.musicEnabled !== undefined) {
+          setMusicEnabledState(s.musicEnabled);
+          localStorage.setItem("audio.musicEnabled", String(s.musicEnabled));
+        }
+        if (s.sfxEnabled !== undefined) {
+          setSfxEnabledState(s.sfxEnabled);
+          localStorage.setItem("audio.sfxEnabled", String(s.sfxEnabled));
+        }
+        if (s.musicVolume !== undefined) {
+          setMusicVolumeState(s.musicVolume);
+          localStorage.setItem("audio.musicVolume", String(s.musicVolume));
+        }
+        if (s.sfxVolume !== undefined) {
+          setSfxVolumeState(s.sfxVolume);
+          localStorage.setItem("audio.sfxVolume", String(s.sfxVolume));
+        }
+        if (s.autoAdapt !== undefined) {
+          setAutoAdaptState(s.autoAdapt);
+          localStorage.setItem("audio.autoAdapt", String(s.autoAdapt));
+        }
+        if (s.muted !== undefined) {
+          setMuted(s.muted);
+          localStorage.setItem("audio.muted", String(s.muted));
+        }
+      }
+    });
+  }, []);
+
+  // Sync back to Supabase settings column
+  const syncSettings = useCallback((userId: string, updates: any) => {
+    supabase.from("profiles").select("settings").eq("id", userId).maybeSingle().then(({ data }) => {
+      const currentSettings = (data?.settings && typeof data.settings === "object") ? data.settings : {};
+      supabase.from("profiles").update({
+        settings: { ...currentSettings, ...updates }
+      }).eq("id", userId).then(() => {});
+    });
+  }, []);
 
   // Current page context and character mood
   const [context, setContextState] = useState<"dashboard" | "biblia" | "vida" | "estudos">("dashboard");
@@ -593,6 +648,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setMuted((m) => {
       const next = !m;
       localStorage.setItem("audio.muted", String(next));
+      if (uid) syncSettings(uid, { muted: next });
       if (next) {
         stopAudioEngine();
       } else {
@@ -600,11 +656,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-  }, [startAudioEngine, stopAudioEngine]);
+  }, [startAudioEngine, stopAudioEngine, uid, syncSettings]);
 
   const setMusicEnabled = useCallback((v: boolean) => {
     setMusicEnabledState(v);
     localStorage.setItem("audio.musicEnabled", String(v));
+    if (uid) syncSettings(uid, { musicEnabled: v });
     if (!v) {
       // fade out music
       if (masterGainRef.current && acRef.current) {
@@ -614,31 +671,36 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       if (muted) {
         setMuted(false);
         localStorage.setItem("audio.muted", "false");
+        if (uid) syncSettings(uid, { muted: false });
       }
       startAudioEngine();
       applyCrossfade();
     }
-  }, [muted, startAudioEngine, applyCrossfade]);
+  }, [muted, startAudioEngine, applyCrossfade, uid, syncSettings]);
 
   const setSfxEnabled = useCallback((v: boolean) => {
     setSfxEnabledState(v);
     localStorage.setItem("audio.sfxEnabled", String(v));
-  }, []);
+    if (uid) syncSettings(uid, { sfxEnabled: v });
+  }, [uid, syncSettings]);
 
   const setMusicVolume = useCallback((v: number) => {
     setMusicVolumeState(v);
     localStorage.setItem("audio.musicVolume", String(v));
-  }, []);
+    if (uid) syncSettings(uid, { musicVolume: v });
+  }, [uid, syncSettings]);
 
   const setSfxVolume = useCallback((v: number) => {
     setSfxVolumeState(v);
     localStorage.setItem("audio.sfxVolume", String(v));
-  }, []);
+    if (uid) syncSettings(uid, { sfxVolume: v });
+  }, [uid, syncSettings]);
 
   const setAutoAdapt = useCallback((v: boolean) => {
     setAutoAdaptState(v);
     localStorage.setItem("audio.autoAdapt", String(v));
-  }, []);
+    if (uid) syncSettings(uid, { autoAdapt: v });
+  }, [uid, syncSettings]);
 
   const play = useCallback(
     (s: Sfx) => {

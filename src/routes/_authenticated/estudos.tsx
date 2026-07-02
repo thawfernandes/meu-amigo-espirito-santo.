@@ -1,12 +1,18 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudio } from "@/components/audio/AudioProvider";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
 import {
   BookOpen, Clock, X, Search, BookMarked, MessageSquare, Sparkles, Lightbulb, Check, Plus,
-  Library, Calendar, HelpCircle, FileText, ChevronRight, Globe, Layers, ArrowRight, Star, Award, Compass, Edit2, Bookmark
+  Library, Calendar, HelpCircle, FileText, ChevronRight, Globe, Layers, ArrowRight, Star, Award, Compass, Edit2, Bookmark,
+  FilePlus, Trash2, AlignLeft, Bold, Italic, List, ListOrdered, Quote, Heading1, Heading2, ChevronLeft, Save, Loader2
 } from "lucide-react";
 import {
   DICTIONARY, CHARACTERS, COMMENTARIES, CROSS_REFERENCES, ARCHEOLOGY, MAPS, TIMELINE, STUDY_CHALLENGES, searchAll,
@@ -17,67 +23,100 @@ import { logActivity } from "@/lib/activity";
 
 export const Route = createFileRoute("/_authenticated/estudos")({ component: EstudosPage });
 
+// ─── Type Definitions ────────────────────────────────────────────────────────
 interface Notebook {
   id: string;
   title: string;
-  objective: string;
-  startDate: string;
-  book: string;
-  chapter: number;
-  observations: string;
-  questions: string;
-  conclusions: string;
-  references: string;
-  isFavorite: boolean;
+  description: string;
+  category: string;
+  is_favorite: boolean;
   status: "progress" | "completed";
-  updatedAt: string;
+  created_at: string;
+  updated_at: string;
+  page_count?: number;
+}
+
+interface NotebookPage {
+  id: string;
+  notebook_id: string;
+  title: string;
+  content: any; // Tiptap JSON
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
 }
 
 interface Doubt {
   id: string;
   question: string;
-  answer: string;
-  isResolved: boolean;
-  references: string;
-  createdAt: string;
+  answer: string | null;
+  references: string | null;
+  is_resolved: boolean;
+  created_at: string;
 }
 
-const DEFAULT_NOTEBOOKS: Notebook[] = [
-  {
-    id: "note-1",
-    title: "O Evangelho de João",
-    objective: "Compreender a revelação do Logos encarnado e a teologia do amor prático.",
-    startDate: "2026-08-05",
-    book: "João",
-    chapter: 8,
-    observations: "A expressão de Jesus 'Eu Sou' (ego eimi) remete diretamente ao nome divino YHWH revelado a Moisés no deserto.",
-    questions: "Qual a relação teológica exata entre o cordeiro pascoal e o cordeiro de Deus citado no capítulo 1?",
-    conclusions: "João apresenta Jesus sob uma perspectiva altamente divina e focada na comunhão pessoal com o Espírito Santo.",
-    references: "Comentário de F.F. Bruce, Exegese de João por Paulo Won.",
-    isFavorite: true,
-    status: "progress",
-    updatedAt: new Date().toISOString()
-  }
+const NOTEBOOK_CATEGORIES = [
+  "Exegese", "Livro Bíblico", "Temático", "Devocional",
+  "Escatologia", "Parábolas", "Doutrina", "Histórico", "Geral"
 ];
 
-const DEFAULT_DOUBTS: Doubt[] = [
-  {
-    id: "doubt-1",
-    question: "Quem foi de fato Melquisedeque citado em Gênesis e Hebreus?",
-    answer: "Muitos estudiosos o identificam como uma teofania (aparição pré-encarnada de Cristo), enquanto outros defendem que era um rei-sacerdote histórico de Salém que serviu como protótipo tipológico do Messias.",
-    isResolved: true,
-    references: "Hebreus 7:1-3, Gênesis 14:18-20",
-    createdAt: "2026-06-19T10:00:00.000Z"
-  },
-  {
-    id: "doubt-2",
-    question: "Por que os Evangelhos sinóticos diferem um pouco em cronologia comparados a João?",
-    answer: "",
-    isResolved: false,
-    references: "",
-    createdAt: "2026-06-22T14:30:00.000Z"
+// Regex para detectar referências bíblicas no texto
+const BIBLE_REF_REGEX = /\b([1-3]?\s?[A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕ][a-záéíóúàâêîôûãõ]+)\s+(\d+)(?::(\d+))?\b/g;
+
+// Highlight Bible refs in plain text
+function highlightBibleRefs(text: string, onClickRef: (book: string, ch: number, vs?: number) => void): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let last = 0;
+  let match: RegExpExecArray | null;
+  BIBLE_REF_REGEX.lastIndex = 0;
+  while ((match = BIBLE_REF_REGEX.exec(text)) !== null) {
+    if (match.index > last) parts.push(text.slice(last, match.index));
+    const [full, book, ch, vs] = match;
+    parts.push(
+      <button
+        key={match.index}
+        onClick={() => onClickRef(book, Number(ch), vs ? Number(vs) : undefined)}
+        className="text-amber-300 hover:text-amber-200 underline underline-offset-2 transition-colors font-medium"
+        title={`Abrir ${full} na Bíblia`}
+      >
+        {full}
+      </button>
+    );
+    last = match.index + full.length;
   }
-];
+  if (last < text.length) parts.push(text.slice(last));
+  return parts;
+}
+
+function extractBibleRefs(content: any): { full: string; book: string; chapter: number; verse?: number }[] {
+  if (!content) return [];
+  let text = "";
+  // Simple recursive helper to extract text from TipTap JSON
+  const extractText = (node: any) => {
+    if (!node) return;
+    if (node.text) text += " " + node.text;
+    if (node.content) {
+      node.content.forEach(extractText);
+    }
+  };
+  extractText(content);
+  
+  const refs: { full: string; book: string; chapter: number; verse?: number }[] = [];
+  // Regex to match "Livro Cap" or "Livro Cap:Vers"
+  const regex = /\b([1-3]?\s?[A-ZÁÉÍÓÚÀÂÊÎÔÛÃÕ][a-záéíóúàâêîôûãõ]+)\s+(\d+)(?::(\d+))?\b/g;
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    const [full, book, ch, vs] = match;
+    // Avoid duplicates
+    if (!refs.some(r => r.full === full)) {
+      refs.push({ full, book, chapter: Number(ch), verse: vs ? Number(vs) : undefined });
+    }
+  }
+  return refs;
+}
+
+// Remove DEFAULT_NOTEBOOKS - now loaded from Supabase
+const DEFAULT_DOUBTS: Doubt[] = [];
 
 function getVerseComparison(book: string, chapter: number, verse: number) {
   const b = book.toLowerCase().trim();
@@ -131,28 +170,38 @@ function getVerseComparison(book: string, chapter: number, verse: number) {
 
 export function EstudosPage() {
   const audio = useAudio();
+  const navigate = useNavigate();
   const [uid, setUid] = useState<string|null>(null);
   const [activeTab, setActiveTab] = useState("biblioteca");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     audio.setContext("estudos");
   }, []);
 
-  
   // Dynamic markers count from Supabase
   const [markedCount, setMarkedCount] = useState(0);
   const [markedVerses, setMarkedVerses] = useState<{ book: string; chapter: number; verse: number; color: string }[]>([]);
 
-  // Notebooks (OneNote style) state
+  // ─── Notebooks state (Supabase) ───────────────────────────────────────────
   const [notebooks, setNotebooks] = useState<Notebook[]>([]);
   const [selectedNotebook, setSelectedNotebook] = useState<Notebook | null>(null);
+  const [selectedPage, setSelectedPage] = useState<NotebookPage | null>(null);
+  const [pages, setPages] = useState<NotebookPage[]>([]);
+  const [loadingPages, setLoadingPages] = useState(false);
+  const [savingPage, setSavingPage] = useState(false);
+
+  // New notebook modal
   const [showNewNotebookModal, setShowNewNotebookModal] = useState(false);
   const [newNoteTitle, setNewNoteTitle] = useState("");
-  const [newNoteObjective, setNewNoteObjective] = useState("");
-  const [newNoteBook, setNewNoteBook] = useState("João");
-  const [newNoteChapter, setNewNoteChapter] = useState(1);
+  const [newNoteDesc, setNewNoteDesc] = useState("");
+  const [newNoteCategory, setNewNoteCategory] = useState("Geral");
 
-  // Doubts state
+  // New page creation
+  const [showNewPageModal, setShowNewPageModal] = useState(false);
+  const [newPageTitle, setNewPageTitle] = useState("");
+
+  // ─── Doubts state (Supabase) ──────────────────────────────────────────────
   const [doubts, setDoubts] = useState<Doubt[]>([]);
   const [newDoubtQ, setNewDoubtQ] = useState("");
   const [selectedDoubt, setSelectedDoubt] = useState<Doubt | null>(null);
@@ -179,171 +228,234 @@ export function EstudosPage() {
   // Characters active
   const [selectedCharacter, setSelectedCharacter] = useState<CharacterProfile | null>(null);
 
-  // Challenges state
-  const [completedChalls, setCompletedChalls] = useState<string[]>([]);
+  // ─── Tiptap Editor ───────────────────────────────────────────────────────
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Underline,
+      Placeholder.configure({
+        placeholder: 'Escreva aqui suas observações, insights, análises... Use os botões acima para formatar o texto. Referências bíblicas como "João 3:16" são detectadas automaticamente.',
+      }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+    ],
+    content: selectedPage?.content || {},
+    onUpdate: ({ editor }) => {
+      // Auto-save after 1.5s of inactivity
+      if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = setTimeout(() => {
+        if (selectedPage && uid) {
+          handleAutoSavePage(editor.getJSON());
+        }
+      }, 1500);
+    },
+  });
 
-  // 1. Initial loads
+  // Update editor content when page changes
   useEffect(() => {
-    // Load from local storage
-    const localNotes = localStorage.getItem("bible.notebooks");
-    if (localNotes) {
-      setNotebooks(JSON.parse(localNotes));
-    } else {
-      setNotebooks(DEFAULT_NOTEBOOKS);
-      localStorage.setItem("bible.notebooks", JSON.stringify(DEFAULT_NOTEBOOKS));
+    if (editor && selectedPage) {
+      editor.commands.setContent(selectedPage.content || {});
     }
+  }, [selectedPage?.id]);
 
-    const localDoubts = localStorage.getItem("bible.doubts");
-    if (localDoubts) {
-      setDoubts(JSON.parse(localDoubts));
-    } else {
-      setDoubts(DEFAULT_DOUBTS);
-      localStorage.setItem("bible.doubts", JSON.stringify(DEFAULT_DOUBTS));
-    }
-
-    const localChalls = localStorage.getItem("bible.completedChallenges");
-    if (localChalls) {
-      setCompletedChalls(JSON.parse(localChalls));
-    }
-
-    // Load active user and fetch highlights
-    supabase.auth.getUser().then(({ data }) => {
+  // ─── Initial data load ───────────────────────────────────────────────────
+  useEffect(() => {
+    supabase.auth.getUser().then(async ({ data }) => {
       if (!data.user) return;
       setUid(data.user.id);
       
-      supabase.from("highlights").select("book,chapter,verse,color")
+      // Load highlights for markers count
+      const { data: hlData } = await supabase.from("highlights")
+        .select("book,chapter,verse,color")
         .eq("user_id", data.user.id)
-        .in("color", ["yellow", "red"])
-        .then(({ data: d }) => {
-          if (d) {
-            setMarkedCount(d.length);
-            setMarkedVerses(d as any);
-          }
-        });
+        .in("color", ["yellow", "red"]);
+      if (hlData) {
+        setMarkedCount(hlData.length);
+        setMarkedVerses(hlData as any);
+      }
+
+      // Load notebooks from Supabase
+      const { data: nbs } = await supabase.from("study_notebooks")
+        .select("id, title, description, category, is_favorite, status, created_at, updated_at")
+        .eq("user_id", data.user.id)
+        .order("is_favorite", { ascending: false })
+        .order("updated_at", { ascending: false });
+      if (nbs) setNotebooks(nbs as Notebook[]);
+
+      // Load doubts from Supabase
+      const { data: dbs } = await supabase.from("study_doubts")
+        .select("id, question, answer, references, is_resolved, created_at")
+        .eq("user_id", data.user.id)
+        .order("created_at", { ascending: false });
+      if (dbs) setDoubts(dbs as Doubt[]);
+
+      setLoading(false);
     });
   }, []);
 
-  // Save changes helper for Notebooks
-  const saveNotebooks = (updated: Notebook[]) => {
-    setNotebooks(updated);
-    localStorage.setItem("bible.notebooks", JSON.stringify(updated));
-  };
+  // ─── Notebook Pages load ─────────────────────────────────────────────────
+  const loadPages = useCallback(async (notebookId: string) => {
+    setLoadingPages(true);
+    const { data } = await supabase.from("study_pages")
+      .select("id, notebook_id, title, content, sort_order, created_at, updated_at")
+      .eq("notebook_id", notebookId)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+    if (data) setPages(data as NotebookPage[]);
+    setLoadingPages(false);
+  }, []);
 
-  // Save changes helper for Doubts
-  const saveDoubts = (updated: Doubt[]) => {
-    setDoubts(updated);
-    localStorage.setItem("bible.doubts", JSON.stringify(updated));
-  };
-
-  // 2. Notebook action handlers
-  const handleCreateNotebook = () => {
-    if (!newNoteTitle.trim()) {
+  // ─── Notebook CRUD ───────────────────────────────────────────────────────
+  const handleCreateNotebook = async () => {
+    if (!newNoteTitle.trim() || !uid) {
       toast.error("Por favor, digite um título.");
       return;
     }
-    const newNotebook: Notebook = {
-      id: "note-" + Date.now(),
-      title: newNoteTitle,
-      objective: newNoteObjective,
-      startDate: new Date().toLocaleDateString("pt-BR"),
-      book: newNoteBook,
-      chapter: newNoteChapter,
-      observations: "",
-      questions: "",
-      conclusions: "",
-      references: "",
-      isFavorite: false,
-      status: "progress",
-      updatedAt: new Date().toISOString()
-    };
-    const updated = [...notebooks, newNotebook];
-    saveNotebooks(updated);
+    const { data, error } = await supabase.from("study_notebooks").insert({
+      user_id: uid,
+      title: newNoteTitle.trim(),
+      description: newNoteDesc.trim(),
+      category: newNoteCategory,
+    }).select().single();
+    if (error) { toast.error("Erro ao criar caderno."); return; }
+    const newNb = data as Notebook;
+    setNotebooks(prev => [newNb, ...prev]);
     setNewNoteTitle("");
-    setNewNoteObjective("");
+    setNewNoteDesc("");
+    setNewNoteCategory("Geral");
     setShowNewNotebookModal(false);
-    setSelectedNotebook(newNotebook);
-    if (uid) {
-      logActivity(uid, "study", { title: newNoteTitle, book: newNoteBook, chapter: newNoteChapter });
-    }
-    toast.success("Novo caderno de estudos criado!");
+    setSelectedNotebook(newNb);
+    setPages([]);
+    logActivity(uid, "study", { title: newNb.title });
+    toast.success("Caderno criado! ✨");
   };
 
-  const handleUpdateNotebookField = (field: keyof Notebook, value: any) => {
-    if (!selectedNotebook) return;
-    const updatedNotebook = { ...selectedNotebook, [field]: value, updatedAt: new Date().toISOString() };
-    setSelectedNotebook(updatedNotebook);
-    const updatedList = notebooks.map(n => n.id === selectedNotebook.id ? updatedNotebook : n);
-    saveNotebooks(updatedList);
-  };
-
-  const handleDeleteNotebook = (id: string) => {
-    const updated = notebooks.filter(n => n.id !== id);
-    saveNotebooks(updated);
+  const handleDeleteNotebook = async (id: string) => {
+    if (!uid) return;
+    await supabase.from("study_notebooks").delete().eq("id", id).eq("user_id", uid);
+    setNotebooks(prev => prev.filter(n => n.id !== id));
     setSelectedNotebook(null);
+    setSelectedPage(null);
     toast.success("Caderno excluído.");
   };
 
-  // 3. Doubt action handlers
-  const handleAddDoubt = () => {
-    if (!newDoubtQ.trim()) return;
-    const newDoubt: Doubt = {
-      id: "doubt-" + Date.now(),
-      question: newDoubtQ.trim(),
-      answer: "",
-      isResolved: false,
-      references: "",
-      createdAt: new Date().toISOString()
-    };
-    const updated = [...doubts, newDoubt];
-    saveDoubts(updated);
+  const handleToggleFavorite = async (nb: Notebook) => {
+    await supabase.from("study_notebooks").update({ is_favorite: !nb.is_favorite }).eq("id", nb.id);
+    setNotebooks(prev => prev.map(n => n.id === nb.id ? { ...n, is_favorite: !n.is_favorite } : n));
+    if (selectedNotebook?.id === nb.id) setSelectedNotebook(prev => prev ? { ...prev, is_favorite: !prev.is_favorite } : null);
+  };
+
+  // ─── Page CRUD ───────────────────────────────────────────────────────────
+  const handleCreatePage = async () => {
+    if (!newPageTitle.trim() || !selectedNotebook || !uid) return;
+    const { data, error } = await supabase.from("study_pages").insert({
+      notebook_id: selectedNotebook.id,
+      user_id: uid,
+      title: newPageTitle.trim(),
+      content: { type: "doc", content: [{ type: "paragraph" }] },
+      sort_order: pages.length
+    }).select().single();
+    if (error) { toast.error("Erro ao criar página."); return; }
+    const newPage = data as NotebookPage;
+    setPages(prev => [...prev, newPage]);
+    setSelectedPage(newPage);
+    setNewPageTitle("");
+    setShowNewPageModal(false);
+  };
+
+  const handleDeletePage = async (pageId: string) => {
+    await supabase.from("study_pages").delete().eq("id", pageId);
+    setPages(prev => prev.filter(p => p.id !== pageId));
+    if (selectedPage?.id === pageId) {
+      setSelectedPage(null);
+      editor?.commands.setContent({});
+    }
+    toast.success("Página excluída.");
+  };
+
+  const handleMovePage = async (pageId: string, direction: "up" | "down") => {
+    const idx = pages.findIndex(p => p.id === pageId);
+    if (idx === -1) return;
+    if (direction === "up" && idx === 0) return;
+    if (direction === "down" && idx === pages.length - 1) return;
+
+    const targetIdx = direction === "up" ? idx - 1 : idx + 1;
+    const newPages = [...pages];
+    
+    // Swap elements
+    const temp = newPages[idx];
+    newPages[idx] = newPages[targetIdx];
+    newPages[targetIdx] = temp;
+
+    // Recalculate sort_order
+    const updatedPages = newPages.map((p, i) => ({ ...p, sort_order: i }));
+    setPages(updatedPages);
+
+    // Save to Supabase
+    await Promise.all(
+      updatedPages.map(p =>
+        supabase.from("study_pages").update({ sort_order: p.sort_order }).eq("id", p.id)
+      )
+    );
+    toast.success("Ordem atualizada! ↕️");
+  };
+
+  const handleAutoSavePage = useCallback(async (content: any) => {
+    if (!selectedPage || !uid) return;
+    setSavingPage(true);
+    await supabase.from("study_pages").update({ content }).eq("id", selectedPage.id);
+    setPages(prev => prev.map(p => p.id === selectedPage.id ? { ...p, content } : p));
+    setSavingPage(false);
+  }, [selectedPage, uid]);
+
+  const handleSavePageTitle = async (pageId: string, title: string) => {
+    await supabase.from("study_pages").update({ title }).eq("id", pageId);
+    setPages(prev => prev.map(p => p.id === pageId ? { ...p, title } : p));
+    if (selectedPage?.id === pageId) setSelectedPage(prev => prev ? { ...prev, title } : null);
+  };
+
+  // ─── Doubts CRUD ─────────────────────────────────────────────────────────
+  const handleAddDoubt = async () => {
+    if (!newDoubtQ.trim() || !uid) return;
+    const { data, error } = await supabase.from("study_doubts").insert({
+      user_id: uid,
+      question: newDoubtQ.trim()
+    }).select().single();
+    if (error) { toast.error("Erro ao registrar dúvida."); return; }
+    setDoubts(prev => [data as Doubt, ...prev]);
     setNewDoubtQ("");
     toast.success("Dúvida registrada!");
   };
 
-  const handleOpenDoubtModal = (doubt: Doubt) => {
-    setSelectedDoubt(doubt);
-    setDoubtAnswerText(doubt.answer);
-    setDoubtRefsText(doubt.references);
-  };
-
-  const handleSaveDoubtAnswer = () => {
-    if (!selectedDoubt) return;
-    const updatedDoubt = {
-      ...selectedDoubt,
+  const handleSaveDoubtAnswer = async () => {
+    if (!selectedDoubt || !uid) return;
+    const isResolved = doubtAnswerText.trim() !== "";
+    const { data } = await supabase.from("study_doubts").update({
       answer: doubtAnswerText,
       references: doubtRefsText,
-      isResolved: doubtAnswerText.trim() !== ""
-    };
-    const updatedList = doubts.map(d => d.id === selectedDoubt.id ? updatedDoubt : d);
-    saveDoubts(updatedList);
+      is_resolved: isResolved
+    }).eq("id", selectedDoubt.id).eq("user_id", uid).select().single();
+    if (data) {
+      setDoubts(prev => prev.map(d => d.id === selectedDoubt.id ? data as Doubt : d));
+    }
     setSelectedDoubt(null);
-    toast.success("Resolução da dúvida salva!");
+    toast.success("Resposta salva!");
   };
 
-  const handleToggleResolveDoubt = (id: string, state: boolean) => {
-    const updatedList = doubts.map(d => d.id === id ? { ...d, isResolved: state } : d);
-    saveDoubts(updatedList);
-    toast.success(state ? "Dúvida marcada como resolvida!" : "Dúvida reaberta.");
-  };
-
-  const handleDeleteDoubt = (id: string) => {
-    const updated = doubts.filter(d => d.id !== id);
-    saveDoubts(updated);
+  const handleDeleteDoubt = async (id: string) => {
+    if (!uid) return;
+    await supabase.from("study_doubts").delete().eq("id", id).eq("user_id", uid);
+    setDoubts(prev => prev.filter(d => d.id !== id));
     toast.success("Dúvida removida.");
   };
 
-  // 4. Challenges toggle handler
-  const handleToggleChallenge = (id: string) => {
-    let updated: string[];
-    if (completedChalls.includes(id)) {
-      updated = completedChalls.filter(x => x !== id);
-    } else {
-      updated = [...completedChalls, id];
-      audio.play("achievement");
-      toast.success("Desafio concluído! Bom trabalho!");
-    }
-    setCompletedChalls(updated);
-    localStorage.setItem("bible.completedChallenges", JSON.stringify(updated));
+  // ─── Navigate to Bible reference ─────────────────────────────────────────
+  const navigateToBibleRef = (book: string, chapter: number, verse?: number) => {
+    // Store the target in sessionStorage for biblia.tsx to pick up
+    sessionStorage.setItem("bible.jump_book", book);
+    sessionStorage.setItem("bible.jump_chapter", String(chapter));
+    if (verse) sessionStorage.setItem("bible.jump_verse", String(verse));
+    navigate({ to: "/biblia" });
   };
 
   // 5. Global Search trigger
@@ -357,14 +469,15 @@ export function EstudosPage() {
     }
   };
 
+
   return (
     <AppShell>
       {/* ── Title and Heading ── */}
       <div className="animate-fade-up mb-6">
         <p className="text-[10px] uppercase tracking-[0.3em] text-violet-400/60 mb-1">Hub de Estudos</p>
-        <h1 className="font-display text-3xl sm:text-4xl text-white">Exegese e Aprendizado</h1>
+        <h1 className="font-display text-3xl sm:text-4xl text-white">Cadernos e Exegese</h1>
         <p className="text-white/40 mt-1.5 text-sm max-w-md">
-          Aprofunde sua reflexão com dicionários, comentários de estudiosos, contexto arqueológico e cadernos personalizados.
+          Cadernos sincronizados entre dispositivos. Crie páginas ricas com editor completo e integração bíblica.
         </p>
       </div>
 
@@ -409,7 +522,7 @@ export function EstudosPage() {
 
       {/* ── Main Tab Contents ── */}
       <div className="min-h-[400px]">
-        {/* ==================== TAB: BIBLIOTECA (OneNote style) ==================== */}
+        {/* ==================== TAB: BIBLIOTECA (Supabase synced, Tiptap editor) ==================== */}
         {activeTab === "biblioteca" && (
           <div className="space-y-6">
             {!selectedNotebook ? (
@@ -426,62 +539,79 @@ export function EstudosPage() {
                   </button>
                 </div>
 
-                {/* Notebooks Grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {notebooks.map(note => (
-                    <div
-                      key={note.id}
-                      onClick={() => setSelectedNotebook(note)}
-                      className="group cursor-pointer rounded-2xl p-5 transition-all hover:bg-white/5 text-left flex flex-col justify-between"
-                      style={{
-                        background: "oklch(1 0 0 / 0.03)",
-                        border: "1px solid oklch(1 0 0 / 0.06)",
-                      }}
-                    >
-                      <div>
-                        <div className="flex justify-between items-start gap-2 mb-3">
-                          <span className="text-2xl">📖</span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const updated = notebooks.map(n => n.id === note.id ? { ...n, isFavorite: !n.isFavorite } : n);
-                              saveNotebooks(updated);
-                            }}
-                            className={`p-1.5 rounded-xl hover:bg-white/10 transition-all ${note.isFavorite ? "text-amber-400" : "text-white/20"}`}
-                          >
-                            <Star className="w-4 h-4 fill-current" />
-                          </button>
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
+                  </div>
+                ) : notebooks.length === 0 ? (
+                  <div className="text-center py-16 space-y-3">
+                    <div className="text-4xl">📚</div>
+                    <p className="text-white/50 text-sm">Nenhum caderno ainda.</p>
+                    <p className="text-white/30 text-xs">Crie seu primeiro caderno de estudo bíblico!</p>
+                  </div>
+                ) : (
+                  /* Notebooks Grid */
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {notebooks.map(note => (
+                      <div
+                        key={note.id}
+                        onClick={() => {
+                          setSelectedNotebook(note);
+                          setSelectedPage(null);
+                          loadPages(note.id);
+                        }}
+                        className="group cursor-pointer rounded-2xl p-5 transition-all hover:bg-white/5 text-left flex flex-col justify-between"
+                        style={{
+                          background: "oklch(1 0 0 / 0.03)",
+                          border: "1px solid oklch(1 0 0 / 0.06)",
+                        }}
+                      >
+                        <div>
+                          <div className="flex justify-between items-start gap-2 mb-3">
+                            <div>
+                              <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
+                                style={{ background: "oklch(0.65 0.18 255 / 0.15)", color: "oklch(0.80 0.14 255)", border: "1px solid oklch(0.65 0.18 255 / 0.2)" }}>
+                                {note.category}
+                              </span>
+                            </div>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleToggleFavorite(note); }}
+                              className={`p-1.5 rounded-xl hover:bg-white/10 transition-all ${note.is_favorite ? "text-amber-400" : "text-white/20"}`}
+                            >
+                              <Star className="w-4 h-4 fill-current" />
+                            </button>
+                          </div>
+                          <h3 className="font-display text-md text-white font-semibold leading-snug group-hover:text-violet-300 transition-colors mt-2">{note.title}</h3>
+                          <p className="text-xs text-white/40 mt-1 line-clamp-2">{note.description || "Sem descrição."}</p>
                         </div>
-                        <h3 className="font-display text-md text-white font-semibold leading-snug group-hover:text-violet-300 transition-colors">{note.title}</h3>
-                        <p className="text-xs text-white/40 mt-1 line-clamp-2">{note.objective || "Sem objetivo definido."}</p>
+                        <div className="mt-5 border-t border-white/5 pt-3 flex items-center justify-between text-[10px] text-white/30 font-mono">
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-3 h-3" /> {new Date(note.created_at).toLocaleDateString("pt-BR")}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${note.status === "completed" ? "text-emerald-400 bg-emerald-400/10" : "text-violet-300 bg-violet-400/10"}`}>
+                            {note.status === "completed" ? "✓ Concluído" : "Em progresso"}
+                          </span>
+                        </div>
                       </div>
-                      <div className="mt-5 border-t border-white/5 pt-3 flex items-center justify-between text-[10px] text-white/30 font-mono">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {note.startDate}
-                        </span>
-                        <span className="bg-violet-500/10 px-2 py-0.5 rounded text-violet-300">
-                          {note.book} {note.chapter}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </>
-            ) : (
-              /* OneNote notebook Editor details view */
+            ) : !selectedPage ? (
+              /* Notebook Interior: pages list */
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
                 {/* Back bar */}
                 <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3">
                   <button
-                    onClick={() => setSelectedNotebook(null)}
-                    className="text-xs text-violet-300 hover:text-white transition-colors flex items-center gap-1"
+                    onClick={() => { setSelectedNotebook(null); setSelectedPage(null); }}
+                    className="text-xs text-violet-300 hover:text-white transition-colors flex items-center gap-1.5"
                   >
-                    ← Voltar à Biblioteca
+                    <ChevronLeft className="w-3.5 h-3.5" /> Voltar à Biblioteca
                   </button>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => handleUpdateNotebookField("isFavorite", !selectedNotebook.isFavorite)}
-                      className={`p-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${selectedNotebook.isFavorite ? "text-amber-400" : "text-white/40"}`}
+                      onClick={() => handleToggleFavorite(selectedNotebook)}
+                      className={`p-2 rounded-xl border border-white/10 hover:bg-white/5 transition-all ${selectedNotebook.is_favorite ? "text-amber-400" : "text-white/40"}`}
                     >
                       <Star className="w-4 h-4 fill-current" />
                     </button>
@@ -489,130 +619,343 @@ export function EstudosPage() {
                       onClick={() => handleDeleteNotebook(selectedNotebook.id)}
                       className="text-xs rounded-xl px-3 py-2 text-rose-400 border border-rose-500/20 hover:bg-rose-500/10 transition-all font-medium"
                     >
-                      Excluir Caderno
+                      Excluir
                     </button>
                   </div>
                 </div>
 
-                {/* Main Notebook fields */}
-                <div className="grid md:grid-cols-3 gap-6">
-                  {/* Left Column: Details */}
-                  <div className="space-y-4 md:col-span-1">
-                    <div
-                      className="p-5 rounded-2xl space-y-4 text-left"
-                      style={{ background: "oklch(1 0 0 / 0.02)", border: "1px solid oklch(1 0 0 / 0.05)" }}
+                {/* Notebook header */}
+                <div className="text-left">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full"
+                      style={{ background: "oklch(0.65 0.18 255 / 0.15)", color: "oklch(0.80 0.14 255)", border: "1px solid oklch(0.65 0.18 255 / 0.2)" }}>
+                      {selectedNotebook.category}
+                    </span>
+                  </div>
+                  <h2 className="font-display text-2xl text-white font-semibold">{selectedNotebook.title}</h2>
+                  {selectedNotebook.description && (
+                    <p className="text-sm text-white/50 mt-1">{selectedNotebook.description}</p>
+                  )}
+                </div>
+
+                {/* Pages list */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-semibold text-white/70">Páginas ({pages.length})</h3>
+                    <button
+                      onClick={() => setShowNewPageModal(true)}
+                      className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-white transition-all hover:brightness-110"
+                      style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280 / 0.3), oklch(0.50 0.22 300 / 0.2))", border: "1px solid oklch(0.58 0.2 280 / 0.4)" }}
                     >
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1">Título do Caderno</label>
-                        <input
-                          type="text"
-                          value={selectedNotebook.title}
-                          onChange={(e) => handleUpdateNotebookField("title", e.target.value)}
-                          className="w-full rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1">Objetivo do Estudo</label>
-                        <textarea
-                          rows={3}
-                          value={selectedNotebook.objective}
-                          onChange={(e) => handleUpdateNotebookField("objective", e.target.value)}
-                          className="w-full rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40 resize-none"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1">Livro Alvo</label>
-                          <input
-                            type="text"
-                            value={selectedNotebook.book}
-                            onChange={(e) => handleUpdateNotebookField("book", e.target.value)}
-                            className="w-full rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1">Capítulo Atual</label>
-                          <input
-                            type="number"
-                            value={selectedNotebook.chapter}
-                            onChange={(e) => handleUpdateNotebookField("chapter", Number(e.target.value))}
-                            className="w-full rounded-xl px-3 py-2 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-                      </div>
-                      <div className="text-[10px] text-white/30 border-t border-white/5 pt-3">
-                        <span className="block">Iniciado em: {selectedNotebook.startDate}</span>
-                        <span className="block mt-0.5">Última edição: {new Date(selectedNotebook.updatedAt).toLocaleTimeString()}</span>
-                      </div>
-                    </div>
+                      <FilePlus className="w-3.5 h-3.5" /> Nova Página
+                    </button>
                   </div>
 
-                  {/* Right Column: Write boards (Observations, Questions, Conclusions, References) */}
-                  <div className="md:col-span-2 space-y-4">
-                    <div
-                      className="p-6 rounded-3xl space-y-5 text-left"
-                      style={{
-                        background: "linear-gradient(160deg, oklch(0.16 0.03 260 / 0.95), oklch(0.12 0.02 260 / 0.98))",
-                        border: "1px solid oklch(0.55 0.18 85 / 0.15)",
-                      }}
-                    >
-                      <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2">
-                        <Edit2 className="w-4 h-4 text-violet-400" />
-                        <h3 className="font-display text-md text-white font-medium">Caderno de Anotações Exegéticas</h3>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div>
-                          <label className="text-xs font-semibold text-white/80 block mb-1">Observações e Insights</label>
-                          <textarea
-                            rows={4}
-                            placeholder="Escreva livremente reflexões, significados das palavras do original hebraico/grego..."
-                            value={selectedNotebook.observations}
-                            onChange={(e) => handleUpdateNotebookField("observations", e.target.value)}
-                            className="w-full rounded-2xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-white/80 block mb-1">Perguntas e Dúvidas</label>
-                          <textarea
-                            rows={3}
-                            placeholder="Que questionamentos este texto te levanta?"
-                            value={selectedNotebook.questions}
-                            onChange={(e) => handleUpdateNotebookField("questions", e.target.value)}
-                            className="w-full rounded-2xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-white/80 block mb-1">Conclusões e Aplicação Prática</label>
-                          <textarea
-                            rows={3}
-                            placeholder="Como este aprendizado se aplica ao seu dia a dia?"
-                            value={selectedNotebook.conclusions}
-                            onChange={(e) => handleUpdateNotebookField("conclusions", e.target.value)}
-                            className="w-full rounded-2xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-xs font-semibold text-white/80 block mb-1">Referências Utilizadas</label>
-                          <input
-                            type="text"
-                            placeholder="Ex: F.F. Bruce, Dicionário Bíblico, Comentário Histórico-Cultural..."
-                            value={selectedNotebook.references}
-                            onChange={(e) => handleUpdateNotebookField("references", e.target.value)}
-                            className="w-full rounded-xl px-4 py-2.5 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
-                          />
-                        </div>
-                      </div>
+                  {loadingPages ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-5 h-5 text-violet-400 animate-spin" />
                     </div>
+                  ) : pages.length === 0 ? (
+                    <div className="text-center py-12 rounded-2xl" style={{ background: "oklch(1 0 0 / 0.02)", border: "1px dashed oklch(1 0 0 / 0.1)" }}>
+                      <p className="text-4xl mb-3">✏️</p>
+                      <p className="text-white/40 text-sm">Nenhuma página ainda.</p>
+                      <p className="text-white/25 text-xs mt-1">Crie a primeira página deste caderno.</p>
+                    </div>
+                  ) : (
+                    pages.map((page, idx) => (
+                      <button
+                        key={page.id}
+                        onClick={() => setSelectedPage(page)}
+                        className="w-full text-left rounded-2xl px-4 py-3.5 transition-all hover:bg-white/5 flex items-center justify-between gap-3 group"
+                        style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}
+                      >
+                        <div className="flex items-center gap-3">
+                          <FileText className="w-4 h-4 text-violet-400/60 shrink-0" />
+                          <div>
+                            <p className="text-sm text-white/90 font-medium">{page.title}</p>
+                            <p className="text-[10px] text-white/30 font-mono">
+                              {new Date(page.updated_at).toLocaleDateString("pt-BR")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
+                          <button
+                            disabled={idx === 0}
+                            onClick={() => handleMovePage(page.id, "up")}
+                            className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-10 transition-all"
+                            title="Mover para cima"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5 -rotate-90" />
+                          </button>
+                          <button
+                            disabled={idx === pages.length - 1}
+                            onClick={() => handleMovePage(page.id, "down")}
+                            className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 disabled:opacity-10 transition-all"
+                            title="Mover para baixo"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5 rotate-90" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePage(page.id)}
+                            className="p-1.5 rounded-lg text-rose-400/60 hover:text-rose-400 hover:bg-rose-400/10 transition-all"
+                            title="Excluir página"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              </motion.div>
+            ) : (
+              /* Page Editor with Tiptap */
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
+                {/* Editor nav */}
+                <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3">
+                  <button
+                    onClick={() => setSelectedPage(null)}
+                    className="text-xs text-violet-300 hover:text-white transition-colors flex items-center gap-1.5"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" /> {selectedNotebook.title}
+                  </button>
+                  <div className="flex items-center gap-2">
+                    {savingPage && (
+                      <span className="text-[10px] text-white/30 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" /> salvando...
+                      </span>
+                    )}
+                    {!savingPage && (
+                      <span className="text-[10px] text-emerald-400/60 flex items-center gap-1">
+                        <Check className="w-3 h-3" /> sincronizado
+                      </span>
+                    )}
                   </div>
+                </div>
+
+                {/* Page title */}
+                <input
+                  type="text"
+                  defaultValue={selectedPage.title}
+                  onBlur={(e) => handleSavePageTitle(selectedPage.id, e.target.value)}
+                  className="w-full bg-transparent font-display text-2xl text-white outline-none border-b border-white/5 pb-3 focus:border-violet-400/40 transition-colors placeholder:text-white/20"
+                  placeholder="Título da página..."
+                />
+
+                {/* Detected Bible References */}
+                {(() => {
+                  const refs = extractBibleRefs(selectedPage.content);
+                  if (refs.length === 0) return null;
+                  return (
+                    <div className="flex flex-wrap items-center gap-2 p-3 rounded-2xl bg-white/3 border border-white/5 text-xs text-left animate-fade-down">
+                      <span className="text-white/40 font-medium flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-amber-300" /> Referências bíblicas:
+                      </span>
+                      {refs.map((r, i) => (
+                        <button
+                          key={i}
+                          onClick={() => navigateToBibleRef(r.book, r.chapter, r.verse)}
+                          className="bg-amber-400/10 hover:bg-amber-400/20 text-amber-300 border border-amber-400/20 px-2 py-0.5 rounded-lg font-medium transition-all hover:scale-105 active:scale-95"
+                        >
+                          {r.full}
+                        </button>
+                      ))}
+                    </div>
+                  );
+                })()}
+
+                {/* Tiptap toolbar */}
+                {editor && (
+                  <div className="flex flex-wrap items-center gap-1 p-2 rounded-xl" style={{ background: "oklch(1 0 0 / 0.04)", border: "1px solid oklch(1 0 0 / 0.08)" }}>
+                    <button onClick={() => editor.chain().focus().toggleBold().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("bold") ? "bg-violet-400/20 text-violet-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Negrito">
+                      <Bold className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleItalic().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("italic") ? "bg-violet-400/20 text-violet-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Itálico">
+                      <Italic className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleUnderline().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("underline") ? "bg-violet-400/20 text-violet-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Sublinhado">
+                      <AlignLeft className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-px h-5 bg-white/10" />
+                    <button onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("heading", { level: 1 }) ? "bg-amber-400/20 text-amber-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Título 1">
+                      <Heading1 className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("heading", { level: 2 }) ? "bg-amber-400/20 text-amber-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Título 2">
+                      <Heading2 className="w-3.5 h-3.5" />
+                    </button>
+                    <span className="w-px h-5 bg-white/10" />
+                    <button onClick={() => editor.chain().focus().toggleBulletList().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("bulletList") ? "bg-violet-400/20 text-violet-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Lista">
+                      <List className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("orderedList") ? "bg-violet-400/20 text-violet-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Lista numerada">
+                      <ListOrdered className="w-3.5 h-3.5" />
+                    </button>
+                    <button onClick={() => editor.chain().focus().toggleBlockquote().run()}
+                      className={`p-2 rounded-lg transition-all ${editor.isActive("blockquote") ? "bg-amber-400/20 text-amber-300" : "text-white/50 hover:text-white hover:bg-white/8"}`}
+                      title="Citação Bíblica">
+                      <Quote className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+
+                {/* Tiptap Editor */}
+                <div
+                  className="min-h-[400px] rounded-2xl p-5 text-left"
+                  style={{
+                    background: "linear-gradient(160deg, oklch(0.16 0.03 260 / 0.95), oklch(0.12 0.02 260 / 0.98))",
+                    border: "1px solid oklch(0.55 0.18 85 / 0.15)",
+                  }}
+                >
+                  <style>{`
+                    .ProseMirror { outline: none; color: oklch(1 0 0 / 0.82); font-size: 0.9rem; line-height: 1.8; }
+                    .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: oklch(1 0 0 / 0.25); height: 0; pointer-events: none; }
+                    .ProseMirror h1 { font-size: 1.5rem; font-weight: 700; color: white; margin: 1rem 0 0.5rem; }
+                    .ProseMirror h2 { font-size: 1.2rem; font-weight: 600; color: oklch(0.85 0.1 255); margin: 0.8rem 0 0.4rem; }
+                    .ProseMirror h3 { font-size: 1rem; font-weight: 600; color: oklch(0.80 0.12 85); margin: 0.6rem 0 0.3rem; }
+                    .ProseMirror ul, .ProseMirror ol { padding-left: 1.5rem; }
+                    .ProseMirror li { margin: 0.2rem 0; }
+                    .ProseMirror blockquote { border-left: 3px solid oklch(0.55 0.18 85 / 0.6); padding: 0.5rem 1rem; margin: 0.5rem 0; background: oklch(0.55 0.18 85 / 0.06); border-radius: 0 0.5rem 0.5rem 0; color: oklch(0.85 0.1 85); font-style: italic; }
+                    .ProseMirror strong { color: white; }
+                    .ProseMirror em { color: oklch(0.85 0.08 255); }
+                  `}</style>
+                  <EditorContent editor={editor} />
                 </div>
               </motion.div>
             )}
           </div>
         )}
+
+        {/* ── New Notebook Modal ── */}
+        <AnimatePresence>
+          {showNewNotebookModal && (
+            <>
+              <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+                className="fixed inset-0 z-40" style={{ background:"oklch(0 0 0 / 0.7)", backdropFilter:"blur(8px)" }}
+                onClick={() => setShowNewNotebookModal(false)} />
+              <motion.div
+                initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
+                className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-md mx-auto text-left"
+                style={{
+                  background: "oklch(0.14 0.03 270 / 0.97)",
+                  border: "1px solid oklch(0.65 0.18 280 / 0.3)",
+                  boxShadow: "0 32px 80px oklch(0 0 0 / 0.7)",
+                  backdropFilter: "blur(32px)",
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="font-display text-xl text-white">Novo Caderno</h2>
+                  <button onClick={() => setShowNewNotebookModal(false)} className="p-1.5 rounded-full hover:bg-white/10 text-white/30">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1.5">Título *</label>
+                    <input autoFocus value={newNoteTitle} onChange={e => setNewNoteTitle(e.target.value)}
+                      placeholder="Ex: Estudo Exegético de Gênesis..."
+                      className="w-full rounded-xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1.5">Descrição</label>
+                    <textarea rows={2} value={newNoteDesc} onChange={e => setNewNoteDesc(e.target.value)}
+                      placeholder="Objetivo deste caderno..."
+                      className="w-full rounded-xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40 resize-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wider text-white/40 block mb-1.5">Categoria</label>
+                    <div className="flex flex-wrap gap-2">
+                      {NOTEBOOK_CATEGORIES.map(cat => (
+                        <button key={cat} onClick={() => setNewNoteCategory(cat)}
+                          className="px-3 py-1.5 rounded-full text-xs transition-all font-medium"
+                          style={newNoteCategory === cat ? {
+                            background: "oklch(0.65 0.18 255 / 0.3)",
+                            border: "1px solid oklch(0.65 0.18 255 / 0.5)",
+                            color: "oklch(0.85 0.1 255)"
+                          } : {
+                            background: "oklch(1 0 0 / 0.05)",
+                            border: "1px solid oklch(1 0 0 / 0.1)",
+                            color: "oklch(1 0 0 / 0.5)"
+                          }}
+                        >{cat}</button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-5 flex justify-end gap-2">
+                  <button onClick={() => setShowNewNotebookModal(false)} className="rounded-xl px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all">Cancelar</button>
+                  <button
+                    onClick={handleCreateNotebook}
+                    className="rounded-xl px-5 py-2 text-sm text-white font-medium transition-all hover:brightness-110"
+                    style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))", boxShadow: "0 4px 16px oklch(0.58 0.2 280 / 0.3)" }}
+                  >
+                    Criar Caderno
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
+
+        {/* ── New Page Modal ── */}
+        <AnimatePresence>
+          {showNewPageModal && (
+            <>
+              <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
+                className="fixed inset-0 z-40" style={{ background:"oklch(0 0 0 / 0.7)", backdropFilter:"blur(8px)" }}
+                onClick={() => setShowNewPageModal(false)} />
+              <motion.div
+                initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
+                className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-sm mx-auto text-left"
+                style={{
+                  background: "oklch(0.14 0.03 270 / 0.97)",
+                  border: "1px solid oklch(0.65 0.18 280 / 0.3)",
+                  boxShadow: "0 32px 80px oklch(0 0 0 / 0.7)",
+                  backdropFilter: "blur(32px)",
+                }}
+                onClick={e => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="font-display text-lg text-white">Nova Página</h2>
+                  <button onClick={() => setShowNewPageModal(false)} className="p-1.5 rounded-full hover:bg-white/10 text-white/30">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <input autoFocus value={newPageTitle} onChange={e => setNewPageTitle(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && handleCreatePage()}
+                  placeholder="Título da página..."
+                  className="w-full rounded-xl px-4 py-3 text-sm bg-white/5 border border-white/10 text-white outline-none focus:ring-1 focus:ring-violet-400/40"
+                />
+                <div className="mt-4 flex justify-end gap-2">
+                  <button onClick={() => setShowNewPageModal(false)} className="rounded-xl px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all">Cancelar</button>
+                  <button
+                    onClick={handleCreatePage}
+                    className="rounded-xl px-5 py-2 text-sm text-white font-medium transition-all hover:brightness-110"
+                    style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))" }}
+                  >
+                    Criar
+                  </button>
+                </div>
+              </motion.div>
+            </>
+          )}
+        </AnimatePresence>
 
         {/* ==================== TAB: EXEGESE ==================== */}
         {activeTab === "exegese" && (
@@ -1077,17 +1420,21 @@ export function EstudosPage() {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <button
-                      onClick={() => handleOpenDoubtModal(doubt)}
+                      onClick={() => { setSelectedDoubt(doubt); setDoubtAnswerText(doubt.answer || ""); setDoubtRefsText(doubt.references || ""); }}
                       className="text-[11px] font-semibold text-violet-300 hover:text-white px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition-all"
                     >
                       Editar/Responder
                     </button>
                     <button
-                      onClick={() => handleToggleResolveDoubt(doubt.id, !doubt.isResolved)}
+                      onClick={async () => {
+                        const newVal = !doubt.is_resolved;
+                        await supabase.from("study_doubts").update({ is_resolved: newVal }).eq("id", doubt.id);
+                        setDoubts(prev => prev.map(d => d.id === doubt.id ? { ...d, is_resolved: newVal } : d));
+                      }}
                       className={`rounded-xl p-1.5 border transition-all ${
-                        doubt.isResolved ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : "border-white/10 text-white/30 hover:bg-white/5"
+                        doubt.is_resolved ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-400" : "border-white/10 text-white/30 hover:bg-white/5"
                       }`}
-                      title={doubt.isResolved ? "Resolvida" : "Marcar como resolvida"}
+                      title={doubt.is_resolved ? "Resolvida" : "Marcar como resolvida"}
                     >
                       <Check className="w-4 h-4" />
                     </button>

@@ -136,22 +136,62 @@ export function Stats() {
       const { data: nts } = await supabase.from("verse_notes").select("book, chapter, verse, content, created_at").eq("user_id", userId);
       if (nts) setNotes(nts as NoteItem[]);
 
-      // Load Local Storage values
-      if (typeof window !== "undefined") {
-        setReadChapters(JSON.parse(localStorage.getItem(`bible.readChapters_${userId}`) || "[]"));
-        setReadChaptersHistory(JSON.parse(localStorage.getItem(`bible.readChaptersHistory_${userId}`) || "[]"));
-        setTotalQuestionsCount(Number(localStorage.getItem("bible.stats.totalQuestionsCount") || "0"));
-        setCorrectAnswersCount(Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0"));
-        setQuizHistory(JSON.parse(localStorage.getItem("bible.stats.questionHistory") || "[]"));
-        setUnlockedBadges(JSON.parse(localStorage.getItem("bible.completedChallenges") || "[]"));
-        setCompletedMonthlyChallenges(JSON.parse(localStorage.getItem(`local_monthly_challenges_${userId}`) || "[]"));
-        
-        try {
-          setNotebooks(JSON.parse(localStorage.getItem("bible.notebooks") || "[]"));
-        } catch (e) {
-          setNotebooks([]);
-        }
+      // Load Read Chapters from Supabase
+      const { data: readChs } = await supabase.from("read_chapters").select("book, chapter").eq("user_id", userId);
+      if (readChs) {
+        const list = readChs.map(c => `${c.book}-${c.chapter}`);
+        setReadChapters(list);
       }
+
+      // Load Activity Log (Reading & Quiz history)
+      const { data: acts } = await supabase.from("activity_log")
+        .select("kind, payload, created_at")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (acts) {
+        // Reading history
+        const readHistory = acts.filter(a => a.kind === "reading").map(a => ({
+          book: a.payload.book || "",
+          chapter: a.payload.chapter || 1,
+          readAt: a.created_at
+        }));
+        setReadChaptersHistory(readHistory);
+
+        // Quiz history
+        const qHistory = acts.filter(a => a.kind === "quiz").map(a => ({
+          date: a.created_at,
+          isCorrect: a.payload.isCorrect ?? true
+        }));
+        setQuizHistory(qHistory);
+      }
+
+      // Load Quiz Stats from Supabase
+      const { data: stats } = await supabase.from("quiz_stats").select("correct_answers, total_answers").eq("user_id", userId).maybeSingle();
+      if (stats) {
+        setCorrectAnswersCount(stats.correct_answers || 0);
+        setTotalQuestionsCount(stats.total_answers || 0);
+      }
+
+      // Load Unlocked Badges (completed challenges) from profiles
+      const { data: pData } = await supabase.from("profiles").select("completed_challenges").eq("id", userId).maybeSingle();
+      if (pData?.completed_challenges && Array.isArray(pData.completed_challenges)) {
+        setUnlockedBadges(pData.completed_challenges);
+      }
+
+      // Load Completed Monthly Challenges
+      const { data: mc } = await supabase.from("monthly_challenge_completions").select("challenge_id, completed_at, experience").eq("user_id", userId);
+      if (mc) {
+        setCompletedMonthlyChallenges(mc.map(r => ({
+          id: r.challenge_id,
+          completedAt: r.completed_at,
+          experience: r.experience || undefined
+        })));
+      }
+
+      // Load study notebooks count to determine studies_count
+      const { count: nbCount } = await supabase.from("study_notebooks").select("*", { count: "exact", head: true }).eq("user_id", userId);
+      setNotebooks(Array(nbCount || 0).fill({}));
 
       setLoading(false);
     })();
