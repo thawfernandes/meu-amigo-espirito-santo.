@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
@@ -10,7 +10,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Loader2, Plus, CalendarHeart, Sparkles, BookOpen, Music, Camera, CheckCircle2 } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  CalendarHeart,
+  Sparkles,
+  BookOpen,
+  Music,
+  Camera,
+  CheckCircle2,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   Accordion,
@@ -26,12 +35,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/capsula-do-tempo")({
   component: TimeCapsulePage,
@@ -60,7 +64,7 @@ function TimeCapsulePage() {
   const queryClient = useQueryClient();
   const userId = session?.user?.id;
   const currentMonthYear = format(new Date(), "yyyy-MM");
-  
+
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonthYear);
   const [isRetrospectiveOpen, setIsRetrospectiveOpen] = useState(false);
 
@@ -77,7 +81,7 @@ function TimeCapsulePage() {
         .maybeSingle();
 
       if (error) throw error;
-      
+
       // Se não existir, retorna um modelo vazio para a UI renderizar o form
       if (!data) {
         return {
@@ -105,7 +109,7 @@ function TimeCapsulePage() {
   const saveMutation = useMutation({
     mutationFn: async (updatedData: Partial<TimeCapsule>) => {
       if (!userId) throw new Error("Usuário não autenticado");
-      
+
       const payload = {
         ...updatedData,
         user_id: userId,
@@ -160,12 +164,20 @@ function TimeCapsulePage() {
     enabled: !!userId,
   });
 
+  const [localNotes, setLocalNotes] = useState("");
+
+  useEffect(() => {
+    if (capsule) {
+      setLocalNotes(capsule.free_notes?.join("\n") || "");
+    }
+  }, [capsule?.id, selectedMonth]);
+
   // Helper para adicionar item a um array específico
   const handleAddItem = (field: keyof TimeCapsule, value: string) => {
     if (!value.trim() || !capsule) return;
     const currentArray = (capsule[field] as string[]) || [];
     saveMutation.mutate({
-      [field]: [...currentArray, value.trim()]
+      [field]: [...currentArray, value.trim()],
     });
   };
 
@@ -178,16 +190,16 @@ function TimeCapsulePage() {
   };
 
   // Renderizador de seção
-  const Section = ({ 
-    title, 
-    field, 
-    icon, 
-    placeholder 
-  }: { 
-    title: string, 
-    field: keyof TimeCapsule, 
-    icon: React.ReactNode,
-    placeholder: string
+  const Section = ({
+    title,
+    field,
+    icon,
+    placeholder,
+  }: {
+    title: string;
+    field: keyof TimeCapsule;
+    icon: React.ReactNode;
+    placeholder: string;
   }) => {
     const [inputValue, setInputValue] = useState("");
     const items = (capsule?.[field] as string[]) || [];
@@ -196,9 +208,7 @@ function TimeCapsulePage() {
       <AccordionItem value={field} className="border-muted bg-card px-4 rounded-lg mb-2 shadow-sm">
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full text-primary">
-              {icon}
-            </div>
+            <div className="p-2 bg-primary/10 rounded-full text-primary">{icon}</div>
             <span className="font-medium text-lg">{title}</span>
             {items.length > 0 && (
               <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
@@ -222,7 +232,7 @@ function TimeCapsulePage() {
                   }
                 }}
               />
-              <Button 
+              <Button
                 onClick={() => {
                   handleAddItem(field, inputValue);
                   setInputValue("");
@@ -232,13 +242,16 @@ function TimeCapsulePage() {
                 <Plus className="w-4 h-4" />
               </Button>
             </div>
-            
+
             {items.length > 0 && (
               <ul className="space-y-2 mt-4">
                 {items.map((item, idx) => (
-                  <li key={idx} className="flex justify-between items-start gap-2 bg-muted/50 p-3 rounded-md animate-in slide-in-from-left-2">
+                  <li
+                    key={idx}
+                    className="flex justify-between items-start gap-2 bg-muted/50 p-3 rounded-md animate-in slide-in-from-left-2"
+                  >
                     <span className="text-sm leading-relaxed">{item}</span>
-                    <button 
+                    <button
                       onClick={() => handleRemoveItem(field, idx)}
                       className="text-muted-foreground hover:text-destructive shrink-0 transition-colors"
                       title="Remover"
@@ -255,16 +268,16 @@ function TimeCapsulePage() {
     );
   };
 
-  const MediaSection = ({ 
-    title, 
-    field, 
+  const MediaSection = ({
+    title,
+    field,
     icon,
-    accept
-  }: { 
-    title: string, 
-    field: "photos" | "audios", 
-    icon: React.ReactNode,
-    accept: string
+    accept,
+  }: {
+    title: string;
+    field: "photos" | "audios";
+    icon: React.ReactNode;
+    accept: string;
   }) => {
     const items = (capsule?.[field] as string[]) || [];
     const [uploading, setUploading] = useState(false);
@@ -275,18 +288,18 @@ function TimeCapsulePage() {
 
       try {
         setUploading(true);
-        const fileExt = file.name.split('.').pop();
+        const fileExt = file.name.split(".").pop();
         const fileName = `${userId}/${selectedMonth}/${Math.random()}.${fileExt}`;
 
         const { error: uploadError } = await supabase.storage
-          .from('capsule-media')
+          .from("capsule-media")
           .upload(fileName, file);
 
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabase.storage
-          .from('capsule-media')
-          .getPublicUrl(fileName);
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from("capsule-media").getPublicUrl(fileName);
 
         handleAddItem(field, publicUrl);
         toast.success("Arquivo enviado com sucesso!");
@@ -301,9 +314,7 @@ function TimeCapsulePage() {
       <AccordionItem value={field} className="border-muted bg-card px-4 rounded-lg mb-2 shadow-sm">
         <AccordionTrigger className="hover:no-underline py-4">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full text-primary">
-              {icon}
-            </div>
+            <div className="p-2 bg-primary/10 rounded-full text-primary">{icon}</div>
             <span className="font-medium text-lg">{title}</span>
             {items.length > 0 && (
               <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
@@ -315,26 +326,38 @@ function TimeCapsulePage() {
         <AccordionContent className="pb-4">
           <div className="space-y-4 pt-2">
             <div>
-              <Input 
-                type="file" 
-                accept={accept} 
+              <Input
+                type="file"
+                accept={accept}
                 onChange={handleUpload}
                 disabled={uploading || saveMutation.isPending}
                 className="cursor-pointer file:text-primary file:bg-primary/10 file:border-0 file:rounded file:px-3 file:py-1 file:mr-4 file:cursor-pointer"
               />
-              {uploading && <p className="text-xs text-muted-foreground mt-2 animate-pulse">Enviando arquivo para a nuvem...</p>}
+              {uploading && (
+                <p className="text-xs text-muted-foreground mt-2 animate-pulse">
+                  Enviando arquivo para a nuvem...
+                </p>
+              )}
             </div>
-            
+
             {items.length > 0 && (
               <ul className="space-y-4 mt-4">
                 {items.map((url, idx) => (
-                  <li key={idx} className="flex flex-col sm:flex-row justify-between items-start gap-4 bg-muted/50 p-3 rounded-md">
+                  <li
+                    key={idx}
+                    className="flex flex-col sm:flex-row justify-between items-start gap-4 bg-muted/50 p-3 rounded-md"
+                  >
                     {field === "photos" ? (
-                      <img src={url} alt="Cápsula" className="w-full sm:w-48 h-32 object-cover rounded shadow-sm" loading="lazy" />
+                      <img
+                        src={url}
+                        alt="Cápsula"
+                        className="w-full sm:w-48 h-32 object-cover rounded shadow-sm"
+                        loading="lazy"
+                      />
                     ) : (
                       <audio controls src={url} className="w-full sm:w-auto" />
                     )}
-                    <button 
+                    <button
                       onClick={() => handleRemoveItem(field, idx)}
                       className="text-destructive hover:text-destructive/80 text-sm font-medium shrink-0 transition-colors bg-destructive/10 px-3 py-1 rounded"
                     >
@@ -368,10 +391,11 @@ function TimeCapsulePage() {
             Cápsula do Tempo
           </h1>
           <p className="text-muted-foreground mt-2 max-w-xl">
-            Registre sua caminhada com Deus. Guarde as bênçãos, orações e aprendizados de cada mês para relembrar Suas maravilhas no futuro.
+            Registre sua caminhada com Deus. Guarde as bênçãos, orações e aprendizados de cada mês
+            para relembrar Suas maravilhas no futuro.
           </p>
         </div>
-        
+
         <Dialog open={isRetrospectiveOpen} onOpenChange={setIsRetrospectiveOpen}>
           <DialogTrigger asChild>
             <Button variant="default" className="gap-2 bg-gradient-to-r from-primary to-primary/80">
@@ -397,26 +421,28 @@ function TimeCapsulePage() {
               ) : (
                 <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
                   {allCapsules.map((cap) => (
-                    <div key={cap.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div
+                      key={cap.id}
+                      className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
+                    >
                       <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-primary text-primary-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
                         <CalendarHeart className="w-4 h-4" />
                       </div>
                       <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-card p-4 rounded-xl border shadow-sm">
-                        <h3 className="font-bold text-lg text-primary capitalize mb-2">{getMonthName(cap.month_year)}</h3>
-                        {cap.blessings?.length > 0 && (
+                        <h3 className="font-bold text-lg text-primary capitalize mb-2">
+                          {getMonthName(cap.month_year)}
+                        </h3>
+                        {cap.free_notes?.length > 0 && (
                           <div className="mb-2">
-                            <strong className="text-sm">Bênçãos:</strong>
-                            <ul className="list-disc pl-4 text-sm text-muted-foreground mt-1">
-                              {cap.blessings.slice(0, 3).map((b, i) => <li key={i}>{b}</li>)}
-                            </ul>
+                            <strong className="text-sm">Anotações:</strong>
+                            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap line-clamp-3">
+                              {cap.free_notes.join("\n")}
+                            </p>
                           </div>
                         )}
-                        {cap.answered_prayers?.length > 0 && (
-                          <div className="mb-2">
-                            <strong className="text-sm">Orações Respondidas:</strong>
-                            <ul className="list-disc pl-4 text-sm text-muted-foreground mt-1">
-                              {cap.answered_prayers.slice(0, 3).map((b, i) => <li key={i}>{b}</li>)}
-                            </ul>
+                        {(cap.photos?.length > 0 || cap.audios?.length > 0 || cap.media_links?.length > 0) && (
+                          <div className="mt-2 text-xs text-primary/80 font-medium">
+                            Contém mídias anexadas
                           </div>
                         )}
                       </div>
@@ -440,20 +466,22 @@ function TimeCapsulePage() {
                 const date = new Date(new Date().getFullYear(), i, 1);
                 const yyyyMM = format(date, "yyyy-MM");
                 const isSelected = selectedMonth === yyyyMM;
-                const hasData = allCapsules?.some(c => c.month_year === yyyyMM);
-                
+                const hasData = allCapsules?.some((c) => c.month_year === yyyyMM);
+
                 // Só mostra o mês se for passado/atual, ou se tiver dados
                 if (date > new Date() && !hasData) return null;
 
                 return (
                   <Button
                     key={yyyyMM}
-                    variant={isSelected ? "default" : (hasData ? "secondary" : "ghost")}
+                    variant={isSelected ? "default" : hasData ? "secondary" : "ghost"}
                     className={`justify-start capitalize ${isSelected ? "shadow-md" : ""}`}
                     onClick={() => setSelectedMonth(yyyyMM)}
                   >
                     {format(date, "MMMM", { locale: ptBR })}
-                    {hasData && !isSelected && <CheckCircle2 className="w-3 h-3 ml-auto text-primary" />}
+                    {hasData && !isSelected && (
+                      <CheckCircle2 className="w-3 h-3 ml-auto text-primary" />
+                    )}
                   </Button>
                 );
               })}
@@ -469,74 +497,50 @@ function TimeCapsulePage() {
             {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
           </div>
 
-          <Accordion type="multiple" className="w-full space-y-4" defaultValue={["blessings", "prayer_requests"]}>
-            <Section 
-              field="blessings" 
-              title="Bênçãos Recebidas" 
-              icon={<Sparkles className="w-5 h-5" />} 
-              placeholder="Ex: Deus proveu um novo emprego..." 
+          <div className="bg-card p-4 rounded-xl border shadow-sm mb-6">
+            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              Suas Anotações
+            </h3>
+            <Textarea
+              placeholder="Escreva aqui como foi o seu mês, orações, bênçãos..."
+              className="min-h-[300px] resize-y bg-background"
+              value={localNotes}
+              onChange={(e) => setLocalNotes(e.target.value)}
+              onBlur={() => {
+                if (localNotes !== (capsule?.free_notes?.join("\n") || "")) {
+                  saveMutation.mutate({ free_notes: [localNotes] });
+                }
+              }}
             />
-            <Section 
-              field="struggles" 
-              title="Dificuldades Enfrentadas" 
-              icon={<CalendarHeart className="w-5 h-5" />} 
-              placeholder="Ex: Lutei contra a ansiedade neste mês..." 
+            <div className="flex justify-end mt-3">
+              <Button
+                variant="default"
+                disabled={saveMutation.isPending || localNotes === (capsule?.free_notes?.join("\n") || "")}
+                onClick={() => saveMutation.mutate({ free_notes: [localNotes] })}
+              >
+                {saveMutation.isPending ? "Salvando..." : "Salvar Anotações"}
+              </Button>
+            </div>
+          </div>
+
+          <Accordion
+            type="multiple"
+            className="w-full space-y-4"
+          >
+            <Section
+              field="media_links"
+              title="Links (Vídeos/Louvores)"
+              icon={<Music className="w-5 h-5" />}
+              placeholder="Ex: https://youtube.com/..."
             />
-            <Section 
-              field="prayer_requests" 
-              title="Pedidos de Oração" 
-              icon={<CalendarHeart className="w-5 h-5" />} 
-              placeholder="Ex: Pela saúde da minha família..." 
-            />
-            <Section 
-              field="answered_prayers" 
-              title="Orações Respondidas" 
-              icon={<CheckCircle2 className="w-5 h-5" />} 
-              placeholder="Ex: Fui curado daquela enfermidade..." 
-            />
-            <Section 
-              field="favorite_verses" 
-              title="Versículo do Mês" 
-              icon={<BookOpen className="w-5 h-5" />} 
-              placeholder="Ex: Salmos 23:1 - O Senhor é o meu pastor..." 
-            />
-            <Section 
-              field="learnings" 
-              title="Aprendizados" 
-              icon={<BookOpen className="w-5 h-5" />} 
-              placeholder="Ex: Aprendi a descansar mais no Senhor..." 
-            />
-            <Section 
-              field="objectives" 
-              title="Objetivos" 
-              icon={<Sparkles className="w-5 h-5" />} 
-              placeholder="Ex: Ler a Bíblia todos os dias..." 
-            />
-            <Section 
-              field="events" 
-              title="Acontecimentos Marcantes" 
-              icon={<CalendarHeart className="w-5 h-5" />} 
-              placeholder="Ex: Aniversário de batismo..." 
-            />
-            <Section 
-              field="media_links" 
-              title="Louvores e Pregações (Links)" 
-              icon={<Music className="w-5 h-5" />} 
-              placeholder="Ex: https://youtube.com/..." 
-            />
-            <Section 
-              field="free_notes" 
-              title="Observações Livres" 
-              icon={<BookOpen className="w-5 h-5" />} 
-              placeholder="Ex: Senti a presença de Deus fortemente na terça..." 
-            />
-            <MediaSection 
+            <MediaSection
               field="photos"
               title="Fotos"
               icon={<Camera className="w-5 h-5" />}
               accept="image/*"
             />
-            <MediaSection 
+            <MediaSection
               field="audios"
               title="Áudios"
               icon={<Music className="w-5 h-5" />}
