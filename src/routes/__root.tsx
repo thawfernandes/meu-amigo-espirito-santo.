@@ -56,9 +56,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           >
             Tentar de novo
           </button>
-          <a href="/" className="rounded-2xl border px-4 py-2 text-sm hover:bg-accent">
+          <Link to="/" className="rounded-2xl border px-4 py-2 text-sm hover:bg-accent text-foreground">
             Início
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -71,7 +71,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#3B82F6" },
-      { title: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez" },
+      { title: "Amigo, Espírito Santo" },
       {
         name: "description",
         content:
@@ -79,7 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       {
         property: "og:title",
-        content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez",
+        content: "Amigo, Espírito Santo",
       },
       {
         property: "og:description",
@@ -90,7 +90,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "twitter:title",
-        content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez",
+        content: "Amigo, Espírito Santo",
       },
       {
         name: "twitter:description",
