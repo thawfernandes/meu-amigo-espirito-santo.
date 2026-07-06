@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/use-auth";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { AppShell } from "@/components/AppShell";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,13 +206,13 @@ function TimeCapsulePage() {
     const items = (capsule?.[field] as string[]) || [];
 
     return (
-      <AccordionItem value={field} className="border-muted bg-card px-4 rounded-lg mb-2 shadow-sm">
+      <AccordionItem value={field} className="border-none rounded-2xl mb-3 shadow-sm px-4" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
         <AccordionTrigger className="hover:no-underline py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full text-primary">{icon}</div>
+          <div className="flex items-center gap-3 text-white">
+            <div className="p-2 rounded-xl text-fuchsia-400" style={{ background: "oklch(0.65 0.18 255 / 0.15)" }}>{icon}</div>
             <span className="font-medium text-lg">{title}</span>
             {items.length > 0 && (
-              <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-fuchsia-500/20 text-fuchsia-300 text-xs px-2 py-0.5 rounded-full">
                 {items.length}
               </span>
             )}
@@ -231,6 +232,8 @@ function TimeCapsulePage() {
                     setInputValue("");
                   }
                 }}
+                className="text-white placeholder:text-white/30 border-white/10"
+                style={{ background: "oklch(1 0 0 / 0.05)" }}
               />
               <Button
                 onClick={() => {
@@ -238,6 +241,7 @@ function TimeCapsulePage() {
                   setInputValue("");
                 }}
                 disabled={!inputValue.trim() || saveMutation.isPending}
+                className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white border-0"
               >
                 <Plus className="w-4 h-4" />
               </Button>
@@ -248,12 +252,13 @@ function TimeCapsulePage() {
                 {items.map((item, idx) => (
                   <li
                     key={idx}
-                    className="flex justify-between items-start gap-2 bg-muted/50 p-3 rounded-md animate-in slide-in-from-left-2"
+                    className="flex justify-between items-start gap-2 p-3 rounded-xl animate-in slide-in-from-left-2"
+                    style={{ background: "oklch(1 0 0 / 0.05)", border: "1px solid oklch(1 0 0 / 0.05)" }}
                   >
-                    <span className="text-sm leading-relaxed">{item}</span>
+                    <span className="text-sm leading-relaxed text-white/80">{item}</span>
                     <button
                       onClick={() => handleRemoveItem(field, idx)}
-                      className="text-muted-foreground hover:text-destructive shrink-0 transition-colors"
+                      className="text-white/40 hover:text-rose-400 shrink-0 transition-colors"
                       title="Remover"
                     >
                       &times;
@@ -311,13 +316,13 @@ function TimeCapsulePage() {
     };
 
     return (
-      <AccordionItem value={field} className="border-muted bg-card px-4 rounded-lg mb-2 shadow-sm">
+      <AccordionItem value={field} className="border-none rounded-2xl mb-3 shadow-sm px-4" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
         <AccordionTrigger className="hover:no-underline py-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-full text-primary">{icon}</div>
+          <div className="flex items-center gap-3 text-white">
+            <div className="p-2 rounded-xl text-fuchsia-400" style={{ background: "oklch(0.65 0.18 255 / 0.15)" }}>{icon}</div>
             <span className="font-medium text-lg">{title}</span>
             {items.length > 0 && (
-              <span className="ml-2 bg-primary/10 text-primary text-xs px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-fuchsia-500/20 text-fuchsia-300 text-xs px-2 py-0.5 rounded-full">
                 {items.length}
               </span>
             )}
@@ -331,10 +336,11 @@ function TimeCapsulePage() {
                 accept={accept}
                 onChange={handleUpload}
                 disabled={uploading || saveMutation.isPending}
-                className="cursor-pointer file:text-primary file:bg-primary/10 file:border-0 file:rounded file:px-3 file:py-1 file:mr-4 file:cursor-pointer"
+                className="cursor-pointer text-white file:text-fuchsia-300 file:bg-fuchsia-500/20 file:border-0 file:rounded file:px-3 file:py-1 file:mr-4 file:cursor-pointer border-white/10"
+                style={{ background: "oklch(1 0 0 / 0.05)" }}
               />
               {uploading && (
-                <p className="text-xs text-muted-foreground mt-2 animate-pulse">
+                <p className="text-xs text-white/50 mt-2 animate-pulse">
                   Enviando arquivo para a nuvem...
                 </p>
               )}
@@ -345,7 +351,8 @@ function TimeCapsulePage() {
                 {items.map((url, idx) => (
                   <li
                     key={idx}
-                    className="flex flex-col sm:flex-row justify-between items-start gap-4 bg-muted/50 p-3 rounded-md"
+                    className="flex flex-col sm:flex-row justify-between items-start gap-4 p-3 rounded-xl"
+                    style={{ background: "oklch(1 0 0 / 0.05)", border: "1px solid oklch(1 0 0 / 0.05)" }}
                   >
                     {field === "photos" ? (
                       <img
@@ -359,7 +366,7 @@ function TimeCapsulePage() {
                     )}
                     <button
                       onClick={() => handleRemoveItem(field, idx)}
-                      className="text-destructive hover:text-destructive/80 text-sm font-medium shrink-0 transition-colors bg-destructive/10 px-3 py-1 rounded"
+                      className="text-rose-400 hover:text-rose-300 text-sm font-medium shrink-0 transition-colors bg-rose-500/10 px-3 py-1 rounded-lg"
                     >
                       Excluir
                     </button>
@@ -383,84 +390,88 @@ function TimeCapsulePage() {
   };
 
   return (
-    <div className="container max-w-4xl py-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <CalendarHeart className="w-8 h-8 text-primary" />
-            Cápsula do Tempo
-          </h1>
-          <p className="text-muted-foreground mt-2 max-w-xl">
-            Registre sua caminhada com Deus. Guarde as bênçãos, orações e aprendizados de cada mês
-            para relembrar Suas maravilhas no futuro.
-          </p>
+    <AppShell>
+      <div className="animate-fade-up mb-6 space-y-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="font-display text-3xl sm:text-4xl text-white">
+              Cápsula do Tempo
+            </h1>
+            <p className="text-white/40 mt-1.5 text-sm max-w-xl">
+              Registre sua caminhada com Deus. Guarde as bênçãos, orações e aprendizados de cada mês
+              para relembrar Suas maravilhas no futuro.
+            </p>
+          </div>
+
+          <Dialog open={isRetrospectiveOpen} onOpenChange={setIsRetrospectiveOpen}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="default" 
+                className="gap-2 text-white transition-all hover:brightness-110 border-0"
+                style={{
+                  background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))",
+                  boxShadow: "0 4px 16px oklch(0.58 0.2 280 / 0.3)"
+                }}
+              >
+                <Sparkles className="w-4 h-4" />
+                Ver Retrospectiva
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0 border-white/10 text-white" style={{ background: "oklch(0.15 0.05 260 / 0.95)", backdropFilter: "blur(20px)" }}>
+              <DialogHeader className="p-6 pb-4 border-b border-white/10">
+                <DialogTitle className="text-2xl flex items-center gap-2 font-display text-white">
+                  <Sparkles className="w-6 h-6 text-fuchsia-400" />
+                  Sua Caminhada Anual
+                </DialogTitle>
+                <DialogDescription className="text-white/50">
+                  Tudo o que Deus fez na sua vida ao longo dos meses registrados.
+                </DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="flex-1 p-6">
+                {!allCapsules?.length ? (
+                  <div className="text-center text-white/40 py-12">
+                    Você ainda não possui registros na cápsula do tempo.
+                  </div>
+                ) : (
+                  <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-transparent before:via-white/10 before:to-transparent">
+                    {allCapsules.map((cap) => (
+                      <div
+                        key={cap.id}
+                        className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group"
+                      >
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-transparent text-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10" style={{ background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))" }}>
+                          <CalendarHeart className="w-4 h-4" />
+                        </div>
+                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-2xl border shadow-sm text-left" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+                          <h3 className="font-display text-lg text-fuchsia-300 capitalize mb-2">
+                            {getMonthName(cap.month_year)}
+                          </h3>
+                          {cap.free_notes?.length > 0 && (
+                            <div className="mb-2">
+                              <strong className="text-sm text-white/80">Anotações:</strong>
+                              <p className="text-sm text-white/50 mt-1 whitespace-pre-wrap line-clamp-3">
+                                {cap.free_notes.join("\n")}
+                              </p>
+                            </div>
+                          )}
+                          {(cap.photos?.length > 0 || cap.audios?.length > 0 || cap.media_links?.length > 0) && (
+                            <div className="mt-2 text-xs text-fuchsia-400/80 font-medium">
+                              Contém mídias anexadas
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        <Dialog open={isRetrospectiveOpen} onOpenChange={setIsRetrospectiveOpen}>
-          <DialogTrigger asChild>
-            <Button variant="default" className="gap-2 bg-gradient-to-r from-primary to-primary/80">
-              <Sparkles className="w-4 h-4" />
-              Ver Retrospectiva
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-            <DialogHeader className="p-6 bg-primary/5 pb-4 border-b">
-              <DialogTitle className="text-2xl flex items-center gap-2">
-                <Sparkles className="w-6 h-6 text-primary" />
-                Sua Caminhada Anual
-              </DialogTitle>
-              <DialogDescription>
-                Tudo o que Deus fez na sua vida ao longo dos meses registrados.
-              </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="flex-1 p-6">
-              {!allCapsules?.length ? (
-                <div className="text-center text-muted-foreground py-12">
-                  Você ainda não possui registros na cápsula do tempo.
-                </div>
-              ) : (
-                <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                  {allCapsules.map((cap) => (
-                    <div
-                      key={cap.id}
-                      className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
-                    >
-                      <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-background bg-primary text-primary-foreground shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10">
-                        <CalendarHeart className="w-4 h-4" />
-                      </div>
-                      <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-card p-4 rounded-xl border shadow-sm">
-                        <h3 className="font-bold text-lg text-primary capitalize mb-2">
-                          {getMonthName(cap.month_year)}
-                        </h3>
-                        {cap.free_notes?.length > 0 && (
-                          <div className="mb-2">
-                            <strong className="text-sm">Anotações:</strong>
-                            <p className="text-sm text-muted-foreground mt-1 whitespace-pre-wrap line-clamp-3">
-                              {cap.free_notes.join("\n")}
-                            </p>
-                          </div>
-                        )}
-                        {(cap.photos?.length > 0 || cap.audios?.length > 0 || cap.media_links?.length > 0) && (
-                          <div className="mt-2 text-xs text-primary/80 font-medium">
-                            Contém mídias anexadas
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="md:col-span-1 h-fit">
-          <CardHeader>
-            <CardTitle className="text-lg">Linha do Tempo</CardTitle>
-          </CardHeader>
-          <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="md:col-span-1 h-fit p-4 rounded-2xl border" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+            <h3 className="text-lg font-display text-white mb-4">Linha do Tempo</h3>
             <div className="flex flex-col gap-2">
               {[...Array(12)].map((_, i) => {
                 const date = new Date(new Date().getFullYear(), i, 1);
@@ -468,87 +479,102 @@ function TimeCapsulePage() {
                 const isSelected = selectedMonth === yyyyMM;
                 const hasData = allCapsules?.some((c) => c.month_year === yyyyMM);
 
-                // Só mostra o mês se for passado/atual, ou se tiver dados
                 if (date > new Date() && !hasData) return null;
 
                 return (
-                  <Button
+                  <button
                     key={yyyyMM}
-                    variant={isSelected ? "default" : hasData ? "secondary" : "ghost"}
-                    className={`justify-start capitalize ${isSelected ? "shadow-md" : ""}`}
+                    className={`justify-start text-left capitalize px-4 py-2.5 rounded-xl transition-all flex items-center ${isSelected ? "font-semibold shadow-md" : ""}`}
+                    style={
+                      isSelected
+                        ? {
+                            background: "linear-gradient(135deg, oklch(0.65 0.18 255 / 0.25), oklch(0.58 0.2 280 / 0.15))",
+                            border: "1px solid oklch(0.65 0.18 255 / 0.4)",
+                            color: "oklch(0.85 0.1 255)",
+                          }
+                        : {
+                            background: "oklch(1 0 0 / 0.02)",
+                            border: "1px solid oklch(1 0 0 / 0.05)",
+                            color: "oklch(1 0 0 / 0.5)",
+                          }
+                    }
                     onClick={() => setSelectedMonth(yyyyMM)}
                   >
                     {format(date, "MMMM", { locale: ptBR })}
                     {hasData && !isSelected && (
-                      <CheckCircle2 className="w-3 h-3 ml-auto text-primary" />
+                      <CheckCircle2 className="w-3 h-3 ml-auto text-fuchsia-400" />
                     )}
-                  </Button>
+                  </button>
                 );
               })}
             </div>
-          </CardContent>
-        </Card>
-
-        <div className="md:col-span-3 space-y-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-semibold capitalize text-primary">
-              {getMonthName(selectedMonth)}
-            </h2>
-            {isLoading && <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />}
           </div>
 
-          <div className="bg-card p-4 rounded-xl border shadow-sm mb-6">
-            <h3 className="text-lg font-medium mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              Suas Anotações
-            </h3>
-            <Textarea
-              placeholder="Escreva aqui como foi o seu mês, orações, bênçãos..."
-              className="min-h-[300px] resize-y bg-background"
-              value={localNotes}
-              onChange={(e) => setLocalNotes(e.target.value)}
-              onBlur={() => {
-                if (localNotes !== (capsule?.free_notes?.join("\n") || "")) {
-                  saveMutation.mutate({ free_notes: [localNotes] });
-                }
-              }}
-            />
-            <div className="flex justify-end mt-3">
-              <Button
-                variant="default"
-                disabled={saveMutation.isPending || localNotes === (capsule?.free_notes?.join("\n") || "")}
-                onClick={() => saveMutation.mutate({ free_notes: [localNotes] })}
-              >
-                {saveMutation.isPending ? "Salvando..." : "Salvar Anotações"}
-              </Button>
+          <div className="md:col-span-3 space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-display capitalize text-white">
+                {getMonthName(selectedMonth)}
+              </h2>
+              {isLoading && <Loader2 className="w-5 h-5 animate-spin text-fuchsia-400" />}
             </div>
-          </div>
 
-          <Accordion
-            type="multiple"
-            className="w-full space-y-4"
-          >
-            <Section
-              field="media_links"
-              title="Links (Vídeos/Louvores)"
-              icon={<Music className="w-5 h-5" />}
-              placeholder="Ex: https://youtube.com/..."
-            />
-            <MediaSection
-              field="photos"
-              title="Fotos"
-              icon={<Camera className="w-5 h-5" />}
-              accept="image/*"
-            />
-            <MediaSection
-              field="audios"
-              title="Áudios"
-              icon={<Music className="w-5 h-5" />}
-              accept="audio/*"
-            />
-          </Accordion>
+            <div className="p-4 rounded-2xl border shadow-sm mb-6" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
+              <h3 className="text-lg font-medium mb-4 flex items-center gap-2 text-white">
+                <BookOpen className="w-5 h-5 text-fuchsia-400" />
+                Suas Anotações
+              </h3>
+              <Textarea
+                placeholder="Escreva aqui como foi o seu mês, orações, bênçãos..."
+                className="min-h-[300px] resize-y text-white placeholder:text-white/30 border-white/10"
+                style={{ background: "oklch(1 0 0 / 0.02)" }}
+                value={localNotes}
+                onChange={(e) => setLocalNotes(e.target.value)}
+                onBlur={() => {
+                  if (localNotes !== (capsule?.free_notes?.join("\n") || "")) {
+                    saveMutation.mutate({ free_notes: [localNotes] });
+                  }
+                }}
+              />
+              <div className="flex justify-end mt-3">
+                <Button
+                  disabled={saveMutation.isPending || localNotes === (capsule?.free_notes?.join("\n") || "")}
+                  onClick={() => saveMutation.mutate({ free_notes: [localNotes] })}
+                  className="text-white border-0 transition-all hover:brightness-110"
+                  style={{
+                    background: "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))",
+                  }}
+                >
+                  {saveMutation.isPending ? "Salvando..." : "Salvar Anotações"}
+                </Button>
+              </div>
+            </div>
+
+            <Accordion
+              type="multiple"
+              className="w-full space-y-4"
+            >
+              <Section
+                field="media_links"
+                title="Links (Vídeos/Louvores)"
+                icon={<Music className="w-5 h-5" />}
+                placeholder="Ex: https://youtube.com/..."
+              />
+              <MediaSection
+                field="photos"
+                title="Fotos"
+                icon={<Camera className="w-5 h-5" />}
+                accept="image/*"
+              />
+              <MediaSection
+                field="audios"
+                title="Áudios"
+                icon={<Music className="w-5 h-5" />}
+                accept="audio/*"
+              />
+            </Accordion>
+          </div>
         </div>
       </div>
-    </div>
+    </AppShell>
   );
 }
