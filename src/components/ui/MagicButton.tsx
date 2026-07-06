@@ -13,10 +13,19 @@ type P = {
 
 let pid = 0;
 
-export function MagicButton({ onClick, children, variant = "primary", className = "", type = "button", disabled }: P) {
+export function MagicButton({
+  onClick,
+  children,
+  variant = "primary",
+  className = "",
+  type = "button",
+  disabled,
+}: P) {
   const audio = useAudio();
   const ref = useRef<HTMLButtonElement>(null);
-  const [parts, setParts] = useState<{ id: number; x: number; y: number; dx: number; dy: number }[]>([]);
+  const [parts, setParts] = useState<
+    { id: number; x: number; y: number; dx: number; dy: number }[]
+  >([]);
 
   function spark(e: MouseEvent) {
     const r = ref.current?.getBoundingClientRect();
@@ -80,7 +89,10 @@ export function MagicButton({ onClick, children, variant = "primary", className 
           animate={{ x: p.x + p.dx, y: p.y + p.dy, opacity: 0, scale: 0.4 }}
           transition={{ duration: 0.9, ease: "easeOut" }}
           className="pointer-events-none absolute w-1.5 h-1.5 rounded-full"
-          style={{ background: "radial-gradient(circle,#fff,#ffd58a)", boxShadow: "0 0 8px #ffb45a" }}
+          style={{
+            background: "radial-gradient(circle,#fff,#ffd58a)",
+            boxShadow: "0 0 8px #ffb45a",
+          }}
         />
       ))}
     </motion.button>

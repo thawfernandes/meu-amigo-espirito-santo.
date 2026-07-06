@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Volume2, VolumeX } from "lucide-react";
 import { useLocation } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,10 +85,29 @@ export function useAudio() {
 
 /* --- Music Constants (Hz Frequencies) --- */
 const N = {
-  C2: 65.41, G2: 98.00,
-  A2: 110.00, C3: 130.81, D3: 146.83, E3: 164.81, F3: 174.61, G3: 196.00, A3: 220.00, B3: 246.94,
-  C4: 261.63, D4: 293.66, E4: 329.63, F4: 349.23, G4: 392.00, A4: 440.00, B4: 493.88,
-  C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880.00, B5: 987.77,
+  C2: 65.41,
+  G2: 98.0,
+  A2: 110.0,
+  C3: 130.81,
+  D3: 146.83,
+  E3: 164.81,
+  F3: 174.61,
+  G3: 196.0,
+  A3: 220.0,
+  B3: 246.94,
+  C4: 261.63,
+  D4: 293.66,
+  E4: 329.63,
+  F4: 349.23,
+  G4: 392.0,
+  A4: 440.0,
+  B4: 493.88,
+  C5: 523.25,
+  D5: 587.33,
+  E5: 659.25,
+  G5: 783.99,
+  A5: 880.0,
+  B5: 987.77,
 };
 
 const pentatonicMajor = [N.C4, N.D4, N.E4, N.G4, N.A4, N.C5, N.D5, N.E5, N.G5, N.A5];
@@ -119,8 +146,8 @@ const chordsPrayer = [
 const chordsStudies = [
   [N.C3, N.G3, N.B3, N.D4, N.E4], // Cmaj9
   [N.A2, N.E3, N.G3, N.C4, N.E4], // Am7
-  [N.E3, N.B3, N.D4, N.G4],       // Em7
-  [N.D3, N.A3, N.C4, N.F4],       // Dm7
+  [N.E3, N.B3, N.D4, N.G4], // Em7
+  [N.D3, N.A3, N.C4, N.F4], // Dm7
 ];
 
 /* --- Audio Synthesis Helpers --- */
@@ -131,7 +158,7 @@ function playPianoNote(
   freq: number,
   time: number,
   dur: number,
-  vol: number
+  vol: number,
 ) {
   const osc1 = ac.createOscillator();
   const osc2 = ac.createOscillator();
@@ -172,7 +199,7 @@ function playPadChord(
   notes: number[],
   time: number,
   dur: number,
-  vol: number
+  vol: number,
 ) {
   const oscillators: OscillatorNode[] = [];
   const gainNode = ac.createGain();
@@ -289,7 +316,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       if (!data.user) return;
       const userId = data.user.id;
       setUid(userId);
-      
+
       const { data: profile } = await supabase
         .from("profiles")
         .select("settings")
@@ -328,16 +355,28 @@ export function AudioProvider({ children }: { children: ReactNode }) {
 
   // Sync back to Supabase settings column
   const syncSettings = useCallback((userId: string, updates: any) => {
-    supabase.from("profiles").select("settings").eq("id", userId).maybeSingle().then(({ data }) => {
-      const currentSettings = (data?.settings && typeof data.settings === "object") ? data.settings : {};
-      supabase.from("profiles").update({
-        settings: { ...currentSettings, ...updates }
-      }).eq("id", userId).then(() => {});
-    });
+    supabase
+      .from("profiles")
+      .select("settings")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        const currentSettings =
+          data?.settings && typeof data.settings === "object" ? data.settings : {};
+        supabase
+          .from("profiles")
+          .update({
+            settings: { ...currentSettings, ...updates },
+          })
+          .eq("id", userId)
+          .then(() => {});
+      });
   }, []);
 
   // Current page context and character mood
-  const [context, setContextState] = useState<"dashboard" | "biblia" | "vida" | "estudos">("dashboard");
+  const [context, setContextState] = useState<"dashboard" | "biblia" | "vida" | "estudos">(
+    "dashboard",
+  );
   const [mood, setMoodState] = useState<Mood>("idle");
 
   // Web Audio Node Refs
@@ -385,7 +424,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const now = ac.currentTime;
 
     // Master Volume calculations
-    const targetMaster = (!musicEnabled || muted) ? 0 : musicVolume;
+    const targetMaster = !musicEnabled || muted ? 0 : musicVolume;
     if (masterGainRef.current) {
       masterGainRef.current.gain.cancelScheduledValues(now);
       masterGainRef.current.gain.linearRampToValueAtTime(targetMaster * 0.7, now + 1.2);
@@ -399,20 +438,26 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const activeCtx = stateRef.current.context;
     const activeMood = stateRef.current.mood;
 
-    if (activeCtx === "vida") { // Prayer
+    if (activeCtx === "vida") {
+      // Prayer
       targetPiano = 0.0;
       targetPad = 0.75;
       targetNature = 0.15; // drone + nature wind
-    } else if (activeCtx === "biblia") { // Reading
+    } else if (activeCtx === "biblia") {
+      // Reading
       targetPiano = 0.08; // extremely sparse
       targetPad = 0.45;
       targetNature = 0.18; // soft wind
-    } else if (activeCtx === "estudos") { // Studies
+    } else if (activeCtx === "estudos") {
+      // Studies
       targetPiano = 0.35;
       targetPad = 0.4;
       targetNature = 0.0;
-    } else { // Dashboard
-      const isJoyful = ["happy", "very_happy", "excited", "celebrate", "evolve"].includes(activeMood);
+    } else {
+      // Dashboard
+      const isJoyful = ["happy", "very_happy", "excited", "celebrate", "evolve"].includes(
+        activeMood,
+      );
       const isGloomy = ["sad", "crying", "sleepy", "sleep"].includes(activeMood);
 
       if (isJoyful) {
@@ -423,7 +468,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         targetPiano = 0.18;
         targetPad = 0.65;
         targetNature = 0.28; // wind active
-      } else { // tranquil / default
+      } else {
+        // tranquil / default
         targetPiano = 0.38;
         targetPad = 0.52;
         targetNature = 0.38; // wind + birds active
@@ -516,10 +562,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       const windLFO = ac.createOscillator();
       windLFO.type = "sine";
       windLFO.frequency.value = 0.08; // slow cycles
-      
+
       const windLFOGain = ac.createGain();
       windLFOGain.gain.value = 220; // oscillate cutoff
-      
+
       windLFO.connect(windLFOGain).connect(windFilter.frequency);
       windLFO.start(0);
       windLFORef.current = windLFO;
@@ -542,24 +588,29 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       let isLofi = false;
 
       // Apply dynamic parameters
-      if (actCtx === "vida") { // Prayer
+      if (actCtx === "vida") {
+        // Prayer
         tempo = 1.0;
         chords = chordsPrayer;
         scale = []; // drone only
         density = 0;
-      } else if (actCtx === "biblia") { // Reading
+      } else if (actCtx === "biblia") {
+        // Reading
         tempo = 0.85;
         chords = chordsReading;
         scale = pentatonicMajor;
         density = 0.04;
-      } else if (actCtx === "estudos") { // Studies
+      } else if (actCtx === "estudos") {
+        // Studies
         tempo = 0.66;
         chords = chordsStudies;
         scale = pentatonicMinor;
         density = 0.15;
         isLofi = true;
-      } else { // Dashboard
-        const isJoyful = isAuto && ["happy", "very_happy", "excited", "celebrate", "evolve"].includes(actMood);
+      } else {
+        // Dashboard
+        const isJoyful =
+          isAuto && ["happy", "very_happy", "excited", "celebrate", "evolve"].includes(actMood);
         const isGloomy = isAuto && ["sad", "crying", "sleepy", "sleep"].includes(actMood);
 
         if (isJoyful) {
@@ -572,7 +623,8 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           chords = chordsSad;
           scale = pentatonicMinor;
           density = 0.12;
-        } else { // default tranquil
+        } else {
+          // default tranquil
           tempo = 0.72;
           chords = chordsTranquil;
           scale = pentatonicMajor;
@@ -609,7 +661,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
             if (Math.random() < density) {
               const noteIdx = Math.floor(Math.random() * scale.length);
               const vel = 0.45 + Math.random() * 0.45;
-              playPianoNote(ac, pianoGain, scale[noteIdx], noteTime, tempo * (1.2 + Math.random() * 2), vel);
+              playPianoNote(
+                ac,
+                pianoGain,
+                scale[noteIdx],
+                noteTime,
+                tempo * (1.2 + Math.random() * 2),
+                vel,
+              );
             }
           }
         }
@@ -658,49 +717,64 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     });
   }, [startAudioEngine, stopAudioEngine, uid, syncSettings]);
 
-  const setMusicEnabled = useCallback((v: boolean) => {
-    setMusicEnabledState(v);
-    localStorage.setItem("audio.musicEnabled", String(v));
-    if (uid) syncSettings(uid, { musicEnabled: v });
-    if (!v) {
-      // fade out music
-      if (masterGainRef.current && acRef.current) {
-        masterGainRef.current.gain.linearRampToValueAtTime(0, acRef.current.currentTime + 0.5);
+  const setMusicEnabled = useCallback(
+    (v: boolean) => {
+      setMusicEnabledState(v);
+      localStorage.setItem("audio.musicEnabled", String(v));
+      if (uid) syncSettings(uid, { musicEnabled: v });
+      if (!v) {
+        // fade out music
+        if (masterGainRef.current && acRef.current) {
+          masterGainRef.current.gain.linearRampToValueAtTime(0, acRef.current.currentTime + 0.5);
+        }
+      } else {
+        if (muted) {
+          setMuted(false);
+          localStorage.setItem("audio.muted", "false");
+          if (uid) syncSettings(uid, { muted: false });
+        }
+        startAudioEngine();
+        applyCrossfade();
       }
-    } else {
-      if (muted) {
-        setMuted(false);
-        localStorage.setItem("audio.muted", "false");
-        if (uid) syncSettings(uid, { muted: false });
-      }
-      startAudioEngine();
-      applyCrossfade();
-    }
-  }, [muted, startAudioEngine, applyCrossfade, uid, syncSettings]);
+    },
+    [muted, startAudioEngine, applyCrossfade, uid, syncSettings],
+  );
 
-  const setSfxEnabled = useCallback((v: boolean) => {
-    setSfxEnabledState(v);
-    localStorage.setItem("audio.sfxEnabled", String(v));
-    if (uid) syncSettings(uid, { sfxEnabled: v });
-  }, [uid, syncSettings]);
+  const setSfxEnabled = useCallback(
+    (v: boolean) => {
+      setSfxEnabledState(v);
+      localStorage.setItem("audio.sfxEnabled", String(v));
+      if (uid) syncSettings(uid, { sfxEnabled: v });
+    },
+    [uid, syncSettings],
+  );
 
-  const setMusicVolume = useCallback((v: number) => {
-    setMusicVolumeState(v);
-    localStorage.setItem("audio.musicVolume", String(v));
-    if (uid) syncSettings(uid, { musicVolume: v });
-  }, [uid, syncSettings]);
+  const setMusicVolume = useCallback(
+    (v: number) => {
+      setMusicVolumeState(v);
+      localStorage.setItem("audio.musicVolume", String(v));
+      if (uid) syncSettings(uid, { musicVolume: v });
+    },
+    [uid, syncSettings],
+  );
 
-  const setSfxVolume = useCallback((v: number) => {
-    setSfxVolumeState(v);
-    localStorage.setItem("audio.sfxVolume", String(v));
-    if (uid) syncSettings(uid, { sfxVolume: v });
-  }, [uid, syncSettings]);
+  const setSfxVolume = useCallback(
+    (v: number) => {
+      setSfxVolumeState(v);
+      localStorage.setItem("audio.sfxVolume", String(v));
+      if (uid) syncSettings(uid, { sfxVolume: v });
+    },
+    [uid, syncSettings],
+  );
 
-  const setAutoAdapt = useCallback((v: boolean) => {
-    setAutoAdaptState(v);
-    localStorage.setItem("audio.autoAdapt", String(v));
-    if (uid) syncSettings(uid, { autoAdapt: v });
-  }, [uid, syncSettings]);
+  const setAutoAdapt = useCallback(
+    (v: boolean) => {
+      setAutoAdaptState(v);
+      localStorage.setItem("audio.autoAdapt", String(v));
+      if (uid) syncSettings(uid, { autoAdapt: v });
+    },
+    [uid, syncSettings],
+  );
 
   const play = useCallback(
     (s: Sfx) => {
@@ -829,7 +903,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         }
         case "levelup": {
           // Level up arpeggio + noise shine sweep
-          const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99, 1046.50];
+          const notes = [261.63, 329.63, 392.0, 523.25, 659.25, 783.99, 1046.5];
           notes.forEach((f, idx) => {
             const osc = ac.createOscillator();
             const gg = ac.createGain();
@@ -876,7 +950,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         }
       }
     },
-    [sfxEnabled, sfxVolume, muted, ensure]
+    [sfxEnabled, sfxVolume, muted, ensure],
   );
 
   // Auto-start music if not muted on first client interaction

@@ -26,7 +26,9 @@ interface LevelInfo {
 
 // Leveling curve and titles helper
 export function calculateLevel(xp: number): LevelInfo {
-  const thresholds = [0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000, 6500, 8000, 10000];
+  const thresholds = [
+    0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000, 6500, 8000, 10000,
+  ];
   const levelNames = [
     "Semeando a Palavra",
     "Semeando a Palavra", // Lvl 1
@@ -43,7 +45,7 @@ export function calculateLevel(xp: number): LevelInfo {
     "Embaixador de Cristo", // Lvl 12
     "Vaso Escolhido", // Lvl 13
     "Maturidade Plena", // Lvl 14
-    "Sábio Conselheiro" // Lvl 15+
+    "Sábio Conselheiro", // Lvl 15+
   ];
 
   let level = 1;
@@ -60,7 +62,7 @@ export function calculateLevel(xp: number): LevelInfo {
       nextLevelXp: 1000,
       pct: 100,
       xpNeeded: 0,
-      totalXp: xp
+      totalXp: xp,
     };
   }
 
@@ -78,7 +80,7 @@ export function calculateLevel(xp: number): LevelInfo {
     nextLevelXp: levelRange,
     pct,
     xpNeeded,
-    totalXp: xp
+    totalXp: xp,
   };
 }
 
@@ -93,7 +95,7 @@ function Dashboard() {
     nextLevelXp: 100,
     pct: 0,
     xpNeeded: 100,
-    totalXp: 0
+    totalXp: 0,
   });
 
   useEffect(() => {
@@ -108,7 +110,7 @@ function Dashboard() {
         .select("display_name, onboarding_completed, created_at, theme")
         .eq("id", userId)
         .maybeSingle();
-      
+
       const userProfile = p as Profile | null;
       setProfile(userProfile);
 
@@ -123,7 +125,7 @@ function Dashboard() {
         .select("*")
         .eq("user_id", userId)
         .maybeSingle();
-      
+
       let walkData = w;
       if (!walkData) {
         const { data: inserted } = await supabase
@@ -155,7 +157,9 @@ function Dashboard() {
       if (quizStatsData) {
         correctAnswersCount = quizStatsData.correct_answers || 0;
       } else {
-        correctAnswersCount = Number(localStorage.getItem("bible.stats.correctAnswersCount") || "0");
+        correctAnswersCount = Number(
+          localStorage.getItem("bible.stats.correctAnswersCount") || "0",
+        );
       }
 
       // Load monthly challenge completions from Supabase (fallback to localStorage)
@@ -167,7 +171,9 @@ function Dashboard() {
       if (monthlyCount !== null) {
         completedMonthlyChallengesCount = monthlyCount;
       } else {
-        const localMC = JSON.parse(localStorage.getItem(`local_monthly_challenges_${userId}`) || "[]");
+        const localMC = JSON.parse(
+          localStorage.getItem(`local_monthly_challenges_${userId}`) || "[]",
+        );
         completedMonthlyChallengesCount = localMC.length;
       }
 
@@ -195,16 +201,16 @@ function Dashboard() {
       const challengesDone = walkData?.challenges_done || 0;
       const streak = walkData?.streak_days || 0;
 
-      const totalXp = 
+      const totalXp =
         baseOffset +
-        (chaptersRead * 15) +
-        (studiesCount * 50) +
-        (correctAnswersCount * 10) +
-        (completedMonthlyChallengesCount * 100) +
-        ((notesCount || 0) * 10) +
-        ((highlightsCount || 0) * 5) +
-        (prayersCount * 15) +
-        (streak * 20);
+        chaptersRead * 15 +
+        studiesCount * 50 +
+        correctAnswersCount * 10 +
+        completedMonthlyChallengesCount * 100 +
+        (notesCount || 0) * 10 +
+        (highlightsCount || 0) * 5 +
+        prayersCount * 15 +
+        streak * 20;
 
       const computedLevel = calculateLevel(totalXp);
       setLevelInfo(computedLevel);
@@ -222,7 +228,7 @@ function Dashboard() {
       // Check-in and update consecutive access days (streak)
       const todayStr = new Date().toISOString().split("T")[0];
       const lastActiveStr = walkData?.last_active_date;
-      
+
       if (lastActiveStr !== todayStr) {
         let newStreak = 1;
         if (lastActiveStr) {
@@ -230,17 +236,17 @@ function Dashboard() {
           const currentDate = new Date(todayStr + "T12:00:00");
           const diffTime = Math.abs(currentDate.getTime() - lastActiveDate.getTime());
           const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-          
+
           if (diffDays === 1) {
             newStreak = (walkData?.streak_days || 0) + 1;
           }
         }
-        
+
         await supabase
           .from("walk_progress")
-          .update({ 
-            last_active_date: todayStr, 
-            streak_days: newStreak 
+          .update({
+            last_active_date: todayStr,
+            streak_days: newStreak,
           })
           .eq("user_id", userId);
         setStreakDays(newStreak);
@@ -250,11 +256,14 @@ function Dashboard() {
       const prevStatsRaw = sessionStorage.getItem("bible.prev_stats");
       if (prevStatsRaw && walkData) {
         const prev = JSON.parse(prevStatsRaw);
-        
+
         if (walkData.chapters_read > prev.chapters_read) {
           setTimeout(() => {
             if ((window as any).__lumiCelebrate) {
-              (window as any).__lumiCelebrate("Parabéns por ler a Palavra! Vamos para o próximo? 📖✨", "excited");
+              (window as any).__lumiCelebrate(
+                "Parabéns por ler a Palavra! Vamos para o próximo? 📖✨",
+                "excited",
+              );
             }
           }, 1200);
         } else if (walkData.prayers_count > prev.prayers_count) {
@@ -272,7 +281,10 @@ function Dashboard() {
         } else if (walkData.challenges_done > prev.challenges_done) {
           setTimeout(() => {
             if ((window as any).__lumiCelebrate) {
-              (window as any).__lumiCelebrate("Glória a Deus! Mais um desafio concluído! ❤️✨", "celebrate");
+              (window as any).__lumiCelebrate(
+                "Glória a Deus! Mais um desafio concluído! ❤️✨",
+                "celebrate",
+              );
             }
           }, 1200);
         }
@@ -280,12 +292,15 @@ function Dashboard() {
 
       // Save stats for next comparison
       if (walkData) {
-        sessionStorage.setItem("bible.prev_stats", JSON.stringify({
-          chapters_read: walkData.chapters_read,
-          prayers_count: walkData.prayers_count,
-          studies_count: walkData.studies_count,
-          challenges_done: walkData.challenges_done
-        }));
+        sessionStorage.setItem(
+          "bible.prev_stats",
+          JSON.stringify({
+            chapters_read: walkData.chapters_read,
+            prayers_count: walkData.prayers_count,
+            studies_count: walkData.studies_count,
+            challenges_done: walkData.challenges_done,
+          }),
+        );
       }
     })();
   }, [walkPercent]);

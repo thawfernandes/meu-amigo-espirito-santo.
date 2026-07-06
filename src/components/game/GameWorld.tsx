@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { Settings, LogOut, BookOpen, GraduationCap, HeartHandshake, Target, Telescope as TelescopeIcon, Users } from "lucide-react";
+import {
+  Settings,
+  LogOut,
+  BookOpen,
+  GraduationCap,
+  HeartHandshake,
+  Target,
+  Telescope as TelescopeIcon,
+  Users,
+} from "lucide-react";
 import { Mascot, Mood } from "./Mascot";
 import { useAudio } from "@/components/audio/AudioProvider";
 
@@ -31,7 +40,14 @@ interface Props {
   lastActiveDate?: string;
 }
 
-export function GameWorld({ userName, percent, streak, onLogout, levelInfo, lastActiveDate }: Props) {
+export function GameWorld({
+  userName,
+  percent,
+  streak,
+  onLogout,
+  levelInfo,
+  lastActiveDate,
+}: Props) {
   const navigate = useNavigate();
   const hour = new Date().getHours();
   const tod = getTimeOfDay(hour);
@@ -41,7 +57,7 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
   const initialMood = useMemo<Mood>(() => {
     // Late night sleeping
     if (hour >= 23 || hour < 6) return "sleep";
-    
+
     if (!lastActiveDate) return "happy";
     const createdDate = new Date(lastActiveDate);
     const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
@@ -50,14 +66,14 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
     if (inactiveDays >= 7) return "sleep";
     if (inactiveDays >= 3) return "sleepy";
     if (streak === 0 && inactiveDays >= 1) return "sad";
-    
+
     // Progress inside current level
     if (percent < 15) return "crying";
     if (percent < 40) return "sad";
-    
+
     if (streak >= 5) return "excited";
     if (streak >= 3) return "very_happy";
-    
+
     return "happy";
   }, [streak, percent, lastActiveDate, hour]);
 
@@ -92,56 +108,59 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
   const [cloudSpeed, setCloudSpeed] = useState(1);
   const audio = useAudio();
 
-  const modules = useMemo(() => [
-    {
-      id: "biblia",
-      label: "Bíblia",
-      icon: BookOpen,
-      color: "text-amber-400",
-      onClick: () => go("/biblia", "Vamos ler juntos!", "read"),
-      emoji: "📖"
-    },
-    {
-      id: "estudos",
-      label: "Estudos",
-      icon: GraduationCap,
-      color: "text-violet-400",
-      onClick: () => go("/estudos", "Estudar edifica o espírito. 📖", "think"),
-      emoji: "📚"
-    },
-    {
-      id: "vida",
-      label: "Vida Espiritual",
-      icon: HeartHandshake,
-      color: "text-rose-400",
-      onClick: () => go("/vida", "A oração move o céu! 🙏", "pray"),
-      emoji: "🌱"
-    },
-    {
-      id: "desafios",
-      label: "Desafios Mensais",
-      icon: Target,
-      color: "text-emerald-400",
-      onClick: () => go("/desafios", "Vamos aceitar um desafio? 💪"),
-      emoji: "🌍"
-    },
-    {
-      id: "estatisticas",
-      label: "Estatísticas",
-      icon: TelescopeIcon,
-      color: "text-indigo-400",
-      onClick: () => go("/estatisticas", "Olha como você cresceu! 🌟"),
-      emoji: "📊"
-    },
-    {
-      id: "ajustes",
-      label: "Ajustes",
-      icon: Settings,
-      color: "text-slate-400",
-      onClick: () => navigate({ to: "/configuracoes" }),
-      emoji: "⚙️"
-    }
-  ], [navigate]);
+  const modules = useMemo(
+    () => [
+      {
+        id: "biblia",
+        label: "Bíblia",
+        icon: BookOpen,
+        color: "text-amber-400",
+        onClick: () => go("/biblia", "Vamos ler juntos!", "read"),
+        emoji: "📖",
+      },
+      {
+        id: "estudos",
+        label: "Estudos",
+        icon: GraduationCap,
+        color: "text-violet-400",
+        onClick: () => go("/estudos", "Estudar edifica o espírito. 📖", "think"),
+        emoji: "📚",
+      },
+      {
+        id: "vida",
+        label: "Vida Espiritual",
+        icon: HeartHandshake,
+        color: "text-rose-400",
+        onClick: () => go("/vida", "A oração move o céu! 🙏", "pray"),
+        emoji: "🌱",
+      },
+      {
+        id: "desafios",
+        label: "Desafios Mensais",
+        icon: Target,
+        color: "text-emerald-400",
+        onClick: () => go("/desafios", "Vamos aceitar um desafio? 💪"),
+        emoji: "🌍",
+      },
+      {
+        id: "estatisticas",
+        label: "Estatísticas",
+        icon: TelescopeIcon,
+        color: "text-indigo-400",
+        onClick: () => go("/estatisticas", "Olha como você cresceu! 🌟"),
+        emoji: "📊",
+      },
+      {
+        id: "ajustes",
+        label: "Ajustes",
+        icon: Settings,
+        color: "text-slate-400",
+        onClick: () => navigate({ to: "/configuracoes" }),
+        emoji: "⚙️",
+      },
+    ],
+    [navigate],
+  );
 
   // Set audio context to dashboard on mount
   useEffect(() => {
@@ -163,7 +182,6 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
       prevLevelRef.current = levelInfo.level;
     }
   }, [levelInfo?.level, audio]);
-
 
   // Auto-dismiss initial speech bubble
   useEffect(() => {
@@ -282,10 +300,7 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
       ))}
 
       {/* Birds (day only) */}
-      {!isNight &&
-        [0, 1].map((i) => (
-          <Bird key={i} delay={i * 18} top={20 + i * 8} />
-        ))}
+      {!isNight && [0, 1].map((i) => <Bird key={i} delay={i * 18} top={20 + i * 8} />)}
 
       {/* Floating leaves */}
       {[0, 1, 2, 3, 4].map((i) => (
@@ -371,7 +386,7 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
               }}
             />
           </div>
-          
+
           {/* Fixed Cloud Base under Mascot */}
           <div className="w-[300px] h-[100px] -mt-6 pointer-events-none relative z-10 flex items-center justify-center opacity-95">
             <div className="absolute w-[220px] h-[35px] rounded-full bg-white/25 blur-xl animate-pulse" />
@@ -423,13 +438,15 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
                 <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-10 transition-opacity duration-300 blur-md bg-white" />
 
                 {/* Icon */}
-                <Icon className={`w-6 h-6 md:w-8 md:h-8 ${m.color} transition-transform duration-300 group-hover:scale-110`} />
+                <Icon
+                  className={`w-6 h-6 md:w-8 md:h-8 ${m.color} transition-transform duration-300 group-hover:scale-110`}
+                />
 
                 {/* Label */}
                 <span className="font-display text-[10px] md:text-xs font-semibold text-white/90 group-hover:text-white transition-colors">
                   {m.label}
                 </span>
-                
+
                 {/* Tiny dot */}
                 <div className="w-1 h-1 rounded-full bg-white/20 group-hover:bg-white/60 transition-colors" />
               </button>
@@ -452,8 +469,6 @@ export function GameWorld({ userName, percent, streak, onLogout, levelInfo, last
           <LogOut className="w-4 h-4 text-white/70 hover:text-white" />
         </button>
       </div>
-
-
 
       {/* Expose celebrate fn via window for child interactions */}
       <span
@@ -487,9 +502,9 @@ function MobileEnergyBar({
     nextLevelXp: 100,
     pct: 0,
     xpNeeded: 100,
-    totalXp: 0
+    totalXp: 0,
   };
-  
+
   const p = Math.max(0, Math.min(100, info.pct));
 
   return (
@@ -502,12 +517,17 @@ function MobileEnergyBar({
       }}
     >
       <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-bold opacity-90">
-        <span>🌱 Nív. {info.level} — {info.levelName}</span>
+        <span>
+          🌱 Nív. {info.level} — {info.levelName}
+        </span>
         <span>🔥 {streak}d</span>
       </div>
-      
+
       {/* Progress Bar */}
-      <div className="mt-2 h-2.5 rounded-full overflow-hidden relative" style={{ background: "rgba(0,0,0,.22)" }}>
+      <div
+        className="mt-2 h-2.5 rounded-full overflow-hidden relative"
+        style={{ background: "rgba(0,0,0,.22)" }}
+      >
         <div
           className="h-full rounded-full relative"
           style={{
@@ -528,12 +548,10 @@ function MobileEnergyBar({
         </div>
       </div>
       <div className="flex justify-between text-[9px] text-white/50 mt-1 font-medium">
-        <span>{info.currentLevelXp} / {info.nextLevelXp} XP</span>
-        {info.xpNeeded > 0 ? (
-          <span>Falta {info.xpNeeded} XP</span>
-        ) : (
-          <span>Nível máximo</span>
-        )}
+        <span>
+          {info.currentLevelXp} / {info.nextLevelXp} XP
+        </span>
+        {info.xpNeeded > 0 ? <span>Falta {info.xpNeeded} XP</span> : <span>Nível máximo</span>}
       </div>
     </div>
   );
@@ -678,10 +696,7 @@ function Tree({ x, y, onClick }: { x: number; y: number; onClick?: () => void })
         const ids = Array.from({ length: 6 }).map((_, i) => Date.now() + i);
         setFallingLeaves((f) => [...f, ...ids]);
         setTimeout(() => setShaking(false), 600);
-        setTimeout(
-          () => setFallingLeaves((f) => f.filter((id) => !ids.includes(id))),
-          2500,
-        );
+        setTimeout(() => setFallingLeaves((f) => f.filter((id) => !ids.includes(id))), 2500);
         onClick?.();
       }}
     >
@@ -797,12 +812,7 @@ function PrayerBench() {
       <rect x="80" y="50" width="6" height="30" fill="#78350f" />
       <rect x="46" y="22" width="8" height="20" fill="#f5f5f4" />
       <path d="M50 12 Q53 18 50 22 Q47 18 50 12" fill="#facc15">
-        <animate
-          attributeName="opacity"
-          values="1;.6;1"
-          dur="1.5s"
-          repeatCount="indefinite"
-        />
+        <animate attributeName="opacity" values="1;.6;1" dur="1.5s" repeatCount="indefinite" />
       </path>
     </svg>
   );
@@ -811,11 +821,44 @@ function PrayerBench() {
 function ChallengeBoard() {
   return (
     <svg width="110" height="100" viewBox="0 0 110 100">
-      <rect x="20" y="10" width="70" height="55" rx="4" fill="#a16207" stroke="#713f12" strokeWidth="2" />
+      <rect
+        x="20"
+        y="10"
+        width="70"
+        height="55"
+        rx="4"
+        fill="#a16207"
+        stroke="#713f12"
+        strokeWidth="2"
+      />
       <rect x="25" y="15" width="60" height="45" fill="#fef3c7" />
-      <line x1="32" y1="28" x2="78" y2="28" stroke="#92400e" strokeWidth="2" strokeLinecap="round" />
-      <line x1="32" y1="38" x2="65" y2="38" stroke="#92400e" strokeWidth="2" strokeLinecap="round" />
-      <line x1="32" y1="48" x2="70" y2="48" stroke="#92400e" strokeWidth="2" strokeLinecap="round" />
+      <line
+        x1="32"
+        y1="28"
+        x2="78"
+        y2="28"
+        stroke="#92400e"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="38"
+        x2="65"
+        y2="38"
+        stroke="#92400e"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+      <line
+        x1="32"
+        y1="48"
+        x2="70"
+        y2="48"
+        stroke="#92400e"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
       <rect x="50" y="65" width="10" height="30" fill="#78350f" />
       <circle cx="22" cy="12" r="3" fill="#dc2626" />
       <circle cx="88" cy="12" r="3" fill="#dc2626" />
@@ -857,14 +900,29 @@ function StudyLantern() {
   return (
     <svg width="70" height="100" viewBox="0 0 70 100">
       <rect x="32" y="70" width="6" height="25" rx="2" fill="#78350f" />
-      <rect x="18" y="30" width="34" height="42" rx="6" fill="#a16207" stroke="#713f12" strokeWidth="1.5" />
+      <rect
+        x="18"
+        y="30"
+        width="34"
+        height="42"
+        rx="6"
+        fill="#a16207"
+        stroke="#713f12"
+        strokeWidth="1.5"
+      />
       <rect x="23" y="35" width="24" height="32" rx="4" fill="#fef9c3" opacity="0.9">
         <animate attributeName="opacity" values="0.9;0.6;0.9" dur="2s" repeatCount="indefinite" />
       </rect>
       <line x1="35" y1="39" x2="35" y2="63" stroke="#92400e" strokeWidth="2" />
       <line x1="27" y1="49" x2="43" y2="49" stroke="#92400e" strokeWidth="2" />
       <polygon points="18,30 35,14 52,30" fill="#78350f" />
-      <path d="M28 14 Q35 4 42 14" fill="none" stroke="#78350f" strokeWidth="2.5" strokeLinecap="round" />
+      <path
+        d="M28 14 Q35 4 42 14"
+        fill="none"
+        stroke="#78350f"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }
@@ -895,9 +953,9 @@ function EnergyBar({
     nextLevelXp: 100,
     pct: 0,
     xpNeeded: 100,
-    totalXp: 0
+    totalXp: 0,
   };
-  
+
   const p = Math.max(0, Math.min(100, info.pct));
 
   return (
@@ -911,28 +969,30 @@ function EnergyBar({
       }}
     >
       <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-bold opacity-90">
-        <span>🌱 Nív. {info.level} — {info.levelName}</span>
+        <span>
+          🌱 Nív. {info.level} — {info.levelName}
+        </span>
         <span>🔥 {streak}d</span>
       </div>
-      
+
       {/* Progress Bar */}
-      <div className="mt-2 h-3 rounded-full overflow-hidden relative" style={{ background: "rgba(0,0,0,.18)" }}>
+      <div
+        className="mt-2 h-3 rounded-full overflow-hidden relative"
+        style={{ background: "rgba(0,0,0,.18)" }}
+      >
         <div
           className="h-full rounded-full relative"
           style={{
             width: `${p}%`,
-            background:
-              "linear-gradient(90deg,#fde047,#22c55e 50%,#38bdf8)",
-            boxShadow:
-              "0 0 16px 2px rgba(253,224,71,.7), 0 0 32px 4px rgba(56,189,248,.4)",
+            background: "linear-gradient(90deg,#fde047,#22c55e 50%,#38bdf8)",
+            boxShadow: "0 0 16px 2px rgba(253,224,71,.7), 0 0 32px 4px rgba(56,189,248,.4)",
             transition: "width 1s ease-out",
           }}
         >
           <div
             className="absolute inset-0"
             style={{
-              background:
-                "linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent)",
+              background: "linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent)",
               backgroundSize: "200% 100%",
               animation: "shimmer 2.4s linear infinite",
             }}
@@ -957,14 +1017,12 @@ function EnergyBar({
             />
           ))}
       </div>
-      
+
       <div className="mt-2 flex justify-between items-center text-[10px] font-mono opacity-80 leading-none">
-        <span>XP: {info.currentLevelXp} / {info.nextLevelXp}</span>
-        {info.xpNeeded > 0 ? (
-          <span>Falta {info.xpNeeded} XP</span>
-        ) : (
-          <span>Nível Máx.</span>
-        )}
+        <span>
+          XP: {info.currentLevelXp} / {info.nextLevelXp}
+        </span>
+        {info.xpNeeded > 0 ? <span>Falta {info.xpNeeded} XP</span> : <span>Nível Máx.</span>}
       </div>
     </div>
   );

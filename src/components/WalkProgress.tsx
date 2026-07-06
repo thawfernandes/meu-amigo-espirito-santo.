@@ -44,8 +44,8 @@ export function WalkProgress({ percent, streak = 0 }: Props) {
 
       <p className="text-sm text-muted-foreground mt-3">{message}</p>
       <p className="text-[11px] text-muted-foreground/80 mt-2">
-        Esta barra mede apenas sua constância — nunca sua salvação, santidade ou
-        a presença de Deus na sua vida.
+        Esta barra mede apenas sua constância — nunca sua salvação, santidade ou a presença de Deus
+        na sua vida.
       </p>
     </div>
   );

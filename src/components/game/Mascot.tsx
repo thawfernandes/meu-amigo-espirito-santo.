@@ -32,14 +32,7 @@ interface Props {
  * Um companheiro ilustrativo, amigável e extremamente expressivo
  * com olhos grandes que acompanham o cursor, piscadas, lágrimas e expressões.
  */
-export function Mascot({
-  mood = "idle",
-  x = 50,
-  y = 70,
-  scale = 1,
-  onClick,
-  message,
-}: Props) {
+export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, message }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const [look, setLook] = useState({ x: 0, y: 0 });
   const [blink, setBlink] = useState(false);
@@ -120,7 +113,12 @@ export function Mascot({
   const isCrying = mood === "crying";
   const isSleepy = mood === "sleepy" || yawn;
   const isThink = mood === "think";
-  const isHappy = mood === "happy" || mood === "very_happy" || mood === "excited" || mood === "evolve" || mood === "celebrate";
+  const isHappy =
+    mood === "happy" ||
+    mood === "very_happy" ||
+    mood === "excited" ||
+    mood === "evolve" ||
+    mood === "celebrate";
   const isWink = mood === "wink";
 
   const animatingHop = hop || mood === "excited" || mood === "evolve" || mood === "celebrate";
@@ -149,8 +147,7 @@ export function Mascot({
           bottom: -6,
           width: 80,
           height: 10,
-          background:
-            "radial-gradient(ellipse at center, rgba(10,15,40,0.4), transparent 70%)",
+          background: "radial-gradient(ellipse at center, rgba(10,15,40,0.4), transparent 70%)",
           filter: "blur(3px)",
         }}
       />
@@ -179,9 +176,7 @@ export function Mascot({
           className="absolute -top-10 right-0 text-xl font-display text-sky-300 font-bold"
           style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}
         >
-          <span
-            style={{ animation: "zfloat 3s ease-out infinite", display: "inline-block" }}
-          >
+          <span style={{ animation: "zfloat 3s ease-out infinite", display: "inline-block" }}>
             z
           </span>
           <span
@@ -290,7 +285,14 @@ export function Mascot({
           />
 
           {/* 5. Chibi Head (Skin) */}
-          <circle cx="70" cy="62" r="32" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.8" />
+          <circle
+            cx="70"
+            cy="62"
+            r="32"
+            fill="url(#jesusSkin)"
+            stroke="#fed7aa"
+            strokeWidth="0.8"
+          />
 
           {/* 6. Hair Front (Framing fringe/bangs and sideburns) */}
           <path
@@ -317,25 +319,67 @@ export function Mascot({
           {blink && !isSleeping && !isPraying ? (
             <>
               {/* Closed squinting/blinking eyes */}
-              <path d="M 46,71 Q 54,75 62,71" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" />
-              <path d="M 78,71 Q 86,75 94,71" fill="none" stroke="#1f2937" strokeWidth="2.5" strokeLinecap="round" />
+              <path
+                d="M 46,71 Q 54,75 62,71"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 78,71 Q 86,75 94,71"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
             </>
           ) : isSleeping || isPraying ? (
             <>
               {/* Sleeping/Praying peaceful curved eyes */}
-              <path d="M 46,70 Q 54,77 62,70" fill="none" stroke="#1f2937" strokeWidth="2.8" strokeLinecap="round" />
-              <path d="M 78,70 Q 86,77 94,70" fill="none" stroke="#1f2937" strokeWidth="2.8" strokeLinecap="round" />
+              <path
+                d="M 46,70 Q 54,77 62,70"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 78,70 Q 86,77 94,70"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.8"
+                strokeLinecap="round"
+              />
             </>
           ) : isHappy ? (
             <>
               {/* Happy arched squinting eyes (^ ^) */}
-              <path d="M 46,72 Q 54,64 62,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
-              <path d="M 78,72 Q 86,64 94,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+              <path
+                d="M 46,72 Q 54,64 62,72"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 78,72 Q 86,64 94,72"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
             </>
           ) : isWink ? (
             <>
               {/* Winking left eye, open right eye */}
-              <path d="M 46,72 Q 54,64 62,72" fill="none" stroke="#1f2937" strokeWidth="3" strokeLinecap="round" />
+              <path
+                d="M 46,72 Q 54,64 62,72"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
               <ellipse cx="86" cy="69" rx="8" ry="8" fill="#1f2937" />
               <circle cx="88.5" cy="66.5" r="2.2" fill="#fff" />
             </>
@@ -352,7 +396,7 @@ export function Mascot({
               <ellipse cx="54" cy="70" rx="8" ry="8" fill="#1f2937" />
               <circle cx="56.5" cy="67.5" r="2.2" fill="#fff" />
               <circle cx="52.2" cy="72.2" r="0.9" fill="#fff" opacity=".8" />
-              
+
               {/* Right eye */}
               <ellipse cx="86" cy="70" rx="8" ry="8" fill="#1f2937" />
               <circle cx="88.5" cy="67.5" r="2.2" fill="#fff" />
@@ -364,29 +408,66 @@ export function Mascot({
           {isSleepy ? (
             /* Yawning circle */
             <circle cx="70" cy="88" r="6" fill="#451a03" />
-          ) : mood === "excited" || mood === "very_happy" || mood === "celebrate" || mood === "evolve" ? (
+          ) : mood === "excited" ||
+            mood === "very_happy" ||
+            mood === "celebrate" ||
+            mood === "evolve" ? (
             /* Open laughing mouth */
             <path d="M 62,83 Q 70,98 78,83 Z" fill="#fda4af" stroke="#7c2d12" strokeWidth="1.8" />
           ) : isSad || isCrying ? (
             /* Sad downward curve */
-            <path d="M 64,88 Q 70,83 76,88" stroke="#7c2d12" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            <path
+              d="M 64,88 Q 70,83 76,88"
+              stroke="#7c2d12"
+              strokeWidth="2.2"
+              fill="none"
+              strokeLinecap="round"
+            />
           ) : isThink ? (
             /* Side smirk thinking line */
-            <path d="M 66,85 Q 71,83 74,86" stroke="#7c2d12" strokeWidth="2" fill="none" strokeLinecap="round" />
+            <path
+              d="M 66,85 Q 71,83 74,86"
+              stroke="#7c2d12"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+            />
           ) : isPraying || isSleeping ? (
             /* Peaceful closed mouth line */
-            <path d="M 66,85 Q 70,87 74,85" stroke="#7c2d12" strokeWidth="1.8" fill="none" strokeLinecap="round" />
+            <path
+              d="M 66,85 Q 70,87 74,85"
+              stroke="#7c2d12"
+              strokeWidth="1.8"
+              fill="none"
+              strokeLinecap="round"
+            />
           ) : (
             /* Default happy smile */
-            <path d="M 62,84 Q 70,92 78,84" stroke="#7c2d12" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+            <path
+              d="M 62,84 Q 70,92 78,84"
+              stroke="#7c2d12"
+              strokeWidth="2.2"
+              fill="none"
+              strokeLinecap="round"
+            />
           )}
 
           {/* 11. Tears for Crying State */}
           {isCrying && (
             <>
               {/* Dripping tears under the eyes */}
-              <path d="M 50,78 C 50,87 53,91 53,91 C 53,91 56,87 56,78 Z" fill="#3b82f6" opacity=".85" className="animate-pulse" />
-              <path d="M 84,78 C 84,87 87,91 87,91 C 87,91 90,87 90,78 Z" fill="#3b82f6" opacity=".85" className="animate-pulse" />
+              <path
+                d="M 50,78 C 50,87 53,91 53,91 C 53,91 56,87 56,78 Z"
+                fill="#3b82f6"
+                opacity=".85"
+                className="animate-pulse"
+              />
+              <path
+                d="M 84,78 C 84,87 87,91 87,91 C 87,91 90,87 90,78 Z"
+                fill="#3b82f6"
+                opacity=".85"
+                className="animate-pulse"
+              />
             </>
           )}
 
@@ -394,8 +475,20 @@ export function Mascot({
           {isPraying ? (
             /* Praying hands: joined together in the center */
             <>
-              <path d="M 60,108 Q 70,98 80,108" fill="none" stroke="url(#jesusSkin)" strokeWidth="6" strokeLinecap="round" />
-              <path d="M 60,108 Q 70,98 80,108" fill="none" stroke="#fed7aa" strokeWidth="1.5" strokeLinecap="round" />
+              <path
+                d="M 60,108 Q 70,98 80,108"
+                fill="none"
+                stroke="url(#jesusSkin)"
+                strokeWidth="6"
+                strokeLinecap="round"
+              />
+              <path
+                d="M 60,108 Q 70,98 80,108"
+                fill="none"
+                stroke="#fed7aa"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </>
           ) : mood === "celebrate" || mood === "excited" || mood === "evolve" ? (
             /* Waving/Cheering arms raised up */
@@ -411,7 +504,14 @@ export function Mascot({
                 strokeWidth="0.8"
                 style={{ transformOrigin: "32px 86px", transform: "rotate(45deg)" }}
               />
-              <circle cx="16" cy="78" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              <circle
+                cx="16"
+                cy="78"
+                r="4.5"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
 
               {/* Right Sleeve & Hand */}
               <ellipse
@@ -424,7 +524,14 @@ export function Mascot({
                 strokeWidth="0.8"
                 style={{ transformOrigin: "108px 86px", transform: "rotate(-45deg)" }}
               />
-              <circle cx="124" cy="78" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              <circle
+                cx="124"
+                cy="78"
+                r="4.5"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
             </>
           ) : isThink ? (
             /* Thinking state: one hand resting, other hand at chin */
@@ -440,11 +547,33 @@ export function Mascot({
                 strokeWidth="0.8"
                 style={{ transformOrigin: "46px 92px", transform: "rotate(-35deg)" }}
               />
-              <circle cx="48" cy="81" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
-              
+              <circle
+                cx="48"
+                cy="81"
+                r="4.5"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
+
               {/* Right resting arm */}
-              <ellipse cx="118" cy="94" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-              <circle cx="124" cy="94" r="4" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              <ellipse
+                cx="118"
+                cy="94"
+                rx="7"
+                ry="5"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+              />
+              <circle
+                cx="124"
+                cy="94"
+                r="4"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
             </>
           ) : (
             /* Default: arms resting on the sides */
@@ -477,15 +606,37 @@ export function Mascot({
               />
 
               {/* Right arm sleeve + hand */}
-              <ellipse cx="118" cy="94" rx="7" ry="5" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" />
-              <circle cx="124" cy="94" r="4" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              <ellipse
+                cx="118"
+                cy="94"
+                rx="7"
+                ry="5"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+              />
+              <circle
+                cx="124"
+                cy="94"
+                r="4"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
             </>
           )}
 
           {/* 13. Tiny Gospel Book if reading */}
           {isReading && (
             <g transform="translate(50 96)" className="animate-pulse">
-              <rect width="40" height="24" rx="3" fill="#ffffff" stroke="#7f1d1d" strokeWidth="1.4" />
+              <rect
+                width="40"
+                height="24"
+                rx="3"
+                fill="#ffffff"
+                stroke="#7f1d1d"
+                strokeWidth="1.4"
+              />
               <line x1="20" y1="2" x2="20" y2="22" stroke="#7f1d1d" strokeWidth="1.2" />
               <line x1="4" y1="8" x2="16" y2="8" stroke="#cbd5e1" strokeWidth="1" />
               <line x1="4" y1="13" x2="16" y2="13" stroke="#cbd5e1" strokeWidth="1" />

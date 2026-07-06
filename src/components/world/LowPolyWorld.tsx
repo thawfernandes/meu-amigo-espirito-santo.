@@ -60,9 +60,36 @@ export function LowPolyWorld({ interactive = true }: { interactive?: boolean }) 
       </Float>
 
       <Clouds material={THREE.MeshBasicMaterial} limit={50}>
-        <Cloud seed={1} bounds={[8, 1.5, 4]} segments={20} volume={3} color="#fff1d8" opacity={0.55} position={[-5, 4, -6]} fade={30} />
-        <Cloud seed={2} bounds={[8, 1.5, 4]} segments={20} volume={3} color="#ffd5a8" opacity={0.5} position={[6, 5, -8]} fade={30} />
-        <Cloud seed={3} bounds={[6, 1.2, 3]} segments={16} volume={2.5} color="#ffe8c8" opacity={0.5} position={[0, 6, -10]} fade={30} />
+        <Cloud
+          seed={1}
+          bounds={[8, 1.5, 4]}
+          segments={20}
+          volume={3}
+          color="#fff1d8"
+          opacity={0.55}
+          position={[-5, 4, -6]}
+          fade={30}
+        />
+        <Cloud
+          seed={2}
+          bounds={[8, 1.5, 4]}
+          segments={20}
+          volume={3}
+          color="#ffd5a8"
+          opacity={0.5}
+          position={[6, 5, -8]}
+          fade={30}
+        />
+        <Cloud
+          seed={3}
+          bounds={[6, 1.2, 3]}
+          segments={16}
+          volume={2.5}
+          color="#ffe8c8"
+          opacity={0.5}
+          position={[0, 6, -10]}
+          fade={30}
+        />
       </Clouds>
 
       <Birds />
@@ -121,7 +148,12 @@ function Island({ position = [0, 0, 0] as [number, number, number], scale = 1, h
     for (let i = 0; i < 7; i++) {
       const a = (i / 7) * Math.PI * 2 + Math.random() * 0.4;
       const r = 0.6 + Math.random() * 0.9;
-      arr.push({ x: Math.cos(a) * r, z: Math.sin(a) * r, s: 0.6 + Math.random() * 0.5, tint: Math.random() * 0.2 - 0.1 });
+      arr.push({
+        x: Math.cos(a) * r,
+        z: Math.sin(a) * r,
+        s: 0.6 + Math.random() * 0.5,
+        tint: Math.random() * 0.2 - 0.1,
+      });
     }
     return arr;
   }, []);
@@ -156,7 +188,15 @@ function Island({ position = [0, 0, 0] as [number, number, number], scale = 1, h
   );
 }
 
-function Tree({ position, scale, tint }: { position: [number, number, number]; scale: number; tint: number }) {
+function Tree({
+  position,
+  scale,
+  tint,
+}: {
+  position: [number, number, number];
+  scale: number;
+  tint: number;
+}) {
   const ref = useRef<THREE.Group>(null);
   useFrame((s) => {
     if (!ref.current) return;
@@ -196,20 +236,30 @@ function Lantern({ position }: { position: [number, number, number] }) {
         <boxGeometry args={[0.16, 0.22, 0.16]} />
         <meshStandardMaterial color="#ffd58a" emissive="#ffb45a" emissiveIntensity={1.6} />
       </mesh>
-      <pointLight ref={light} position={[0, 0.35, 0]} color="#ffb45a" intensity={1.4} distance={2.4} decay={2} />
+      <pointLight
+        ref={light}
+        position={[0, 0.35, 0]}
+        color="#ffb45a"
+        intensity={1.4}
+        distance={2.4}
+        decay={2}
+      />
     </group>
   );
 }
 
 function Birds() {
   const group = useRef<THREE.Group>(null);
-  const birds = useMemo(() =>
-    new Array(5).fill(0).map((_, i) => ({
-      r: 4 + Math.random() * 2,
-      y: 2 + Math.random() * 2,
-      s: 0.4 + Math.random() * 0.3,
-      o: (i / 5) * Math.PI * 2,
-    })), []);
+  const birds = useMemo(
+    () =>
+      new Array(5).fill(0).map((_, i) => ({
+        r: 4 + Math.random() * 2,
+        y: 2 + Math.random() * 2,
+        s: 0.4 + Math.random() * 0.3,
+        o: (i / 5) * Math.PI * 2,
+      })),
+    [],
+  );
   useFrame((s) => {
     if (!group.current) return;
     group.current.children.forEach((c, i) => {
@@ -260,7 +310,15 @@ function Particles({ count }: { count: number }) {
       <bufferGeometry>
         <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
-      <pointsMaterial color="#fff2c8" size={0.08} sizeAttenuation transparent opacity={0.9} depthWrite={false} blending={THREE.AdditiveBlending} />
+      <pointsMaterial
+        color="#fff2c8"
+        size={0.08}
+        sizeAttenuation
+        transparent
+        opacity={0.9}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+      />
     </points>
   );
 }

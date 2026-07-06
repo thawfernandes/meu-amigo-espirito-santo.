@@ -45,17 +45,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center gradient-sky px-4">
       <div className="glass rounded-3xl p-8 max-w-md text-center">
         <h1 className="text-xl font-display">Algo não carregou</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Respire fundo e tente novamente.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">Respire fundo e tente novamente.</p>
         <div className="mt-5 flex flex-wrap justify-center gap-2">
           <button
-            onClick={() => { router.invalidate(); reset(); }}
+            onClick={() => {
+              router.invalidate();
+              reset();
+            }}
             className="rounded-2xl bg-primary px-4 py-2 text-sm text-primary-foreground hover:opacity-90"
           >
             Tentar de novo
           </button>
-          <a href="/" className="rounded-2xl border px-4 py-2 text-sm hover:bg-accent">Início</a>
+          <a href="/" className="rounded-2xl border px-4 py-2 text-sm hover:bg-accent">
+            Início
+          </a>
         </div>
       </div>
     </div>
@@ -69,15 +72,41 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { name: "theme-color", content: "#3B82F6" },
       { title: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez" },
-      { name: "description", content: "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo." },
-      { property: "og:title", content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez" },
-      { property: "og:description", content: "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo." },
+      {
+        name: "description",
+        content:
+          "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo.",
+      },
+      {
+        property: "og:title",
+        content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez",
+      },
+      {
+        property: "og:description",
+        content:
+          "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:title", content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez" },
-      { name: "twitter:description", content: "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cec1fac-f087-4fda-905e-ec9b10b0e727/id-preview-3f27b590--e70efc3b-e5f3-41a1-a2df-cbb165df23ad.lovable.app-1781892893707.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cec1fac-f087-4fda-905e-ec9b10b0e727/id-preview-3f27b590--e70efc3b-e5f3-41a1-a2df-cbb165df23ad.lovable.app-1781892893707.png" },
+      {
+        name: "twitter:title",
+        content: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez",
+      },
+      {
+        name: "twitter:description",
+        content:
+          "Aplicativo cristão para leitura, oração, estudos e desafios — uma jornada acolhedora com o Espírito Santo.",
+      },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cec1fac-f087-4fda-905e-ec9b10b0e727/id-preview-3f27b590--e70efc3b-e5f3-41a1-a2df-cbb165df23ad.lovable.app-1781892893707.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3cec1fac-f087-4fda-905e-ec9b10b0e727/id-preview-3f27b590--e70efc3b-e5f3-41a1-a2df-cbb165df23ad.lovable.app-1781892893707.png",
+      },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

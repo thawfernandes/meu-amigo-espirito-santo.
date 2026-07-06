@@ -8,7 +8,11 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Amigo, Espírito Santo — Caminhando com Deus um dia de cada vez" },
-      { name: "description", content: "Uma jornada cristã viva: leitura, oração, estudos e desafios em um pequeno mundo acolhedor." },
+      {
+        name: "description",
+        content:
+          "Uma jornada cristã viva: leitura, oração, estudos e desafios em um pequeno mundo acolhedor.",
+      },
       { property: "og:title", content: "Amigo, Espírito Santo" },
       { property: "og:description", content: "Caminhando com Deus um dia de cada vez." },
     ],
@@ -28,12 +32,13 @@ function Landing() {
       {/* Vignette suave */}
       <div
         className="pointer-events-none absolute inset-0 z-10"
-        style={{ background: "radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(15,5,35,.7) 100%)" }}
+        style={{
+          background: "radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(15,5,35,.7) 100%)",
+        }}
       />
 
       {/* Layout principal — flex column centralizado */}
       <div className="absolute inset-0 z-30 flex flex-col items-center justify-between px-6 py-10 sm:py-14 text-center">
-
         {/* Topo — espaço vazio ou branding mínimo */}
         <div />
 
@@ -64,7 +69,6 @@ function Landing() {
               Espírito Santo
             </span>
           </motion.h1>
-
         </div>
 
         {/* Base — botões SEMPRE visíveis, sem delay */}
@@ -92,7 +96,6 @@ function Landing() {
             Já tenho conta
           </MagicButton>
         </motion.div>
-
       </div>
     </div>
   );

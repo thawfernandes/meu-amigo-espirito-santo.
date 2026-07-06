@@ -114,14 +114,21 @@ function Onboarding() {
         <div className="flex items-center gap-4 mb-5">
           <SpiritCharacter size={64} />
           <div className="flex-1">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Personalização</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
+              Personalização
+            </p>
             <h1 className="font-display text-xl">Vamos conhecer você melhor</h1>
           </div>
-          <span className="text-xs text-muted-foreground">{step + 1}/{QUESTIONS.length}</span>
+          <span className="text-xs text-muted-foreground">
+            {step + 1}/{QUESTIONS.length}
+          </span>
         </div>
 
         <div className="h-1.5 bg-secondary rounded-full overflow-hidden mb-6">
-          <div className="h-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+          <div
+            className="h-full bg-primary transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
         </div>
 
         <div key={q.key} className="glass-strong rounded-3xl p-7 animate-fade-up">
@@ -142,12 +149,16 @@ function Onboarding() {
           </div>
 
           <p className="text-[11px] text-muted-foreground mt-6">
-            Suas respostas servem apenas para personalizar sua experiência. Nunca medimos sua espiritualidade.
+            Suas respostas servem apenas para personalizar sua experiência. Nunca medimos sua
+            espiritualidade.
           </p>
         </div>
 
         {step > 0 && (
-          <button onClick={() => setStep(step - 1)} className="mt-5 text-xs text-muted-foreground hover:text-foreground">
+          <button
+            onClick={() => setStep(step - 1)}
+            className="mt-5 text-xs text-muted-foreground hover:text-foreground"
+          >
             ← Voltar
           </button>
         )}

@@ -4,13 +4,89 @@
   "currentChapter": 31,
   "chaptersCompleted": 50,
   "versesTranslated": 982,
-  "apiRetries": 53,
+  "apiRetries": 72,
   "validationErrors": 4,
-  "rateLimitWaitMs": 3061168.966640999,
+  "rateLimitWaitMs": 4147908.551344999,
   "startTime": 1783307535217,
-  "avgTimePerChapter": 108996.22,
-  "etaMs": 124146694.58,
+  "avgTimePerChapter": 131868.74,
+  "etaMs": 150198494.85999998,
   "logs": [
+    {
+      "timestamp": 1783314128587,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 54s..."
+    },
+    {
+      "timestamp": 1783314071749,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 51s..."
+    },
+    {
+      "timestamp": 1783314006555,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 56s..."
+    },
+    {
+      "timestamp": 1783313953431,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 51s..."
+    },
+    {
+      "timestamp": 1783313885106,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 57s..."
+    },
+    {
+      "timestamp": 1783313824628,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 58s..."
+    },
+    {
+      "timestamp": 1783313763475,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313703284,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313643240,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313585069,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 57s..."
+    },
+    {
+      "timestamp": 1783313523296,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313463548,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313405867,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 56s..."
+    },
+    {
+      "timestamp": 1783313344386,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 58s..."
+    },
+    {
+      "timestamp": 1783313282840,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313222969,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313163121,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313103223,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
+    {
+      "timestamp": 1783313043110,
+      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
+    },
     {
       "timestamp": 1783312985020,
       "message": "Erro Temporário/API (429/Rede). Pausando por 57s..."
@@ -134,82 +210,6 @@
     {
       "timestamp": 1783311182619,
       "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783311122587,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783311062735,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783311003483,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310942939,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310882918,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310823767,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 58s..."
-    },
-    {
-      "timestamp": 1783310762902,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310703110,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310643193,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310582810,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310523379,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310462859,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310402704,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310342838,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310282587,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310224614,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 57s..."
-    },
-    {
-      "timestamp": 1783310163936,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 60s..."
-    },
-    {
-      "timestamp": 1783310103215,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 59s..."
-    },
-    {
-      "timestamp": 1783310057705,
-      "message": "Erro Temporário/API (429/Rede). Pausando por 44s..."
     }
   ]
 }

@@ -12,14 +12,20 @@ function Settings() {
   return (
     <AppShell>
       <div className="animate-fade-up max-w-xl mx-auto pb-10">
-        <p className="text-xs uppercase tracking-[0.25em] text-amber-200/60 font-semibold mb-1">Ajustes</p>
+        <p className="text-xs uppercase tracking-[0.25em] text-amber-200/60 font-semibold mb-1">
+          Ajustes
+        </p>
         <h1 className="font-display text-3xl sm:text-4xl text-white">Sua Experiência</h1>
-        <p className="text-white/40 mt-1.5 text-sm">Personalize o som e a atmosfera da sua caminhada espiritual.</p>
+        <p className="text-white/40 mt-1.5 text-sm">
+          Personalize o som e a atmosfera da sua caminhada espiritual.
+        </p>
 
         {/* Audio Configuration Section */}
         <div className="mt-8 space-y-6">
-          <div className="rounded-3xl p-6 border border-white/10 space-y-6" style={{ background: "oklch(0.14 0.03 260 / 0.75)", backdropFilter: "blur(24px)" }}>
-
+          <div
+            className="rounded-3xl p-6 border border-white/10 space-y-6"
+            style={{ background: "oklch(0.14 0.03 260 / 0.75)", backdropFilter: "blur(24px)" }}
+          >
             <h2 className="font-display text-xl text-amber-100 flex items-center gap-2.5">
               <Radio className="w-5 h-5 text-amber-300" />
               <span>Ajustes de Áudio</span>
@@ -33,7 +39,9 @@ function Settings() {
                     <Music className="w-4 h-4 text-sky-300" />
                     Música de Fundo
                   </div>
-                  <div className="text-xs text-white/40 mt-0.5">Música instrumental generativa de contemplação.</div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    Música instrumental generativa de contemplação.
+                  </div>
                 </div>
                 <button
                   onClick={() => audio.setMusicEnabled(!audio.musicEnabled)}
@@ -79,7 +87,9 @@ function Settings() {
                     <Sliders className="w-4 h-4 text-emerald-300" />
                     Efeitos Sonoros (SFX)
                   </div>
-                  <div className="text-xs text-white/40 mt-0.5">Sons de toque, marcações, virar página e nível.</div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    Sons de toque, marcações, virar página e nível.
+                  </div>
                 </div>
                 <button
                   onClick={() => audio.setSfxEnabled(!audio.sfxEnabled)}
@@ -124,7 +134,9 @@ function Settings() {
                   <Smile className="w-4 h-4 text-rose-300" />
                   Música Adaptativa Dinâmica
                 </div>
-                <div className="text-xs text-white/40 mt-0.5">Mudar o clima sonoro conforme a emoção do Chibi Jesus.</div>
+                <div className="text-xs text-white/40 mt-0.5">
+                  Mudar o clima sonoro conforme a emoção do Chibi Jesus.
+                </div>
               </div>
               <button
                 onClick={() => audio.setAutoAdapt(!audio.autoAdapt)}
@@ -143,13 +155,17 @@ function Settings() {
           </div>
 
           {/* Account Settings / General Section */}
-          <div className="rounded-3xl p-6 border border-white/10 space-y-4" style={{ background: "oklch(0.14 0.03 260 / 0.75)", backdropFilter: "blur(24px)" }}>
-
+          <div
+            className="rounded-3xl p-6 border border-white/10 space-y-4"
+            style={{ background: "oklch(0.14 0.03 260 / 0.75)", backdropFilter: "blur(24px)" }}
+          >
             <h2 className="font-display text-xl text-white flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-amber-300" />
               <span>Geral & Conta</span>
             </h2>
-            <p className="text-xs text-white/40 text-left">Mais opções em breve: temas personalizados, fontes bíblicas, notificações e backups.</p>
+            <p className="text-xs text-white/40 text-left">
+              Mais opções em breve: temas personalizados, fontes bíblicas, notificações e backups.
+            </p>
             <div className="pt-2 flex justify-start">
               <button
                 onClick={async () => {

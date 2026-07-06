@@ -13,21 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Loader2,
-  Plus,
+import {
+  Loader2,
   CalendarHeart,
   Sparkles,
   BookOpen,
-  Music,
-  Camera,
   CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import {
   Dialog,
   DialogContent,
@@ -190,196 +183,6 @@ function TimeCapsulePage() {
     saveMutation.mutate({ [field]: newArray });
   };
 
-  // Renderizador de seção
-  const Section = ({
-    title,
-    field,
-    icon,
-    placeholder,
-  }: {
-    title: string;
-    field: keyof TimeCapsule;
-    icon: React.ReactNode;
-    placeholder: string;
-  }) => {
-    const [inputValue, setInputValue] = useState("");
-    const items = (capsule?.[field] as string[]) || [];
-
-    return (
-      <AccordionItem value={field} className="border-none rounded-2xl mb-3 shadow-sm px-4" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
-        <AccordionTrigger className="hover:no-underline py-4">
-          <div className="flex items-center gap-3 text-white">
-            <div className="p-2 rounded-xl text-fuchsia-400" style={{ background: "oklch(0.65 0.18 255 / 0.15)" }}>{icon}</div>
-            <span className="font-medium text-lg">{title}</span>
-            {items.length > 0 && (
-              <span className="ml-2 bg-fuchsia-500/20 text-fuchsia-300 text-xs px-2 py-0.5 rounded-full">
-                {items.length}
-              </span>
-            )}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="pb-4">
-          <div className="space-y-4 pt-2">
-            <div className="flex gap-2">
-              <Input
-                placeholder={placeholder}
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddItem(field, inputValue);
-                    setInputValue("");
-                  }
-                }}
-                className="text-white placeholder:text-white/30 border-white/10"
-                style={{ background: "oklch(1 0 0 / 0.05)" }}
-              />
-              <Button
-                onClick={() => {
-                  handleAddItem(field, inputValue);
-                  setInputValue("");
-                }}
-                disabled={!inputValue.trim() || saveMutation.isPending}
-                className="bg-fuchsia-600 hover:bg-fuchsia-500 text-white border-0"
-              >
-                <Plus className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {items.length > 0 && (
-              <ul className="space-y-2 mt-4">
-                {items.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="flex justify-between items-start gap-2 p-3 rounded-xl animate-in slide-in-from-left-2"
-                    style={{ background: "oklch(1 0 0 / 0.05)", border: "1px solid oklch(1 0 0 / 0.05)" }}
-                  >
-                    <span className="text-sm leading-relaxed text-white/80">{item}</span>
-                    <button
-                      onClick={() => handleRemoveItem(field, idx)}
-                      className="text-white/40 hover:text-rose-400 shrink-0 transition-colors"
-                      title="Remover"
-                    >
-                      &times;
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    );
-  };
-
-  const MediaSection = ({
-    title,
-    field,
-    icon,
-    accept,
-  }: {
-    title: string;
-    field: "photos" | "audios";
-    icon: React.ReactNode;
-    accept: string;
-  }) => {
-    const items = (capsule?.[field] as string[]) || [];
-    const [uploading, setUploading] = useState(false);
-
-    const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (!file || !userId) return;
-
-      try {
-        setUploading(true);
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${userId}/${selectedMonth}/${Math.random()}.${fileExt}`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("capsule-media")
-          .upload(fileName, file);
-
-        if (uploadError) throw uploadError;
-
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("capsule-media").getPublicUrl(fileName);
-
-        handleAddItem(field, publicUrl);
-        toast.success("Arquivo enviado com sucesso!");
-      } catch (err: any) {
-        toast.error("Erro ao enviar arquivo: " + err.message);
-      } finally {
-        setUploading(false);
-      }
-    };
-
-    return (
-      <AccordionItem value={field} className="border-none rounded-2xl mb-3 shadow-sm px-4" style={{ background: "oklch(1 0 0 / 0.03)", border: "1px solid oklch(1 0 0 / 0.06)" }}>
-        <AccordionTrigger className="hover:no-underline py-4">
-          <div className="flex items-center gap-3 text-white">
-            <div className="p-2 rounded-xl text-fuchsia-400" style={{ background: "oklch(0.65 0.18 255 / 0.15)" }}>{icon}</div>
-            <span className="font-medium text-lg">{title}</span>
-            {items.length > 0 && (
-              <span className="ml-2 bg-fuchsia-500/20 text-fuchsia-300 text-xs px-2 py-0.5 rounded-full">
-                {items.length}
-              </span>
-            )}
-          </div>
-        </AccordionTrigger>
-        <AccordionContent className="pb-4">
-          <div className="space-y-4 pt-2">
-            <div>
-              <Input
-                type="file"
-                accept={accept}
-                onChange={handleUpload}
-                disabled={uploading || saveMutation.isPending}
-                className="cursor-pointer text-white file:text-fuchsia-300 file:bg-fuchsia-500/20 file:border-0 file:rounded file:px-3 file:py-1 file:mr-4 file:cursor-pointer border-white/10"
-                style={{ background: "oklch(1 0 0 / 0.05)" }}
-              />
-              {uploading && (
-                <p className="text-xs text-white/50 mt-2 animate-pulse">
-                  Enviando arquivo para a nuvem...
-                </p>
-              )}
-            </div>
-
-            {items.length > 0 && (
-              <ul className="space-y-4 mt-4">
-                {items.map((url, idx) => (
-                  <li
-                    key={idx}
-                    className="flex flex-col sm:flex-row justify-between items-start gap-4 p-3 rounded-xl"
-                    style={{ background: "oklch(1 0 0 / 0.05)", border: "1px solid oklch(1 0 0 / 0.05)" }}
-                  >
-                    {field === "photos" ? (
-                      <img
-                        src={url}
-                        alt="Cápsula"
-                        className="w-full sm:w-48 h-32 object-cover rounded shadow-sm"
-                        loading="lazy"
-                      />
-                    ) : (
-                      <audio controls src={url} className="w-full sm:w-auto" />
-                    )}
-                    <button
-                      onClick={() => handleRemoveItem(field, idx)}
-                      className="text-rose-400 hover:text-rose-300 text-sm font-medium shrink-0 transition-colors bg-rose-500/10 px-3 py-1 rounded-lg"
-                    >
-                      Excluir
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-        </AccordionContent>
-      </AccordionItem>
-    );
-  };
-
   const getMonthName = (yyyyMM: string) => {
     try {
       const date = parseISO(`${yyyyMM}-01`);
@@ -452,11 +255,6 @@ function TimeCapsulePage() {
                               <p className="text-sm text-white/50 mt-1 whitespace-pre-wrap line-clamp-3">
                                 {cap.free_notes.join("\n")}
                               </p>
-                            </div>
-                          )}
-                          {(cap.photos?.length > 0 || cap.audios?.length > 0 || cap.media_links?.length > 0) && (
-                            <div className="mt-2 text-xs text-fuchsia-400/80 font-medium">
-                              Contém mídias anexadas
                             </div>
                           )}
                         </div>
@@ -548,30 +346,6 @@ function TimeCapsulePage() {
                 </Button>
               </div>
             </div>
-
-            <Accordion
-              type="multiple"
-              className="w-full space-y-4"
-            >
-              <Section
-                field="media_links"
-                title="Links (Vídeos/Louvores)"
-                icon={<Music className="w-5 h-5" />}
-                placeholder="Ex: https://youtube.com/..."
-              />
-              <MediaSection
-                field="photos"
-                title="Fotos"
-                icon={<Camera className="w-5 h-5" />}
-                accept="image/*"
-              />
-              <MediaSection
-                field="audios"
-                title="Áudios"
-                icon={<Music className="w-5 h-5" />}
-                accept="audio/*"
-              />
-            </Accordion>
           </div>
         </div>
       </div>

@@ -1,14 +1,14 @@
-import fs from 'fs';
-import path from 'path';
+import fs from "fs";
+import path from "path";
 
-const envPath = path.resolve(process.cwd(), '.env');
+const envPath = path.resolve(process.cwd(), ".env");
 const env = {};
 if (fs.existsSync(envPath)) {
-  const envContent = fs.readFileSync(envPath, 'utf-8');
-  envContent.split(/\r?\n/).forEach(line => {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  envContent.split(/\r?\n/).forEach((line) => {
     const match = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
     if (match) {
-      let value = match[2] || '';
+      let value = match[2] || "";
       if (value.startsWith('"') && value.endsWith('"')) value = value.slice(1, -1);
       env[match[1]] = value;
     }
@@ -30,7 +30,7 @@ async function checkModels() {
   }
   const data = await res.json();
   console.log("Modelos Disponíveis:");
-  data.models.forEach(m => {
+  data.models.forEach((m) => {
     console.log(`- ${m.name} (${m.displayName})`);
   });
 }
