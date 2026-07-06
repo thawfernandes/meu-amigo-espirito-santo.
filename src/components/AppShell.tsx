@@ -1,23 +1,24 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, BookOpen, HeartHandshake, Target, GraduationCap } from "lucide-react";
+import { Home, BookOpen, HeartHandshake, Target, GraduationCap, CalendarHeart } from "lucide-react";
 import type { ReactNode } from "react";
 
 const nav = [
-  { to: "/dashboard",  label: "Início",   icon: Home,          color: "from-blue-500 to-indigo-600"   },
-  { to: "/biblia",     label: "Bíblia",   icon: BookOpen,      color: "from-amber-400 to-orange-500"  },
-  { to: "/estudos",    label: "Estudos",  icon: GraduationCap, color: "from-violet-500 to-purple-600" },
-  { to: "/vida",       label: "Vida",     icon: HeartHandshake,color: "from-rose-400 to-pink-600"     },
-  { to: "/desafios",   label: "Desafios", icon: Target,        color: "from-emerald-400 to-green-600" },
+  { to: "/dashboard",        label: "Início",   icon: Home,          color: "from-blue-500 to-indigo-600"   },
+  { to: "/biblia",           label: "Bíblia",   icon: BookOpen,      color: "from-amber-400 to-orange-500"  },
+  { to: "/estudos",          label: "Estudos",  icon: GraduationCap, color: "from-violet-500 to-purple-600" },
+  { to: "/vida",             label: "Vida",     icon: HeartHandshake,color: "from-rose-400 to-pink-600"     },
+  { to: "/capsula-do-tempo", label: "Cápsula",  icon: CalendarHeart, color: "from-fuchsia-400 to-purple-600" },
 ];
 
 const PAGE_TITLES: Record<string, { label: string; sub?: string; accent: string }> = {
-  "/dashboard":    { label: "Amigo,",         sub: "Espírito Santo",  accent: "from-blue-400 to-indigo-400"   },
-  "/biblia":       { label: "Bíblia",          sub: "Sua leitura",     accent: "from-amber-300 to-orange-400"  },
-  "/estudos":      { label: "Iniciar um",      sub: "Estudo",          accent: "from-violet-400 to-purple-400" },
-  "/vida":         { label: "Vida",            sub: "Espiritual",      accent: "from-rose-400 to-pink-400"     },
-  "/desafios":     { label: "Desafios",        sub: "do mês",          accent: "from-emerald-400 to-green-400" },
-  "/estatisticas": { label: "Estatísticas",    accent: "from-sky-400 to-blue-400"     },
-  "/configuracoes":{ label: "Configurações",   accent: "from-slate-400 to-gray-400"   },
+  "/dashboard":        { label: "Amigo,",         sub: "Espírito Santo",  accent: "from-blue-400 to-indigo-400"   },
+  "/biblia":           { label: "Bíblia",          sub: "Sua leitura",     accent: "from-amber-300 to-orange-400"  },
+  "/estudos":          { label: "Iniciar um",      sub: "Estudo",          accent: "from-violet-400 to-purple-400" },
+  "/vida":             { label: "Vida",            sub: "Espiritual",      accent: "from-rose-400 to-pink-400"     },
+  "/desafios":         { label: "Desafios",        sub: "do mês",          accent: "from-emerald-400 to-green-400" },
+  "/capsula-do-tempo": { label: "Cápsula",         sub: "do Tempo",        accent: "from-fuchsia-400 to-purple-400"},
+  "/estatisticas":     { label: "Estatísticas",    accent: "from-sky-400 to-blue-400"     },
+  "/configuracoes":    { label: "Configurações",   accent: "from-slate-400 to-gray-400"   },
 };
 
 export function AppShell({ children }: { children: ReactNode }) {

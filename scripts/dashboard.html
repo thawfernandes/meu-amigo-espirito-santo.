@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Tradução Exegética - Meu Amigo Espírito Santo</title>
+  <style>
+    :root {
+      --bg: #09090b;
+      --card: #18181b;
+      --border: #27272a;
+      --text: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --primary: #8b5cf6;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+    h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: var(--success);
+      box-shadow: 0 0 10px var(--success);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card-title {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+    .card-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .progress-bar-container {
+      width: 100%;
+      height: 8px;
+      background-color: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: var(--primary);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    .logs-container {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 1.25rem;
+      height: 350px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .log-line {
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .log-time {
+      color: var(--primary);
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1><div class="status-dot" id="status-dot"></div> Monitoramento da Tradução</h1>
+  
+  <div class="grid">
+    <div class="card">
+      <span class="card-title">Livro Atual</span>
+      <span class="card-value" id="val-current-book">-</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Capítulo Atual</span>
+      <span class="card-value" id="val-current-chapter">-</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Versículos Traduzidos</span>
+      <span class="card-value" id="val-verses-translated">0</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Progresso Geral (Bíblia)</span>
+      <span class="card-value" id="val-total-progress">0%</span>
+      <div class="progress-bar-container"><div class="progress-bar" id="bar-total"></div></div>
+      <span style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem" id="val-chapters-done">0 / 1189 Capítulos</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <span class="card-title">Tempo Médio / Capítulo</span>
+      <span class="card-value" id="val-avg-chapter-time">-</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Tempo Estimado Restante</span>
+      <span class="card-value" id="val-eta">-</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Tentativas de API / Erros</span>
+      <span class="card-value" style="color: var(--warning)" id="val-errors">0 / 0</span>
+    </div>
+    <div class="card">
+      <span class="card-title">Tempo em Rate Limit</span>
+      <span class="card-value" id="val-rate-limit-time">0s</span>
+    </div>
+  </div>
+
+  <div class="logs-container" id="logs-box">
+    <div class="log-line">Aguardando logs...</div>
+  </div>
+
+  <script>
+    async function updateDashboard() {
+      try {
+        const res = await fetch('translation-state.json?t=' + Date.now());
+        if (!res.ok) throw new Error("Não foi possível carregar o estado");
+        const state = await res.json();
+        
+        document.getElementById('val-current-book').textContent = state.currentBook || '-';
+        document.getElementById('val-current-chapter').textContent = state.currentChapter ? \`Capítulo \${state.currentChapter}\` : '-';
+        document.getElementById('val-verses-translated').textContent = state.versesTranslated || 0;
+        
+        const totalChapters = 1189;
+        const chaptersDone = state.chaptersCompleted || 0;
+        const pct = ((chaptersDone / totalChapters) * 100).toFixed(2);
+        
+        document.getElementById('val-total-progress').textContent = \`\${pct}%\`;
+        document.getElementById('bar-total').style.width = \`\${pct}%\`;
+        document.getElementById('val-chapters-done').textContent = \`\${chaptersDone} / \${totalChapters} Capítulos\`;
+        
+        document.getElementById('val-avg-chapter-time').textContent = state.avgTimePerChapter ? \`\${(state.avgTimePerChapter/1000).toFixed(1)}s\` : '-';
+        
+        if (state.etaMs) {
+          const h = Math.floor(state.etaMs / 3600000);
+          const m = Math.floor((state.etaMs % 3600000) / 60000);
+          document.getElementById('val-eta').textContent = \`\${h}h \${m}m\`;
+        } else {
+          document.getElementById('val-eta').textContent = '-';
+        }
+        
+        document.getElementById('val-errors').textContent = \`\${state.apiRetries || 0} / \${state.validationErrors || 0}\`;
+        document.getElementById('val-rate-limit-time').textContent = \`\${Math.floor((state.rateLimitWaitMs || 0)/1000)}s\`;
+
+        const logsBox = document.getElementById('logs-box');
+        if (state.logs && state.logs.length > 0) {
+          logsBox.innerHTML = state.logs.map(l => {
+            const time = new Date(l.timestamp).toLocaleTimeString();
+            return \`<div class="log-line"><span class="log-time">[\${time}]</span> \${l.message}</div>\`;
+          }).join('');
+        }
+        
+        document.getElementById('status-dot').style.backgroundColor = state.isRunning ? 'var(--success)' : 'var(--warning)';
+        
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status-dot').style.backgroundColor = 'var(--danger)';
+      }
+    }
+
+    setInterval(updateDashboard, 1000);
+    updateDashboard();
+  </script>
+</body>
+</html>

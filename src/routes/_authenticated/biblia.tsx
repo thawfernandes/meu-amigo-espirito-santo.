@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useCallback, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppShell } from "@/components/AppShell";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BIBLE_BOOKS, getBook, TRANSLATIONS, getVerses } from "@/lib/bible-data";
 import { getOriginalVerse } from "@/lib/original-translation";
 import { getChapterQuiz, BibleQuestion, recordAnswer, recordQuizCompletion } from "@/lib/quiz-data";
@@ -9,7 +10,7 @@ import { useAudio } from "@/components/audio/AudioProvider";
 import {
   BookOpen, ChevronLeft, ChevronRight, Minus, Plus,
   X, StickyNote, Check, Search, ChevronDown, BookMarked, Info, Award, HelpCircle,
-  BookPlus, Scroll
+  BookPlus, Scroll, History
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -105,6 +106,62 @@ function useDebouncedCallback(fn: (...args: any[]) => void, delay: number) {
   }, [fn, delay]);
 }
 
+function parseOriginalText(text: string, keyWords: any[] | null) {
+  if (!text) return text;
+  
+  const regex = /\{\{(.*?)\}\}/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+
+    const term = match[1];
+    const keyWordData = keyWords?.find(k => k.term === term);
+
+    if (keyWordData) {
+      parts.push(
+        <Popover key={match.index}>
+          <PopoverTrigger asChild>
+            <span className="text-amber-300 font-medium underline decoration-amber-300/30 decoration-dashed underline-offset-4 cursor-pointer hover:text-amber-200 transition-colors" onClick={(e) => e.stopPropagation()}>
+              {term}
+            </span>
+          </PopoverTrigger>
+          <PopoverContent className="w-64 p-4 bg-[#141419] border-white/10 text-white shadow-2xl rounded-2xl" onClick={e => e.stopPropagation()}>
+            <p className="text-[10px] text-amber-400 uppercase tracking-wider mb-2 font-semibold flex items-center gap-1.5">
+              <Scroll className="w-3 h-3" /> Termo Original
+            </p>
+            <div className="space-y-1">
+              <p className="text-2xl font-display mt-2">{keyWordData.word}</p>
+              <p className="text-[13px] text-white/60 italic">{keyWordData.transliteration}</p>
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <p className="text-sm text-white/90 leading-relaxed">{keyWordData.meaning}</p>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      );
+    } else {
+      parts.push(
+        <span key={match.index} className="text-amber-200/80">
+          {term}
+        </span>
+      );
+    }
+
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts.length > 0 ? <>{parts.map((p, i) => <span key={i}>{p}</span>)}</> : text;
+}
+
 export default function Bible() {
   const audio = useAudio();
   const navigate = useNavigate();
@@ -126,10 +183,12 @@ export default function Bible() {
   const [fetchedBibles, setFetchedBibles] = useState<Record<string, any>>({});
   const [loadingTranslation, setLoadingTranslation] = useState(false);
   const [showOriginalNote, setShowOriginalNote] = useState<number|null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [noteHistory, setNoteHistory] = useState<any[]>([]);
   // For "Add to notebook" feature
   const [addToNotebookVerse, setAddToNotebookVerse] = useState<number|null>(null);
   const [notebooks, setNotebooks] = useState<{id:string;title:string}[]>([]);
-  const [originalVerses, setOriginalVerses] = useState<Record<number, { text: string; notes: string | null; originalLang: string | null }>>({});
+  const [originalVerses, setOriginalVerses] = useState<Record<number, { text: string; notes: string | null; originalLang: string | null; keyWords: any[] | null }>>({});
   const prefsLoadedRef = useRef(false);
 
   useEffect(() => {
@@ -137,17 +196,18 @@ export default function Bible() {
       if (!abbr || !ch) return;
       const { data, error } = await supabase
         .from("original_bible_verses")
-        .select("verse, text, notes, original_lang")
+        .select("verse, text, notes, original_lang, key_words")
         .eq("book_abbr", abbr)
         .eq("chapter", ch);
         
       if (!error && data) {
-        const map: Record<number, { text: string; notes: string | null; originalLang: string | null }> = {};
+        const map: Record<number, { text: string; notes: string | null; originalLang: string | null; keyWords: any[] | null }> = {};
         data.forEach(row => {
           map[row.verse] = {
             text: row.text,
             notes: row.notes,
-            originalLang: row.original_lang
+            originalLang: row.original_lang,
+            keyWords: row.key_words
           };
         });
         setOriginalVerses(map);
@@ -597,7 +657,8 @@ export default function Bible() {
                 originalData = {
                   text: dbVerse.text,
                   notes: dbVerse.notes,
-                  originalLang: dbVerse.originalLang
+                  originalLang: dbVerse.originalLang,
+                  keyWords: dbVerse.keyWords
                 };
               } else {
                 const localOverride = getOriginalVerse(abbr, ch, v);
@@ -620,7 +681,7 @@ export default function Bible() {
                   } ${isSel ? "ring-1 ring-blue-400/40 bg-blue-400/5" : ""}`}
                 >
                   <sup className="text-amber-400/70 mr-2 text-[0.68em] font-bold">{v}</sup>
-                  {displayText}
+                  {translation === "ORIGINAL" && originalData ? parseOriginalText(displayText, originalData.keyWords) : displayText}
                   {hasNote && <span className="inline-block ml-1.5 w-1.5 h-1.5 rounded-full bg-violet-400 align-middle animate-pulse" />}
                 </p>
                 {/* Exegetical notes panel */}
@@ -853,7 +914,7 @@ export default function Bible() {
           <>
             <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }} exit={{ opacity:0 }}
               className="fixed inset-0 z-40" style={{ background:"oklch(0 0 0 / 0.7)", backdropFilter:"blur(8px)" }}
-              onClick={() => setNoteVerse(null)} />
+              onClick={() => { setNoteVerse(null); setShowHistory(false); }} />
             <motion.div
               initial={{ opacity:0, scale:0.95 }} animate={{ opacity:1, scale:1 }} exit={{ opacity:0, scale:0.95 }}
               className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50 rounded-3xl p-6 max-w-md mx-auto text-left"
@@ -870,27 +931,80 @@ export default function Bible() {
                   <StickyNote className="w-4 h-4 text-violet-400" />
                   {book.name} {ch}:{noteVerse}
                 </h2>
-                <button onClick={() => setNoteVerse(null)} className="p-1.5 rounded-full hover:bg-white/10 text-white/30">
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={async () => {
+                      if (!showHistory) {
+                        // Load history
+                        const { data: noteData } = await supabase.from('verse_notes')
+                          .select('id')
+                          .eq('user_id', uid)
+                          .eq('version', 'GLOBAL')
+                          .eq('book', book.name)
+                          .eq('chapter', ch)
+                          .eq('verse', noteVerse)
+                          .maybeSingle();
+                        
+                        if (noteData?.id) {
+                          const { data: hist } = await supabase.from('verse_notes_history')
+                            .select('*')
+                            .eq('note_id', noteData.id)
+                            .order('version_created_at', { ascending: false });
+                          setNoteHistory(hist || []);
+                        } else {
+                          setNoteHistory([]);
+                        }
+                      }
+                      setShowHistory(!showHistory);
+                    }} 
+                    className={`p-1.5 rounded-lg transition-all ${showHistory ? 'bg-violet-500/20 text-violet-300' : 'hover:bg-white/10 text-white/50 hover:text-white'}`}
+                    title="Ver histórico de versões"
+                  >
+                    <History className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => { setNoteVerse(null); setShowHistory(false); }} className="p-1.5 rounded-full hover:bg-white/10 text-white/30">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-              <textarea
-                autoFocus value={noteDraft} onChange={e => setNoteDraft(e.target.value)}
-                placeholder="Sua reflexão, insight ou observação..."
-                rows={5}
-                className="w-full rounded-2xl px-4 py-3 text-sm resize-none outline-none text-white placeholder:text-white/30 focus:ring-2 focus:ring-violet-500/30 transition-all"
-                style={{ background:"oklch(1 0 0 / 0.07)", border:"1px solid oklch(1 0 0 / 0.12)" }}
-              />
-              <div className="mt-4 flex justify-end gap-2">
-                <button onClick={() => setNoteVerse(null)} className="rounded-xl px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all">Cancelar</button>
-                <button
-                  onClick={async () => { await saveNote(noteVerse, noteDraft); setNoteVerse(null); }}
-                  className="rounded-xl px-4 py-2 text-sm text-white flex items-center gap-1.5 font-medium transition-all"
-                  style={{ background:"linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))", boxShadow:"0 4px 20px oklch(0.58 0.2 280 / 0.4)" }}
-                >
-                  <Check className="w-3.5 h-3.5" /> Salvar
-                </button>
-              </div>
+
+              {showHistory ? (
+                <div className="space-y-4 max-h-64 overflow-y-auto pr-2">
+                  {noteHistory.length === 0 ? (
+                    <p className="text-sm text-white/50 text-center py-4">Nenhum histórico anterior encontrado.</p>
+                  ) : (
+                    noteHistory.map((h, i) => (
+                      <div key={i} className="p-3 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                        <div className="text-[10px] text-white/40 uppercase tracking-wider flex justify-between">
+                          <span>Versão Anterior</span>
+                          <span>{new Date(h.version_created_at).toLocaleDateString()}</span>
+                        </div>
+                        <p className="text-sm text-white/80 whitespace-pre-wrap">{h.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              ) : (
+                <>
+                  <textarea
+                    autoFocus value={noteDraft} onChange={e => setNoteDraft(e.target.value)}
+                    placeholder="Sua reflexão, insight ou observação..."
+                    rows={5}
+                    className="w-full rounded-2xl px-4 py-3 text-sm resize-none outline-none text-white placeholder:text-white/30 focus:ring-2 focus:ring-violet-500/30 transition-all"
+                    style={{ background:"oklch(1 0 0 / 0.07)", border:"1px solid oklch(1 0 0 / 0.12)" }}
+                  />
+                  <div className="mt-4 flex justify-end gap-2">
+                    <button onClick={() => { setNoteVerse(null); setShowHistory(false); }} className="rounded-xl px-4 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 transition-all">Cancelar</button>
+                    <button
+                      onClick={async () => { await saveNote(noteVerse, noteDraft); setNoteVerse(null); setShowHistory(false); }}
+                      className="rounded-xl px-4 py-2 text-sm text-white flex items-center gap-1.5 font-medium transition-all"
+                      style={{ background:"linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))", boxShadow:"0 4px 20px oklch(0.58 0.2 280 / 0.4)" }}
+                    >
+                      <Check className="w-3.5 h-3.5" /> Salvar
+                    </button>
+                  </div>
+                </>
+              )}
             </motion.div>
           </>
         )}

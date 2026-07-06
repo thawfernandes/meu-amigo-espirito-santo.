@@ -1,0 +1,1813 @@
+[
+  {
+    "id": "f712d676-ae82-4014-8623-ca9c23f6f2a7",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 1,
+    "text": "E aconteceu nos dias de julgar os juízes, e houve fome na terra. E foi um homem de Belém de Judá para peregrinar nos campos de Moabe, ele e sua esposa e seus dois filhos.",
+    "original_text": "וַיְהִ֗י בִּימֵי֙ שְׁפֹ֣ט הַשֹּׁפְטִ֔ים וַיְהִ֥י רָעָ֖ב בָּאָ֑רֶץ וַיֵּ֨לֶךְ אִ֜ישׁ מִבֵּ֧ית לֶ֣חֶם יְהוּדָ֗ה לָגוּר֙ בִּשְׂדֵ֣י מֹואָ֔ב ה֥וּא וְאִשְׁתֹּ֖ו וּשְׁנֵ֥י בָנָֽיו׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַיְהִ֗י",
+        "meaning": "E aconteceu",
+        "transliteration": "vayhi"
+      },
+      {
+        "word": "בִּימֵי֙",
+        "meaning": "nos dias de",
+        "transliteration": "bimei"
+      },
+      {
+        "word": "שְׁפֹ֣ט",
+        "meaning": "julgar (infinitivo)",
+        "transliteration": "shefot"
+      },
+      {
+        "word": "הַשֹּׁפְטִ֔ים",
+        "meaning": "os juízes",
+        "transliteration": "hashof'tim"
+      },
+      {
+        "word": "רָעָ֖ב",
+        "meaning": "fome",
+        "transliteration": "ra'av"
+      },
+      {
+        "word": "בָּאָ֑רֶץ",
+        "meaning": "na terra",
+        "transliteration": "ba'aretz"
+      },
+      {
+        "word": "וַיֵּ֨לֶךְ",
+        "meaning": "E foi",
+        "transliteration": "vayyelekh"
+      },
+      {
+        "word": "אִ֜ישׁ",
+        "meaning": "homem",
+        "transliteration": "ish"
+      },
+      {
+        "word": "מִבֵּ֧ית לֶ֣חֶם",
+        "meaning": "de Belém",
+        "transliteration": "mibbeit lekhem"
+      },
+      {
+        "word": "יְהוּדָ֗ה",
+        "meaning": "Judá",
+        "transliteration": "yehudah"
+      },
+      {
+        "word": "לָגוּר֙",
+        "meaning": "para peregrinar / residir como estrangeiro",
+        "transliteration": "lagur"
+      },
+      {
+        "word": "בִּשְׂדֵ֣י",
+        "meaning": "nos campos de",
+        "transliteration": "bisdei"
+      },
+      {
+        "word": "מֹואָ֔ב",
+        "meaning": "Moabe",
+        "transliteration": "mo'av"
+      },
+      {
+        "word": "ה֥וּא",
+        "meaning": "ele",
+        "transliteration": "hu"
+      },
+      {
+        "word": "וְאִשְׁתֹּ֖ו",
+        "meaning": "e sua esposa",
+        "transliteration": "ve'ishto"
+      },
+      {
+        "word": "וּשְׁנֵ֥י",
+        "meaning": "e dois",
+        "transliteration": "ushnei"
+      },
+      {
+        "word": "בָנָֽיו׃",
+        "meaning": "seus filhos",
+        "transliteration": "banav"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "0fd685a2-b1f5-4ed7-9123-2fb7313eecc6",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 2,
+    "text": "E o nome do homem era Elimeleque, e o nome de sua esposa Noemi, e o nome de seus dois filhos Malom e Quiliom, efrateus, de Belém de Judá. E chegaram aos campos de Moabe e ficaram lá.",
+    "original_text": "וְשֵׁ֣ם הָאִ֣ישׁ אֱ‍ֽלִימֶ֡לֶךְ וְשֵׁם֩ אִשְׁתֹּ֨ו נָעֳמִ֜י וְשֵׁ֥ם שְׁנֵֽי־בָנָ֣יו ׀ מַחְלֹ֤ון וְכִלְיֹון֙ אֶפְרָתִ֔ים מִבֵּ֥ית לֶ֖חֶם יְהוּדָ֑ה וַיָּבֹ֥אוּ שְׂדֵי־מֹואָ֖ב וַיִּֽהְיוּ־שָֽׁם׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וְשֵׁ֣ם",
+        "meaning": "E o nome de",
+        "transliteration": "veshem"
+      },
+      {
+        "word": "הָאִ֣ישׁ",
+        "meaning": "o homem",
+        "transliteration": "ha'ish"
+      },
+      {
+        "word": "אֱ‍ֽלִימֶ֡לֶךְ",
+        "meaning": "Elimeleque",
+        "transliteration": "elimelekh"
+      },
+      {
+        "word": "אִשְׁתֹּ֨ו",
+        "meaning": "sua esposa",
+        "transliteration": "ishto"
+      },
+      {
+        "word": "נָעֳמִ֜י",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "שְׁנֵֽי־בָנָ֣יו",
+        "meaning": "seus dois filhos",
+        "transliteration": "shnei vanav"
+      },
+      {
+        "word": "מַחְלֹ֤ון",
+        "meaning": "Malom",
+        "transliteration": "makhlon"
+      },
+      {
+        "word": "וְכִלְיֹון֙",
+        "meaning": "e Quiliom",
+        "transliteration": "vekhilyon"
+      },
+      {
+        "word": "אֶפְרָתִ֔ים",
+        "meaning": "Efrateus",
+        "transliteration": "efratim"
+      },
+      {
+        "word": "מִבֵּ֥ית לֶ֖חֶם",
+        "meaning": "de Belém",
+        "transliteration": "mibbeit lekhem"
+      },
+      {
+        "word": "יְהוּדָ֑ה",
+        "meaning": "Judá",
+        "transliteration": "yehudah"
+      },
+      {
+        "word": "וַיָּבֹ֥אוּ",
+        "meaning": "E chegaram",
+        "transliteration": "vayyavo'u"
+      },
+      {
+        "word": "שְׂדֵי־מֹואָ֖ב",
+        "meaning": "aos campos de Moabe",
+        "transliteration": "sdei mo'av"
+      },
+      {
+        "word": "וַיִּֽהְיוּ־שָֽׁם׃",
+        "meaning": "e ficaram lá",
+        "transliteration": "vayyihyu-sham"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "1266b628-f206-451d-b627-f5b7f69115ce",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 3,
+    "text": "E morreu Elimeleque, marido de Noemi. E ficou ela e seus dois filhos.",
+    "original_text": "וַיָּ֥מָת אֱלִימֶ֖לֶךְ אִ֣ישׁ נָעֳמִ֑י וַתִּשָּׁאֵ֥ר הִ֖יא וּשְׁנֵ֥י בָנֶֽיהָ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַיָּ֥מָת",
+        "meaning": "E morreu",
+        "transliteration": "vayyamot"
+      },
+      {
+        "word": "אֱלִימֶ֖לֶךְ",
+        "meaning": "Elimeleque",
+        "transliteration": "elimelekh"
+      },
+      {
+        "word": "אִ֣ישׁ",
+        "meaning": "marido de",
+        "transliteration": "ish"
+      },
+      {
+        "word": "נָעֳמִ֑י",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "וַתִּשָּׁאֵ֥ר",
+        "meaning": "E ficou",
+        "transliteration": "vattisha'er"
+      },
+      {
+        "word": "הִ֖יא",
+        "meaning": "ela",
+        "transliteration": "hi"
+      },
+      {
+        "word": "וּשְׁנֵ֥י",
+        "meaning": "e os dois",
+        "transliteration": "ushnei"
+      },
+      {
+        "word": "בָנֶֽיהָ׃",
+        "meaning": "seus filhos",
+        "transliteration": "baneiha"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "d3fbb872-c918-4f4c-b289-755238000dd1",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 4,
+    "text": "E tomaram para si mulheres moabitas. O nome de uma era Orfa, e o nome da segunda Rute. E habitaram lá como dez anos.",
+    "original_text": "וַיִּשְׂא֣וּ לָהֶ֗ם נָשִׁים֙ מֹֽאֲבִיֹּ֔ות שֵׁ֤ם הָֽאַחַת֙ עָרְפָּ֔ה וְשֵׁ֥ם הַשֵּׁנִ֖ית ר֑וּת וַיֵּ֥שְׁבוּ שָׁ֖ם כְּעֶ֥שֶׂר שָׁנִֽים׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַיִּשְׂא֣וּ",
+        "meaning": "E tomaram",
+        "transliteration": "vayyis'u"
+      },
+      {
+        "word": "לָהֶ֗ם",
+        "meaning": "para eles",
+        "transliteration": "lahem"
+      },
+      {
+        "word": "נָשִׁים֙",
+        "meaning": "mulheres",
+        "transliteration": "nashim"
+      },
+      {
+        "word": "מֹֽאֲבִיֹּ֔ות",
+        "meaning": "moabitas",
+        "transliteration": "mo'aviyot"
+      },
+      {
+        "word": "שֵׁ֤ם",
+        "meaning": "nome de",
+        "transliteration": "shem"
+      },
+      {
+        "word": "הָֽאַחַת֙",
+        "meaning": "a uma",
+        "transliteration": "ha'akhat"
+      },
+      {
+        "word": "עָרְפָּ֔ה",
+        "meaning": "Orfa",
+        "transliteration": "orpha"
+      },
+      {
+        "word": "הַשֵּׁנִ֖ית",
+        "meaning": "a segunda",
+        "transliteration": "hashshenit"
+      },
+      {
+        "word": "ר֑וּת",
+        "meaning": "Rute",
+        "transliteration": "rut"
+      },
+      {
+        "word": "וַיֵּ֥שְׁבוּ",
+        "meaning": "E habitaram",
+        "transliteration": "vayyeshvu"
+      },
+      {
+        "word": "שָׁ֖ם",
+        "meaning": "lá",
+        "transliteration": "sham"
+      },
+      {
+        "word": "כְּעֶ֥שֶׂר",
+        "meaning": "como dez",
+        "transliteration": "ke'eser"
+      },
+      {
+        "word": "שָׁנִֽים׃",
+        "meaning": "anos",
+        "transliteration": "shanim"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "a707663d-c610-40ca-a89f-952dfb7526eb",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 5,
+    "text": "E morreram também ambos, Malom e Quiliom. E ficou a mulher dos seus dois filhos e de seu marido.",
+    "original_text": "וַיָּמ֥וּתוּ גַם־שְׁנֵיהֶ֖ם מַחְלֹ֣ון וְכִלְיֹ֑ון וַתִּשָּׁאֵר֙ הָֽאִשָּׁ֔ה מִשְּׁנֵ֥י יְלָדֶ֖יהָ וּמֵאִישָֽׁהּ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַיָּמ֥וּתוּ",
+        "meaning": "E morreram",
+        "transliteration": "vayyamutu"
+      },
+      {
+        "word": "גַם־שְׁנֵיהֶ֖ם",
+        "meaning": "também ambos",
+        "transliteration": "gam-shneihem"
+      },
+      {
+        "word": "מַחְלֹ֣ון",
+        "meaning": "Malom",
+        "transliteration": "makhlon"
+      },
+      {
+        "word": "וְכִלְיֹ֑ון",
+        "meaning": "e Quiliom",
+        "transliteration": "vekhilyon"
+      },
+      {
+        "word": "וַתִּשָּׁאֵר֙",
+        "meaning": "E ficou",
+        "transliteration": "vattisha'er"
+      },
+      {
+        "word": "הָֽאִשָּׁ֔ה",
+        "meaning": "a mulher",
+        "transliteration": "ha'ishah"
+      },
+      {
+        "word": "מִשְּׁנֵ֥י",
+        "meaning": "dos dois de",
+        "transliteration": "mishnei"
+      },
+      {
+        "word": "יְלָדֶ֖יהָ",
+        "meaning": "seus filhos",
+        "transliteration": "yeladeiha"
+      },
+      {
+        "word": "וּמֵאִישָֽׁהּ׃",
+        "meaning": "e de seu marido",
+        "transliteration": "ume'isha"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "c50f3dc3-0f63-4a89-b9a6-c847f0dea064",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 6,
+    "text": "E se levantou ela e suas noras e voltou dos campos de Moabe, porque ouviu nos campos de Moabe que YHWH (Senhor) visitou o seu povo para lhes dar pão.",
+    "original_text": "וַתָּ֤קָם הִיא֙ וְכַלֹּתֶ֔יהָ וַתָּ֖שָׁב מִשְּׂדֵ֣י מֹואָ֑ב כִּ֤י שָֽׁמְעָה֙ בִּשְׂדֵ֣ה מֹואָ֔ב כִּֽי־פָקַ֤ד יְהוָה֙ אֶת־עַמֹּ֔ו לָתֵ֥ת לָהֶ֖ם לָֽחֶם׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתָּ֤קָם",
+        "meaning": "E se levantou",
+        "transliteration": "vattakam"
+      },
+      {
+        "word": "הִיא֙",
+        "meaning": "ela",
+        "transliteration": "hi"
+      },
+      {
+        "word": "וְכַלֹּתֶ֔יהָ",
+        "meaning": "e suas noras",
+        "transliteration": "vekalloteiha"
+      },
+      {
+        "word": "וַתָּ֖שָׁב",
+        "meaning": "e voltou",
+        "transliteration": "vattashav"
+      },
+      {
+        "word": "מִשְּׂדֵ֣י",
+        "meaning": "dos campos de",
+        "transliteration": "misdei"
+      },
+      {
+        "word": "מֹואָ֑ב",
+        "meaning": "Moabe",
+        "transliteration": "mo'av"
+      },
+      {
+        "word": "כִּ֤י",
+        "meaning": "porque",
+        "transliteration": "ki"
+      },
+      {
+        "word": "שָֽׁמְעָה֙",
+        "meaning": "ouviu",
+        "transliteration": "sham'a"
+      },
+      {
+        "word": "בִּשְׂדֵ֣ה",
+        "meaning": "nos campos de",
+        "transliteration": "bisdeh"
+      },
+      {
+        "word": "מֹואָ֔ב",
+        "meaning": "Moabe",
+        "transliteration": "mo'av"
+      },
+      {
+        "word": "פָקַ֤ד",
+        "meaning": "visitou",
+        "transliteration": "fakad"
+      },
+      {
+        "word": "יְהוָה֙",
+        "meaning": "YHWH (Senhor)",
+        "transliteration": "YHWH"
+      },
+      {
+        "word": "אֶת־עַמֹּ֔ו",
+        "meaning": "seu povo",
+        "transliteration": "et-ammo"
+      },
+      {
+        "word": "לָתֵ֥ת",
+        "meaning": "para dar",
+        "transliteration": "latet"
+      },
+      {
+        "word": "לָהֶ֖ם",
+        "meaning": "a eles",
+        "transliteration": "lahem"
+      },
+      {
+        "word": "לָֽחֶם׃",
+        "meaning": "pão",
+        "transliteration": "lekhem"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "c816aefe-3c6d-4074-b4ab-9feb8bb98431",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 7,
+    "text": "E saiu do lugar onde estava, e suas duas noras com ela. E caminharam no caminho para voltar à terra de Judá.",
+    "original_text": "וַתֵּצֵ֗א מִן־הַמָּקֹום֙ אֲשֶׁ֣ר הָיְתָה־שָׁ֔מָּה וּשְׁתֵּ֥י כַלֹּתֶ֖יהָ עִמָּ֑הּ וַתֵּלַ֣כְנָה בַדֶּ֔רֶךְ לָשׁ֖וּב אֶל־אֶ֥רֶץ יְהוּדָֽה׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֵּצֵ֗א",
+        "meaning": "E saiu",
+        "transliteration": "vattetzei"
+      },
+      {
+        "word": "מִן־הַמָּקֹום֙",
+        "meaning": "do lugar",
+        "transliteration": "min-hammaqom"
+      },
+      {
+        "word": "אֲשֶׁ֣ר",
+        "meaning": "onde",
+        "transliteration": "asher"
+      },
+      {
+        "word": "הָיְתָה־שָׁ֔מָּה",
+        "meaning": "estava lá",
+        "transliteration": "haytah-shammah"
+      },
+      {
+        "word": "וּשְׁתֵּ֥י",
+        "meaning": "e as duas",
+        "transliteration": "ushttei"
+      },
+      {
+        "word": "כַלֹּתֶ֖יהָ",
+        "meaning": "suas noras",
+        "transliteration": "kalloteiha"
+      },
+      {
+        "word": "עִמָּ֑הּ",
+        "meaning": "com ela",
+        "transliteration": "immah"
+      },
+      {
+        "word": "וַתֵּלַ֣כְנָה",
+        "meaning": "E caminharam",
+        "transliteration": "vattelakhnah"
+      },
+      {
+        "word": "בַדֶּ֔רֶךְ",
+        "meaning": "no caminho",
+        "transliteration": "baderekh"
+      },
+      {
+        "word": "לָשׁ֖וּב",
+        "meaning": "para voltar",
+        "transliteration": "lashuv"
+      },
+      {
+        "word": "אֶל־אֶ֥רֶץ",
+        "meaning": "à terra de",
+        "transliteration": "el-eretz"
+      },
+      {
+        "word": "יְהוּדָֽה׃",
+        "meaning": "Judá",
+        "transliteration": "yehudah"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "986e7007-44c5-47c6-bf8e-3ad8ca93b184",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 8,
+    "text": "E disse Noemi às suas duas noras: Ide, voltai cada uma para a casa de sua mãe. Que YHWH (Senhor) faça convosco amor leal, como fizestes com os mortos e comigo.",
+    "original_text": "וַתֹּ֤אמֶר נָעֳמִי֙ לִשְׁתֵּ֣י כַלֹּתֶ֔יהָ לֵ֣כְנָה שֹּׁ֔בְנָה אִשָּׁ֖ה לְבֵ֣ית אִמָּ֑הּ [יַעֲשֶׂה כ] (יַ֣עַשׂ ק) יְהוָ֤ה עִמָּכֶם֙ חֶ֔סֶד כַּאֲשֶׁ֧ר עֲשִׂיתֶ֛ם עִם־הַמֵּתִ֖ים וְעִמָּדִֽי׃",
+    "notes": "A tradução segue o Qere (יַ֣עַשׂ) que é a forma de leitura tradicionalmente aceita.",
+    "key_words": [
+      {
+        "word": "וַתֹּ֤אמֶר",
+        "meaning": "E disse",
+        "transliteration": "vattomer"
+      },
+      {
+        "word": "נָעֳמִי֙",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "לִשְׁתֵּ֣י",
+        "meaning": "às duas",
+        "transliteration": "lishttei"
+      },
+      {
+        "word": "כַלֹּתֶ֔יהָ",
+        "meaning": "suas noras",
+        "transliteration": "kalloteiha"
+      },
+      {
+        "word": "לֵ֣כְנָה",
+        "meaning": "ide",
+        "transliteration": "lekhnah"
+      },
+      {
+        "word": "שֹּׁ֔בְנָה",
+        "meaning": "voltai",
+        "transliteration": "shovnah"
+      },
+      {
+        "word": "אִשָּׁ֖ה",
+        "meaning": "cada mulher",
+        "transliteration": "ishah"
+      },
+      {
+        "word": "לְבֵ֣ית",
+        "meaning": "para a casa de",
+        "transliteration": "leveit"
+      },
+      {
+        "word": "אִמָּ֑הּ",
+        "meaning": "sua mãe",
+        "transliteration": "immah"
+      },
+      {
+        "word": "יַ֣עַשׂ",
+        "meaning": "Que faça",
+        "transliteration": "ya'as"
+      },
+      {
+        "word": "יְהוָ֤ה",
+        "meaning": "YHWH (Senhor)",
+        "transliteration": "YHWH"
+      },
+      {
+        "word": "עִמָּכֶם֙",
+        "meaning": "convosco",
+        "transliteration": "immakhem"
+      },
+      {
+        "word": "חֶ֔סֶד",
+        "meaning": "amor leal",
+        "transliteration": "khesed"
+      },
+      {
+        "word": "כַּאֲשֶׁ֧ר",
+        "meaning": "como",
+        "transliteration": "ka'asher"
+      },
+      {
+        "word": "עֲשִׂיתֶ֛ם",
+        "meaning": "fizestes",
+        "transliteration": "asitem"
+      },
+      {
+        "word": "עִם־הַמֵּתִ֖ים",
+        "meaning": "com os mortos",
+        "transliteration": "im-hammetim"
+      },
+      {
+        "word": "וְעִמָּדִֽי׃",
+        "meaning": "e comigo",
+        "transliteration": "ve'immadi"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "ad39e551-c2da-464f-a23c-2d59bf2b0771",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 9,
+    "text": "Que YHWH (Senhor) vos dê, e acheis descanso, cada mulher na casa de seu marido. E as beijou, e levantaram sua voz e choraram.",
+    "original_text": "יִתֵּ֤ן יְהוָה֙ לָכֶ֔ם וּמְצֶ֣אןָ מְנוּחָ֔ה אִשָּׁ֖ה בֵּ֣ית אִישָׁ֑הּ וַתִּשַּׁ֣ק לָהֶ֔ן וַתִּשֶּׂ֥אנָה קֹולָ֖ן וַתִּבְכֶּֽינָה׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "יִתֵּ֤ן",
+        "meaning": "Que dê",
+        "transliteration": "yitten"
+      },
+      {
+        "word": "יְהוָה֙",
+        "meaning": "YHWH (Senhor)",
+        "transliteration": "YHWH"
+      },
+      {
+        "word": "לָכֶ֔ם",
+        "meaning": "a vós",
+        "transliteration": "lakhem"
+      },
+      {
+        "word": "וּמְצֶ֣אןָ",
+        "meaning": "e acheis",
+        "transliteration": "umtze'na"
+      },
+      {
+        "word": "מְנוּחָ֔ה",
+        "meaning": "descanso",
+        "transliteration": "menukhah"
+      },
+      {
+        "word": "אִשָּׁ֖ה",
+        "meaning": "cada mulher",
+        "transliteration": "ishah"
+      },
+      {
+        "word": "בֵּ֣ית",
+        "meaning": "na casa de",
+        "transliteration": "beit"
+      },
+      {
+        "word": "אִישָׁ֑הּ",
+        "meaning": "seu marido",
+        "transliteration": "isha"
+      },
+      {
+        "word": "וַתִּשַּׁ֣ק",
+        "meaning": "E beijou",
+        "transliteration": "vattishaq"
+      },
+      {
+        "word": "לָהֶ֔ן",
+        "meaning": "a elas",
+        "transliteration": "lahen"
+      },
+      {
+        "word": "וַתִּשֶּׂ֥אנָה",
+        "meaning": "E levantaram",
+        "transliteration": "vattissa'nah"
+      },
+      {
+        "word": "קֹולָ֖ן",
+        "meaning": "sua voz",
+        "transliteration": "qolan"
+      },
+      {
+        "word": "וַתִּבְכֶּֽינָה׃",
+        "meaning": "e choraram",
+        "transliteration": "vattibkenah"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "4cbc49c6-01c6-4ffc-904d-1e302750e1ce",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 10,
+    "text": "E lhe disseram: Certamente contigo voltaremos ao teu povo.",
+    "original_text": "וַתֹּאמַ֖רְנָה־לָּ֑הּ כִּי־אִתָּ֥ךְ נָשׁ֖וּב לְעַמֵּֽךְ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֹּאמַ֖רְנָה־לָּ֑הּ",
+        "meaning": "E lhe disseram",
+        "transliteration": "vattomarnah-lah"
+      },
+      {
+        "word": "כִּי־אִתָּ֥ךְ",
+        "meaning": "certamente contigo",
+        "transliteration": "ki-ittakh"
+      },
+      {
+        "word": "נָשׁ֖וּב",
+        "meaning": "voltaremos",
+        "transliteration": "nashuv"
+      },
+      {
+        "word": "לְעַמֵּֽךְ׃",
+        "meaning": "ao teu povo",
+        "transliteration": "le'ammekh"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "4671a53e-c04f-4130-89b5-435aa3e737af",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 11,
+    "text": "E disse Noemi: Voltai, minhas filhas. Por que ireis comigo? Tenho ainda filhos nas minhas entranhas para que vos sejam por maridos?",
+    "original_text": "וַתֹּ֤אמֶר נָעֳמִי֙ שֹׁ֣בְנָה בְנֹתַ֔י לָ֥מָּה תֵלַ֖כְנָה עִמִּ֑י הַֽעֹֽוד־לִ֤י בָנִים֙ בְּֽמֵעַ֔י וְהָי֥וּ לָכֶ֖ם לַאֲנָשִֽׁים׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֹּ֤אמֶר",
+        "meaning": "E disse",
+        "transliteration": "vattomer"
+      },
+      {
+        "word": "נָעֳמִי֙",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "שֹׁ֣בְנָה",
+        "meaning": "voltai",
+        "transliteration": "shovnah"
+      },
+      {
+        "word": "בְנֹתַ֔י",
+        "meaning": "minhas filhas",
+        "transliteration": "benotai"
+      },
+      {
+        "word": "לָ֥מָּה",
+        "meaning": "por que",
+        "transliteration": "lammah"
+      },
+      {
+        "word": "תֵלַ֖כְנָה",
+        "meaning": "ireis",
+        "transliteration": "telakhnah"
+      },
+      {
+        "word": "עִמִּ֑י",
+        "meaning": "comigo",
+        "transliteration": "immi"
+      },
+      {
+        "word": "הַֽעֹֽוד־לִ֤י",
+        "meaning": "Tenho ainda eu?",
+        "transliteration": "ha'od-li"
+      },
+      {
+        "word": "בָנִים֙",
+        "meaning": "filhos",
+        "transliteration": "banim"
+      },
+      {
+        "word": "בְּֽמֵעַ֔י",
+        "meaning": "nas minhas entranhas",
+        "transliteration": "beme'ay"
+      },
+      {
+        "word": "וְהָי֥וּ",
+        "meaning": "e fossem",
+        "transliteration": "vehayu"
+      },
+      {
+        "word": "לָכֶ֖ם",
+        "meaning": "para vós",
+        "transliteration": "lakhem"
+      },
+      {
+        "word": "לַאֲנָשִֽׁים׃",
+        "meaning": "por maridos",
+        "transliteration": "la'anashim"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "d6fb018f-0777-4d4b-abae-d700259ca440",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 12,
+    "text": "Voltai, minhas filhas, ide, porque envelheci para ser de um homem. Porque, mesmo se eu dissesse: \"Tenho esperança\", ou se eu fosse de um homem esta noite, e também gerasse filhos,",
+    "original_text": "שֹׁ֤בְנָה בְנֹתַי֙ לֵ֔כְןָ כִּ֥י זָקַ֖נְתִּי מִהְיֹ֣ות לְאִ֑ישׁ כִּ֤י אָמַ֙רְתִּי֙ יֶשׁ־לִ֣י תִקְוָ֔ה גַּ֣ם הָיִ֤יתִי הַלַּ֙יְלָה֙ לְאִ֔ישׁ וְגַ֖ם יָלַ֥דְתִּי בָנִֽים׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "שֹׁ֤בְנָה",
+        "meaning": "Voltai",
+        "transliteration": "shovnah"
+      },
+      {
+        "word": "בְנֹתַי֙",
+        "meaning": "minhas filhas",
+        "transliteration": "benotai"
+      },
+      {
+        "word": "לֵ֔כְןָ",
+        "meaning": "ide",
+        "transliteration": "lekhna"
+      },
+      {
+        "word": "כִּ֥י",
+        "meaning": "porque",
+        "transliteration": "ki"
+      },
+      {
+        "word": "זָקַ֖נְתִּי",
+        "meaning": "envelheci",
+        "transliteration": "zaqanti"
+      },
+      {
+        "word": "מִהְיֹ֣ות",
+        "meaning": "de ser",
+        "transliteration": "mihyot"
+      },
+      {
+        "word": "לְאִ֑ישׁ",
+        "meaning": "de um homem",
+        "transliteration": "le'ish"
+      },
+      {
+        "word": "אָמַ֙רְתִּי֙",
+        "meaning": "eu dissesse",
+        "transliteration": "amarti"
+      },
+      {
+        "word": "יֶשׁ־לִ֣י",
+        "meaning": "eu tenho",
+        "transliteration": "yesh-li"
+      },
+      {
+        "word": "תִקְוָ֔ה",
+        "meaning": "esperança",
+        "transliteration": "tiqvah"
+      },
+      {
+        "word": "גַּ֣ם",
+        "meaning": "também / mesmo se",
+        "transliteration": "gam"
+      },
+      {
+        "word": "הָיִ֤יתִי",
+        "meaning": "eu fosse",
+        "transliteration": "hayiti"
+      },
+      {
+        "word": "הַלַּ֙יְלָה֙",
+        "meaning": "esta noite",
+        "transliteration": "hallaylah"
+      },
+      {
+        "word": "לְאִ֔ישׁ",
+        "meaning": "de um homem",
+        "transliteration": "le'ish"
+      },
+      {
+        "word": "וְגַ֖ם",
+        "meaning": "e também",
+        "transliteration": "vegam"
+      },
+      {
+        "word": "יָלַ֥דְתִּי",
+        "meaning": "eu gerasse",
+        "transliteration": "yaladeti"
+      },
+      {
+        "word": "בָנִֽים׃",
+        "meaning": "filhos",
+        "transliteration": "banim"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "2be151c6-0906-45f0-8204-ae025692d3f0",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 13,
+    "text": "Esperá-los-íeis até que cresçam? Atrasar-vos-íeis por eles para não ser de um homem? Não, minhas filhas, porque amargo é para mim muito mais do que para vós, pois a mão de YHWH (Senhor) saiu contra mim.",
+    "original_text": "הֲלָהֵ֣ן ׀ תְּשַׂבֵּ֗רְנָה עַ֚ד אֲשֶׁ֣ר יִגְדָּ֔לוּ הֲלָהֵן֙ תֵּֽעָגֵ֔נָה לְבִלְתִּ֖י הֱיֹ֣ות לְאִ֑ישׁ אַ֣ל בְּנֹתַ֗י כִּֽי־מַר־לִ֤י מְאֹד֙ מִכֶּ֔ם כִּֽי־יָצְאָ֥ה בִ֖י יַד־יְהוָֽה׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "הֲלָהֵ֣ן",
+        "meaning": "Esperá-los-íeis?",
+        "transliteration": "halahen"
+      },
+      {
+        "word": "תְּשַׂבֵּ֗רְנָה",
+        "meaning": "esperareis",
+        "transliteration": "tesabbernah"
+      },
+      {
+        "word": "עַ֚ד אֲשֶׁ֣ר",
+        "meaning": "até que",
+        "transliteration": "ad asher"
+      },
+      {
+        "word": "יִגְדָּ֔לוּ",
+        "meaning": "cresçam",
+        "transliteration": "yigdelu"
+      },
+      {
+        "word": "תֵּֽעָגֵ֔נָה",
+        "meaning": "vos atrasareis / vos prenderais",
+        "transliteration": "te'agenah"
+      },
+      {
+        "word": "לְבִלְתִּ֖י",
+        "meaning": "para não",
+        "transliteration": "lebilti"
+      },
+      {
+        "word": "הֱיֹ֣ות",
+        "meaning": "ser / ter",
+        "transliteration": "he'yot"
+      },
+      {
+        "word": "לְאִ֑ישׁ",
+        "meaning": "de um homem",
+        "transliteration": "le'ish"
+      },
+      {
+        "word": "אַ֣ל בְּנֹתַ֗י",
+        "meaning": "Não, minhas filhas",
+        "transliteration": "al benotai"
+      },
+      {
+        "word": "כִּֽי־מַר־לִ֤י",
+        "meaning": "porque amargo é para mim",
+        "transliteration": "ki-mar-li"
+      },
+      {
+        "word": "מְאֹד֙",
+        "meaning": "muito",
+        "transliteration": "me'od"
+      },
+      {
+        "word": "מִכֶּ֔ם",
+        "meaning": "mais do que para vós",
+        "transliteration": "mikem"
+      },
+      {
+        "word": "כִּֽי־יָצְאָ֥ה",
+        "meaning": "pois saiu",
+        "transliteration": "ki-yats'ah"
+      },
+      {
+        "word": "בִ֖י",
+        "meaning": "em mim / contra mim",
+        "transliteration": "bi"
+      },
+      {
+        "word": "יַד־יְהוָֽה׃",
+        "meaning": "a mão de YHWH (Senhor)",
+        "transliteration": "yad-YHWH"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "57855bb0-0dfd-46e1-89ca-0ccf4bb483dd",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 14,
+    "text": "E levantaram sua voz e choraram ainda. E Orfa beijou sua sogra, mas Rute se apegou a ela.",
+    "original_text": "וַתִּשֶּׂ֣נָה קֹולָ֔ן וַתִּבְכֶּ֖ינָה עֹ֑וד וַתִּשַּׁ֤ק עָרְפָּה֙ לַחֲמֹותָ֔הּ וְר֖וּת דָּ֥בְקָה בָּֽהּ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתִּשֶּׂ֣נָה",
+        "meaning": "E levantaram",
+        "transliteration": "vattissenah"
+      },
+      {
+        "word": "קֹולָ֔ן",
+        "meaning": "sua voz",
+        "transliteration": "qolan"
+      },
+      {
+        "word": "וַתִּבְכֶּ֖ינָה",
+        "meaning": "e choraram",
+        "transliteration": "vattibkenah"
+      },
+      {
+        "word": "עֹ֑וד",
+        "meaning": "ainda / novamente",
+        "transliteration": "od"
+      },
+      {
+        "word": "וַתִּשַּׁ֤ק",
+        "meaning": "E beijou",
+        "transliteration": "vattishaq"
+      },
+      {
+        "word": "עָרְפָּה֙",
+        "meaning": "Orfa",
+        "transliteration": "orpha"
+      },
+      {
+        "word": "לַחֲמֹותָ֔הּ",
+        "meaning": "sua sogra",
+        "transliteration": "lakhamotah"
+      },
+      {
+        "word": "וְר֖וּת",
+        "meaning": "e Rute",
+        "transliteration": "verut"
+      },
+      {
+        "word": "דָּ֥בְקָה",
+        "meaning": "se apegou",
+        "transliteration": "davqa"
+      },
+      {
+        "word": "בָּֽהּ׃",
+        "meaning": "a ela",
+        "transliteration": "bah"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "e8379bb3-f13c-45a3-9a3f-e8239cd69ae0",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 15,
+    "text": "E disse: Eis que voltou tua cunhada ao seu povo e aos seus Elohim (Deus); volta após tua cunhada.",
+    "original_text": "וַתֹּ֗אמֶר הִנֵּה֙ שָׁ֣בָה יְבִמְתֵּ֔ךְ אֶל־עַמָּ֖הּ וְאֶל־אֱלֹהֶ֑יהָ שׁ֖וּבִי אַחֲרֵ֥י יְבִמְתֵּֽךְ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֹּ֗אמֶר",
+        "meaning": "E disse",
+        "transliteration": "vattomer"
+      },
+      {
+        "word": "הִנֵּה֙",
+        "meaning": "eis que",
+        "transliteration": "hinneh"
+      },
+      {
+        "word": "שָׁ֣בָה",
+        "meaning": "voltou",
+        "transliteration": "shavah"
+      },
+      {
+        "word": "יְבִמְתֵּ֔ךְ",
+        "meaning": "tua cunhada",
+        "transliteration": "yevimtek"
+      },
+      {
+        "word": "אֶל־עַמָּ֖הּ",
+        "meaning": "ao seu povo",
+        "transliteration": "el-ammah"
+      },
+      {
+        "word": "וְאֶל־אֱלֹהֶ֑יהָ",
+        "meaning": "e aos seus Elohim (Deus)",
+        "transliteration": "ve'el-eloheiha"
+      },
+      {
+        "word": "שׁ֖וּבִי",
+        "meaning": "volta",
+        "transliteration": "shuvi"
+      },
+      {
+        "word": "אַחֲרֵ֥י",
+        "meaning": "após",
+        "transliteration": "akharei"
+      },
+      {
+        "word": "יְבִמְתֵּֽךְ׃",
+        "meaning": "tua cunhada",
+        "transliteration": "yevimtek"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "9260e182-3340-4042-996b-08ba2cd0a964",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 16,
+    "text": "E disse Rute: Não me instes para te abandonar, para voltar de após ti. Porque para onde fores, eu irei, e onde pousares, eu pousarei. Teu povo, meu povo, e teus Elohim (Deus), meus Elohim (Deus).",
+    "original_text": "וַתֹּ֤אמֶר רוּת֙ אַל־תִּפְגְּעִי־בִ֔י לְעָזְבֵ֖ךְ לָשׁ֣וּב מֵאַחֲרָ֑יִךְ כִּ֠י אֶל־אֲשֶׁ֨ר תֵּלְכ֜י אֵלֵ֗ךְ וּבַאֲשֶׁ֤ר תָּלִ֙ינִי֙ אָלִ֔ין עַמֵּ֣ךְ עַמִּ֔י וֵאלֹהַ֖יִךְ אֱלֹהָֽי׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֹּ֤אמֶר",
+        "meaning": "E disse",
+        "transliteration": "vattomer"
+      },
+      {
+        "word": "רוּת֙",
+        "meaning": "Rute",
+        "transliteration": "rut"
+      },
+      {
+        "word": "אַל־תִּפְגְּעִי־בִ֔י",
+        "meaning": "Não me instes",
+        "transliteration": "al-tifge'i-vi"
+      },
+      {
+        "word": "לְעָזְבֵ֖ךְ",
+        "meaning": "para te abandonar",
+        "transliteration": "le'ozvek"
+      },
+      {
+        "word": "לָשׁ֣וּב",
+        "meaning": "para voltar",
+        "transliteration": "lashuv"
+      },
+      {
+        "word": "מֵאַחֲרָ֑יִךְ",
+        "meaning": "de após ti",
+        "transliteration": "me'akhrayikh"
+      },
+      {
+        "word": "כִּ֠י",
+        "meaning": "porque",
+        "transliteration": "ki"
+      },
+      {
+        "word": "אֶל־אֲשֶׁ֨ר",
+        "meaning": "para onde",
+        "transliteration": "el-asher"
+      },
+      {
+        "word": "תֵּלְכ֜י",
+        "meaning": "tu fores",
+        "transliteration": "telchi"
+      },
+      {
+        "word": "אֵלֵ֗ךְ",
+        "meaning": "eu irei",
+        "transliteration": "elekh"
+      },
+      {
+        "word": "וּבַאֲשֶׁ֤ר",
+        "meaning": "e onde",
+        "transliteration": "uva'asher"
+      },
+      {
+        "word": "תָּלִ֙ינִי֙",
+        "meaning": "tu pousares",
+        "transliteration": "talini"
+      },
+      {
+        "word": "אָלִ֔ין",
+        "meaning": "eu pousarei",
+        "transliteration": "alin"
+      },
+      {
+        "word": "עַמֵּ֣ךְ",
+        "meaning": "Teu povo",
+        "transliteration": "ammekh"
+      },
+      {
+        "word": "עַמִּ֔י",
+        "meaning": "meu povo",
+        "transliteration": "ammi"
+      },
+      {
+        "word": "וֵאלֹהַ֖יִךְ",
+        "meaning": "e teus Elohim (Deus)",
+        "transliteration": "ve'elohei'ikh"
+      },
+      {
+        "word": "אֱלֹהָֽי׃",
+        "meaning": "meus Elohim (Deus)",
+        "transliteration": "elohay"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "bf7be8b1-e414-45de-8122-3b1f915032f0",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 17,
+    "text": "Onde tu morreres, eu morrerei, e lá serei sepultada. Assim me faça YHWH (Senhor), e assim adicione, se a morte separar entre mim e entre ti.",
+    "original_text": "בַּאֲשֶׁ֤ר תָּמ֙וּתִי֙ אָמ֔וּת וְשָׁ֖ם אֶקָּבֵ֑ר כֹּה֩ יַעֲשֶׂ֨ה יְהוָ֥ה לִי֙ וְכֹ֣ה יֹסִ֔יף כִּ֣י הַמָּ֔וֶת יַפְרִ֖יד בֵּינִ֥י וּבֵינֵֽךְ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "בַּאֲשֶׁ֤ר",
+        "meaning": "Onde",
+        "transliteration": "ba'asher"
+      },
+      {
+        "word": "תָּמ֙וּתִי֙",
+        "meaning": "tu morreres",
+        "transliteration": "tamuti"
+      },
+      {
+        "word": "אָמ֔וּת",
+        "meaning": "eu morrerei",
+        "transliteration": "amut"
+      },
+      {
+        "word": "וְשָׁ֖ם",
+        "meaning": "e lá",
+        "transliteration": "vesham"
+      },
+      {
+        "word": "אֶקָּבֵ֑ר",
+        "meaning": "serei sepultada",
+        "transliteration": "eqqaver"
+      },
+      {
+        "word": "כֹּה֩",
+        "meaning": "assim",
+        "transliteration": "khoh"
+      },
+      {
+        "word": "יַעֲשֶׂ֨ה",
+        "meaning": "faça",
+        "transliteration": "ya'aseh"
+      },
+      {
+        "word": "יְהוָ֥ה",
+        "meaning": "YHWH (Senhor)",
+        "transliteration": "YHWH"
+      },
+      {
+        "word": "לִי֙",
+        "meaning": "a mim",
+        "transliteration": "li"
+      },
+      {
+        "word": "וְכֹ֣ה",
+        "meaning": "e assim",
+        "transliteration": "vekhoh"
+      },
+      {
+        "word": "יֹסִ֔יף",
+        "meaning": "adicione",
+        "transliteration": "yosif"
+      },
+      {
+        "word": "כִּ֣י",
+        "meaning": "se",
+        "transliteration": "ki"
+      },
+      {
+        "word": "הַמָּ֔וֶת",
+        "meaning": "a morte",
+        "transliteration": "hammawet"
+      },
+      {
+        "word": "יַפְרִ֖יד",
+        "meaning": "separará",
+        "transliteration": "yafrid"
+      },
+      {
+        "word": "בֵּינִ֥י",
+        "meaning": "entre mim",
+        "transliteration": "beini"
+      },
+      {
+        "word": "וּבֵינֵֽךְ׃",
+        "meaning": "e entre ti",
+        "transliteration": "uveinek"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "913faff9-3645-4c71-9bf6-aff6544d3b2c",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 18,
+    "text": "E viu que ela se esforçava para ir com ela, e cessou de lhe falar.",
+    "original_text": "וַתֵּ֕רֶא כִּיֽ־מִתְאַמֶּ֥צֶת הִ֖יא לָלֶ֣כֶת אִתָּ֑הּ וַתֶּחְדַּ֖ל לְדַבֵּ֥ר אֵלֶֽיהָ׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֵּ֕רֶא",
+        "meaning": "E viu",
+        "transliteration": "vattere"
+      },
+      {
+        "word": "כִּיֽ־מִתְאַמֶּ֥צֶת",
+        "meaning": "que se esforçava",
+        "transliteration": "ki-mit'ammetzet"
+      },
+      {
+        "word": "הִ֖יא",
+        "meaning": "ela",
+        "transliteration": "hi"
+      },
+      {
+        "word": "לָלֶ֣כֶת",
+        "meaning": "para ir",
+        "transliteration": "lalekhet"
+      },
+      {
+        "word": "אִתָּ֑הּ",
+        "meaning": "com ela",
+        "transliteration": "ittah"
+      },
+      {
+        "word": "וַתֶּחְדַּ֖ל",
+        "meaning": "E cessou",
+        "transliteration": "vattekhdal"
+      },
+      {
+        "word": "לְדַבֵּ֥ר",
+        "meaning": "de falar",
+        "transliteration": "ledabber"
+      },
+      {
+        "word": "אֵלֶֽיהָ׃",
+        "meaning": "a ela",
+        "transliteration": "eleiha"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "7e6e17e2-5abd-4366-bd1b-74581ff61cc9",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 19,
+    "text": "E caminharam ambas até chegarem a Belém. E aconteceu, ao chegarem a Belém, que toda a cidade se agitou por causa delas, e disseram: É esta Noemi?",
+    "original_text": "וַתֵּלַ֣כְנָה שְׁתֵּיהֶ֔ם עַד־בֹּאָ֖נָה בֵּ֣ית לָ֑חֶם וַיְהִ֗י כְּבֹאָ֙נָה֙ בֵּ֣ית לֶ֔חֶם וַתֵּהֹ֤ם כָּל־הָעִיר֙ עֲלֵיהֶ֔ן וַתֹּאמַ֖רְנָה הֲזֹ֥את נָעֳמִֽי׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֵּלַ֣כְנָה",
+        "meaning": "E caminharam",
+        "transliteration": "vattelakhnah"
+      },
+      {
+        "word": "שְׁתֵּיהֶ֔ם",
+        "meaning": "ambas",
+        "transliteration": "shttehem"
+      },
+      {
+        "word": "עַד־בֹּאָ֖נָה",
+        "meaning": "até chegarem",
+        "transliteration": "ad-bo'anah"
+      },
+      {
+        "word": "בֵּ֣ית לָ֑חֶם",
+        "meaning": "Belém",
+        "transliteration": "beit lakhem"
+      },
+      {
+        "word": "וַיְהִ֗י",
+        "meaning": "E aconteceu",
+        "transliteration": "vayhi"
+      },
+      {
+        "word": "כְּבֹאָ֙נָה֙",
+        "meaning": "ao chegarem",
+        "transliteration": "kevo'anah"
+      },
+      {
+        "word": "בֵּ֣ית לֶ֔חֶם",
+        "meaning": "Belém",
+        "transliteration": "beit lekhem"
+      },
+      {
+        "word": "וַתֵּהֹ֤ם",
+        "meaning": "E se agitou",
+        "transliteration": "vattehom"
+      },
+      {
+        "word": "כָּל־הָעִיר֙",
+        "meaning": "toda a cidade",
+        "transliteration": "kol-ha'ir"
+      },
+      {
+        "word": "עֲלֵיהֶ֔ן",
+        "meaning": "por causa delas",
+        "transliteration": "aleihen"
+      },
+      {
+        "word": "וַתֹּאמַ֖רְנָה",
+        "meaning": "E disseram",
+        "transliteration": "vattomarnah"
+      },
+      {
+        "word": "הֲזֹ֥את",
+        "meaning": "É esta?",
+        "transliteration": "hazot"
+      },
+      {
+        "word": "נָעֳמִֽי׃",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "f697b3ee-6f50-43ba-9be8-b1b17496f87e",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 20,
+    "text": "E disse a elas: Não me chameis Noemi; chamai-me Mara, porque Shaddai me amargou muito.",
+    "original_text": "וַתֹּ֣אמֶר אֲלֵיהֶ֔ן אַל־תִּקְרֶ֥אנָה לִ֖י נָעֳמִ֑י קְרֶ֤אןָ לִי֙ מָרָ֔א כִּי־הֵמַ֥ר שַׁדַּ֛י לִ֖י מְאֹֽד׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתֹּ֣אמֶר",
+        "meaning": "E disse",
+        "transliteration": "vattomer"
+      },
+      {
+        "word": "אֲלֵיהֶ֔ן",
+        "meaning": "a elas",
+        "transliteration": "aleihen"
+      },
+      {
+        "word": "אַל־תִּקְרֶ֥אנָה",
+        "meaning": "Não me chameis",
+        "transliteration": "al-tiqre'na"
+      },
+      {
+        "word": "לִ֖י",
+        "meaning": "a mim",
+        "transliteration": "li"
+      },
+      {
+        "word": "נָעֳמִ֑י",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "קְרֶ֤אןָ",
+        "meaning": "chamai",
+        "transliteration": "qre'na"
+      },
+      {
+        "word": "לִ֖י",
+        "meaning": "a mim",
+        "transliteration": "li"
+      },
+      {
+        "word": "מָרָ֔א",
+        "meaning": "Mara",
+        "transliteration": "mara"
+      },
+      {
+        "word": "כִּי־הֵמַ֥ר",
+        "meaning": "porque me amargou",
+        "transliteration": "ki-hemar"
+      },
+      {
+        "word": "שַׁדַּ֛י",
+        "meaning": "Shaddai",
+        "transliteration": "shadday"
+      },
+      {
+        "word": "לִ֖י",
+        "meaning": "a mim",
+        "transliteration": "li"
+      },
+      {
+        "word": "מְאֹֽד׃",
+        "meaning": "muito",
+        "transliteration": "me'od"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "67dbcad6-584f-41f2-98a4-a95784093831",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 21,
+    "text": "Eu fui cheia, e vazia me fez voltar YHWH (Senhor). Por que me chamais Noemi, se YHWH (Senhor) testificou contra mim, e Shaddai me fez mal?",
+    "original_text": "אֲנִי֙ מְלֵאָ֣ה הָלַ֔כְתִּי וְרֵיקָ֖ם הֱשִׁיבַ֣נִי יְהוָ֑ה לָ֣מָּה תִקְרֶ֤אנָה לִי֙ נָעֳמִ֔י וַֽיהוָה֙ עָ֣נָה בִ֔י וְשַׁדַּ֖י הֵ֥רַע  לִֽי׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "אֲנִי֙",
+        "meaning": "Eu",
+        "transliteration": "ani"
+      },
+      {
+        "word": "מְלֵאָ֣ה",
+        "meaning": "cheia",
+        "transliteration": "mele'ah"
+      },
+      {
+        "word": "הָלַ֔כְתִּי",
+        "meaning": "fui",
+        "transliteration": "halakhti"
+      },
+      {
+        "word": "וְרֵיקָ֖ם",
+        "meaning": "e vazia",
+        "transliteration": "vereiqam"
+      },
+      {
+        "word": "הֱשִׁיבַ֣נִי",
+        "meaning": "me fez voltar",
+        "transliteration": "heshivani"
+      },
+      {
+        "word": "יְהוָ֑ה",
+        "meaning": "YHWH (Senhor)",
+        "transliteration": "YHWH"
+      },
+      {
+        "word": "לָ֣מָּה",
+        "meaning": "por que",
+        "transliteration": "lammah"
+      },
+      {
+        "word": "תִקְרֶ֤אנָה",
+        "meaning": "me chamais",
+        "transliteration": "tiqre'na"
+      },
+      {
+        "word": "לִ֛י",
+        "meaning": "a mim",
+        "transliteration": "li"
+      },
+      {
+        "word": "נָעֳמִ֔י",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "וַֽיהוָה֙",
+        "meaning": "e YHWH (Senhor)",
+        "transliteration": "va'YHWH"
+      },
+      {
+        "word": "עָ֣נָה בִ֔י",
+        "meaning": "testificou contra mim",
+        "transliteration": "anah vi"
+      },
+      {
+        "word": "וְשַׁדַּ֖י",
+        "meaning": "e Shaddai",
+        "transliteration": "veshadday"
+      },
+      {
+        "word": "הֵ֥רַע",
+        "meaning": "me fez mal",
+        "transliteration": "hera"
+      },
+      {
+        "word": "לִֽי׃",
+        "meaning": "a mim",
+        "transliteration": "li"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  },
+  {
+    "id": "90b11df9-dd38-47d6-90e5-9f0a0ed312d9",
+    "book_abbr": "rt",
+    "chapter": 1,
+    "verse": 22,
+    "text": "E voltou Noemi, e Rute, a moabita, sua nora com ela, a que voltara dos campos de Moabe. E elas vieram a Belém no começo da colheita das cevadas.",
+    "original_text": "וַתָּ֣שָׁב נָעֳמִ֗י וְר֨וּת הַמֹּואֲבִיָּ֤ה כַלָּתָהּ֙ עִמָּ֔הּ הַשָּׁ֖בָה מִשְּׂדֵ֣י מֹואָ֑ב וְהֵ֗מָּה בָּ֚אוּ בֵּ֣ית לֶ֔חֶם בִּתְחִלַּ֖ת קְצִ֥יר שְׂעֹרִֽים׃",
+    "notes": null,
+    "key_words": [
+      {
+        "word": "וַתָּ֣שָׁב",
+        "meaning": "E voltou",
+        "transliteration": "vattashav"
+      },
+      {
+        "word": "נָעֳמִ֗י",
+        "meaning": "Noemi",
+        "transliteration": "na'omi"
+      },
+      {
+        "word": "וְר֨וּת",
+        "meaning": "e Rute",
+        "transliteration": "verut"
+      },
+      {
+        "word": "הַמֹּואֲבִיָּ֤ה",
+        "meaning": "a moabita",
+        "transliteration": "hammo'aviyah"
+      },
+      {
+        "word": "כַלָּתָהּ֙",
+        "meaning": "sua nora",
+        "transliteration": "kallatah"
+      },
+      {
+        "word": "עִמָּ֔הּ",
+        "meaning": "com ela",
+        "transliteration": "immah"
+      },
+      {
+        "word": "הַשָּׁ֖בָה",
+        "meaning": "a que voltara",
+        "transliteration": "hashshavah"
+      },
+      {
+        "word": "מִשְּׂדֵ֣י",
+        "meaning": "dos campos de",
+        "transliteration": "misdei"
+      },
+      {
+        "word": "מֹואָ֑ב",
+        "meaning": "Moabe",
+        "transliteration": "mo'av"
+      },
+      {
+        "word": "וְהֵ֗מָּה",
+        "meaning": "E elas",
+        "transliteration": "vehemmah"
+      },
+      {
+        "word": "בָּ֚אוּ",
+        "meaning": "vieram",
+        "transliteration": "ba'u"
+      },
+      {
+        "word": "בֵּ֣ית לֶ֔חֶם",
+        "meaning": "Belém",
+        "transliteration": "beit lekhem"
+      },
+      {
+        "word": "בִּתְחִלַּ֖ת",
+        "meaning": "no começo de",
+        "transliteration": "bitkhillat"
+      },
+      {
+        "word": "קְצִ֥יר",
+        "meaning": "colheita de",
+        "transliteration": "qetsir"
+      },
+      {
+        "word": "שְׂעֹרִֽים׃",
+        "meaning": "cevadas",
+        "transliteration": "se'orim"
+      }
+    ],
+    "original_lang": "hebraico",
+    "translation_version": 1,
+    "model_used": "gemini-flash-latest",
+    "review_status": "Gerado pela IA",
+    "reviewed_at": null,
+    "created_at": "2026-07-03T04:12:56.64317+00:00",
+    "updated_at": "2026-07-03T04:12:56.64317+00:00"
+  }
+]

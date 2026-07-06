@@ -20,6 +20,7 @@ import { Route as AuthenticatedEstatisticasRouteImport } from './routes/_authent
 import { Route as AuthenticatedDesafiosRouteImport } from './routes/_authenticated/desafios'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedConfiguracoesRouteImport } from './routes/_authenticated/configuracoes'
+import { Route as AuthenticatedCapsulaDoTempoRouteImport } from './routes/_authenticated/capsula-do-tempo'
 import { Route as AuthenticatedBibliaRouteImport } from './routes/_authenticated/biblia'
 
 const QuizRoute = QuizRouteImport.update({
@@ -78,6 +79,12 @@ const AuthenticatedConfiguracoesRoute =
     path: '/configuracoes',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedCapsulaDoTempoRoute =
+  AuthenticatedCapsulaDoTempoRouteImport.update({
+    id: '/capsula-do-tempo',
+    path: '/capsula-do-tempo',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedBibliaRoute = AuthenticatedBibliaRouteImport.update({
   id: '/biblia',
   path: '/biblia',
@@ -89,6 +96,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/quiz': typeof QuizRoute
   '/biblia': typeof AuthenticatedBibliaRoute
+  '/capsula-do-tempo': typeof AuthenticatedCapsulaDoTempoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/desafios': typeof AuthenticatedDesafiosRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/quiz': typeof QuizRoute
   '/biblia': typeof AuthenticatedBibliaRoute
+  '/capsula-do-tempo': typeof AuthenticatedCapsulaDoTempoRoute
   '/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/desafios': typeof AuthenticatedDesafiosRoute
@@ -117,6 +126,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/quiz': typeof QuizRoute
   '/_authenticated/biblia': typeof AuthenticatedBibliaRoute
+  '/_authenticated/capsula-do-tempo': typeof AuthenticatedCapsulaDoTempoRoute
   '/_authenticated/configuracoes': typeof AuthenticatedConfiguracoesRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/desafios': typeof AuthenticatedDesafiosRoute
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/quiz'
     | '/biblia'
+    | '/capsula-do-tempo'
     | '/configuracoes'
     | '/dashboard'
     | '/desafios'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/quiz'
     | '/biblia'
+    | '/capsula-do-tempo'
     | '/configuracoes'
     | '/dashboard'
     | '/desafios'
@@ -159,6 +171,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/quiz'
     | '/_authenticated/biblia'
+    | '/_authenticated/capsula-do-tempo'
     | '/_authenticated/configuracoes'
     | '/_authenticated/dashboard'
     | '/_authenticated/desafios'
@@ -254,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedConfiguracoesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/capsula-do-tempo': {
+      id: '/_authenticated/capsula-do-tempo'
+      path: '/capsula-do-tempo'
+      fullPath: '/capsula-do-tempo'
+      preLoaderRoute: typeof AuthenticatedCapsulaDoTempoRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/biblia': {
       id: '/_authenticated/biblia'
       path: '/biblia'
@@ -266,6 +286,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBibliaRoute: typeof AuthenticatedBibliaRoute
+  AuthenticatedCapsulaDoTempoRoute: typeof AuthenticatedCapsulaDoTempoRoute
   AuthenticatedConfiguracoesRoute: typeof AuthenticatedConfiguracoesRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDesafiosRoute: typeof AuthenticatedDesafiosRoute
@@ -277,6 +298,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBibliaRoute: AuthenticatedBibliaRoute,
+  AuthenticatedCapsulaDoTempoRoute: AuthenticatedCapsulaDoTempoRoute,
   AuthenticatedConfiguracoesRoute: AuthenticatedConfiguracoesRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDesafiosRoute: AuthenticatedDesafiosRoute,

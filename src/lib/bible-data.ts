@@ -358,14 +358,11 @@ export function getVerses(translationId: string, bookAbbr: string, chapter: numb
   const bookName = getBook(normBook)?.name || bookAbbr;
   
   const generated: Record<number, string> = {};
-  const numVerses = 15;
   
-  for (let i = 1; i <= numVerses; i++) {
-    if (normTrans === "NT") {
-      generated[i] = `No original hebraico/grego deste versículo ${i} de ${bookName} ${chapter}, as palavras mantêm a estrutura literal mais fiel às línguas bíblicas de origem. (Nota: texto simulado para este capítulo)`;
-    } else {
-      generated[i] = `Este é o texto sagrado do livro de ${bookName}, capítulo ${chapter}, versículo ${i}. O texto completo para este capítulo não está carregado na versão local para economizar espaço.`;
-    }
+  if (normTrans === "ORIGINAL" || normTrans === "NT") {
+    generated[1] = "A tradução 'Linguagem Próxima do Original' para este capítulo ainda está sendo processada pela IA e logo estará disponível.";
+  } else {
+    generated[1] = `O texto completo para o livro de ${bookName}, capítulo ${chapter} não está carregado na versão local para economizar espaço.`;
   }
   
   return generated;

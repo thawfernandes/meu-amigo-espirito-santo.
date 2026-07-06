@@ -5,8 +5,14 @@ CREATE TABLE IF NOT EXISTS public.original_bible_verses (
   chapter        INT NOT NULL,
   verse          INT NOT NULL,
   text           TEXT NOT NULL,
+  original_text  TEXT,
   notes          TEXT,
+  key_words      JSONB,
   original_lang  TEXT, -- 'hebraico', 'aramaico', 'grego'
+  translation_version INT DEFAULT 1,
+  model_used     TEXT,
+  review_status  TEXT DEFAULT 'Gerado pela IA',
+  reviewed_at    TIMESTAMPTZ,
   created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE(book_abbr, chapter, verse)
