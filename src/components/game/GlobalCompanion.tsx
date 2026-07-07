@@ -118,9 +118,9 @@ export function GlobalCompanion() {
         }
       : {
           left: "auto",
-          right: "30px",
+          right: "20px", // moved slightly closer to the edge
           top: "auto",
-          bottom: "30px",
+          bottom: "110px", // moved higher so it doesn't cover "vida/capsula" cards
           transform: `translate(0, ${cloudSway}px) scale(0.85)`,
         }),
   };
