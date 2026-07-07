@@ -425,9 +425,23 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
             </>
           ) : isSleepy ? (
             <>
-              {/* Droopy/Sleepy eyes */}
-              <ellipse cx="54" cy="70" rx="8" ry="4" fill="#1f2937" />
-              <ellipse cx="86" cy="70" rx="8" ry="4" fill="#1f2937" />
+              {/* Droopy/Sleepy eyes (> <) */}
+              <path
+                d="M 46,66 L 54,71 L 46,76"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M 94,66 L 86,71 L 94,76"
+                fill="none"
+                stroke="#1f2937"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </>
           ) : (
             /* Default tracking round eyes (idle, sad, crying, think) */
