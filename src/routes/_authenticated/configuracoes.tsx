@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { supabase } from "@/integrations/supabase/client";
 import { useAudio } from "@/components/audio/AudioProvider";
-import { Music, Sliders, Sparkles, Smile, Volume2, LogOut, Radio } from "lucide-react";
+import { Music, Sliders, Sparkles, Smile, Volume2, LogOut, Radio, Heart } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/configuracoes")({ component: Settings });
 
@@ -151,6 +151,93 @@ function Settings() {
                   }`}
                 />
               </button>
+            </div>
+          </div>
+
+          {/* Companion Configuration Section */}
+          <div
+            className="rounded-3xl p-6 border border-white/10 space-y-6"
+            style={{ background: "oklch(0.14 0.03 260 / 0.75)", backdropFilter: "blur(24px)" }}
+          >
+            <h2 className="font-display text-xl text-rose-200 flex items-center gap-2.5">
+              <Heart className="w-5 h-5 text-rose-400" />
+              <span>O Companheiro</span>
+            </h2>
+
+            {/* Animations Toggle */}
+            <div className="space-y-4 border-b border-white/5 pb-5">
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Smile className="w-4 h-4 text-amber-300" />
+                    Animações e Vida
+                  </div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    Permite que o personagem pisque, respire e reaja à sua navegação.
+                  </div>
+                </div>
+                <button
+                  onClick={() => audio.setCompanionAnimationsEnabled(!audio.companionAnimationsEnabled)}
+                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${
+                    audio.companionAnimationsEnabled ? "bg-amber-400" : "bg-white/10"
+                  }`}
+                  aria-label="Ativar/Desativar Animações"
+                >
+                  <span
+                    className={`w-4.5 h-4.5 rounded-full bg-slate-900 transition-transform absolute ${
+                      audio.companionAnimationsEnabled ? "translate-x-5.5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Companion Sounds Toggle */}
+            <div className="space-y-4 border-b border-white/5 pb-5">
+              <div className="flex items-center justify-between">
+                <div className="text-left">
+                  <div className="text-sm font-semibold text-white flex items-center gap-2">
+                    <Volume2 className="w-4 h-4 text-rose-300" />
+                    Sons de Interação
+                  </div>
+                  <div className="text-xs text-white/40 mt-0.5">
+                    Pequenos murmúrios, risadinhas e bocejos.
+                  </div>
+                </div>
+                <button
+                  onClick={() => audio.setCompanionSoundsEnabled(!audio.companionSoundsEnabled)}
+                  className={`w-11 h-6 rounded-full transition-colors relative flex items-center ${
+                    audio.companionSoundsEnabled ? "bg-amber-400" : "bg-white/10"
+                  }`}
+                  aria-label="Ativar/Desativar Sons do Personagem"
+                >
+                  <span
+                    className={`w-4.5 h-4.5 rounded-full bg-slate-900 transition-transform absolute ${
+                      audio.companionSoundsEnabled ? "translate-x-5.5" : "translate-x-1"
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {audio.companionSoundsEnabled && (
+                <div className="space-y-2 animate-fade-down">
+                  <div className="flex justify-between text-xs text-white/50">
+                    <span className="flex items-center gap-1.5">
+                      <Volume2 className="w-3.5 h-3.5" /> Volume do Personagem
+                    </span>
+                    <span>{Math.round(audio.companionVolume * 100)}%</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value={audio.companionVolume}
+                    onChange={(e) => audio.setCompanionVolume(parseFloat(e.target.value))}
+                    className="w-full h-1.5 rounded-lg bg-white/10 appearance-none cursor-pointer accent-amber-400"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

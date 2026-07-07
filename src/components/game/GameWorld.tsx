@@ -10,7 +10,8 @@ import {
   Telescope as TelescopeIcon,
   Users,
 } from "lucide-react";
-import { Mascot, Mood } from "./Mascot";
+import { Mood } from "./Mascot";
+import { useCompanion } from "./CompanionProvider";
 import { useAudio } from "@/components/audio/AudioProvider";
 
 type TimeOfDay = "dawn" | "day" | "dusk" | "night";
@@ -53,60 +54,30 @@ export function GameWorld({
   const tod = getTimeOfDay(hour);
   const isNight = tod === "night";
 
-  // Determine Chibi Jesus initial mood dynamically based on inactivity and progress
-  const initialMood = useMemo<Mood>(() => {
-    // Late night sleeping
-    if (hour >= 23 || hour < 6) return "sleep";
-
-    if (!lastActiveDate) return "happy";
-    const createdDate = new Date(lastActiveDate);
-    const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
-    const inactiveDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (inactiveDays >= 7) return "sleep";
-    if (inactiveDays >= 3) return "sleepy";
-    if (streak === 0 && inactiveDays >= 1) return "sad";
-
-    // Progress inside current level
-    if (percent < 15) return "crying";
-    if (percent < 40) return "sad";
-
-    if (streak >= 5) return "excited";
-    if (streak >= 3) return "very_happy";
-
-    return "happy";
-  }, [streak, percent, lastActiveDate, hour]);
-
-  // Determine Chibi Jesus speech bubble contextually
-  const initialSpeech = useMemo(() => {
-    if (!lastActiveDate) return `Olá, ${userName}! Que bom te ver.`;
-    const createdDate = new Date(lastActiveDate);
-    const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
-    const inactiveDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (inactiveDays >= 7) {
-      return "Estava dormindo... Que bom te ver! Senti saudade da nossa leitura. 💤";
-    }
-    if (inactiveDays >= 3) {
-      return "Estou com saudade da nossa leitura... Que tal lermos um capítulo hoje? 😴";
-    }
-    if (streak === 0 && inactiveDays >= 1) {
-      return "Vamos retomar nossa caminhada? Um pequeno passo já faz diferença. 🌱";
-    }
-    if (streak >= 5) {
-      return `Que alegria caminhar com você! ${streak} dias consecutivos! 🔥😄`;
-    }
-    if (isNight) {
-      return `Boa noite, ${userName}! Que tal um momento com Deus antes de descansar? 🙏`;
-    }
-    return `Que bom te ver novamente! Vamos continuar nossa jornada? 📖`;
-  }, [userName, streak, lastActiveDate, isNight]);
-
-  const [mascotMood, setMascotMood] = useState<Mood>(initialMood);
-  const [bubble, setBubble] = useState<string | null>(initialSpeech);
+  const companion = useCompanion();
   const [stars, setStars] = useState<{ id: number; x: number; y: number }[]>([]);
   const [cloudSpeed, setCloudSpeed] = useState(1);
   const audio = useAudio();
+
+  // Set initial mood globally when dashboard mounts
+  useEffect(() => {
+    const hour = new Date().getHours();
+    let mood: Mood = "idle";
+    
+    if (hour >= 23 || hour < 6) mood = "sleep";
+    else if (!lastActiveDate) mood = "happy";
+    else {
+      const createdDate = new Date(lastActiveDate);
+      const diffTime = Math.abs(new Date().getTime() - createdDate.getTime());
+      const inactiveDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (inactiveDays >= 7) mood = "sleep";
+      else if (inactiveDays >= 3) mood = "sleepy";
+      else if (streak === 0 && inactiveDays >= 1) mood = "think";
+    }
+    
+    companion.setMood(mood);
+  }, [lastActiveDate, streak, companion.setMood]);
 
   const modules = useMemo(
     () => [
@@ -167,11 +138,6 @@ export function GameWorld({
     audio.setContext("dashboard");
   }, []);
 
-  // Sync mascot mood with audio context
-  useEffect(() => {
-    audio.setMood(mascotMood);
-  }, [mascotMood]);
-
   // Play level-up sound if level increases
   const prevLevelRef = useRef<number | null>(null);
   useEffect(() => {
@@ -185,9 +151,9 @@ export function GameWorld({
 
   // Auto-dismiss initial speech bubble
   useEffect(() => {
-    const t = setTimeout(() => setBubble(null), 5000);
+    const t = setTimeout(() => companion.setMessage(null), 5000);
     return () => clearTimeout(t);
-  }, []);
+  }, [companion]);
 
   // Sky gradient by time of day
   const sky = useMemo(() => {
@@ -217,17 +183,17 @@ export function GameWorld({
   };
 
   function celebrate(text: string, customMood: Mood = "celebrate") {
-    setMascotMood(customMood);
-    setBubble(text);
+    companion.setMood(customMood);
+    companion.setMessage(text);
     setTimeout(() => {
-      setMascotMood(initialMood);
-      setBubble(null);
+      companion.setMood(initialMood);
+      companion.setMessage(null);
     }, 3500);
   }
 
   function go(to: string, text: string, mood: Mood = "happy") {
-    setMascotMood(mood);
-    setBubble(text);
+    companion.setMood(mood);
+    companion.setMessage(text);
     setTimeout(() => navigate({ to }), 650);
   }
 
@@ -365,51 +331,7 @@ export function GameWorld({
         </div>
       </div>
 
-      {/* ── CENTER SECTION (Mascot Chibi Jesus fixed on the Cloud) ── */}
-      <div className="absolute top-[60%] md:top-[63%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center pointer-events-none">
-        <div className="animate-float-slow flex flex-col items-center pointer-events-none">
-          {/* Mascot Container */}
-          <div className="relative w-36 h-36 flex items-center justify-center pointer-events-auto">
-            <Mascot
-              mood={mascotMood}
-              x={50}
-              y={50}
-              scale={1.3}
-              message={bubble}
-              onClick={() => {
-                setMascotMood("wave");
-                setBubble("Paz seja convosco! 👋");
-                setTimeout(() => {
-                  setMascotMood(initialMood);
-                  setBubble(null);
-                }, 2200);
-              }}
-            />
-          </div>
-
-          {/* Fixed Cloud Base under Mascot */}
-          <div className="w-[300px] h-[100px] -mt-6 pointer-events-none relative z-10 flex items-center justify-center opacity-95">
-            <div className="absolute w-[220px] h-[35px] rounded-full bg-white/25 blur-xl animate-pulse" />
-            <svg width="260" height="90" viewBox="0 0 260 90">
-              <defs>
-                <linearGradient id="cloudGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="60%" stopColor="#f8fafc" />
-                  <stop offset="100%" stopColor="#e2e8f0" />
-                </linearGradient>
-              </defs>
-              <g fill="url(#cloudGrad)">
-                <circle cx="70" cy="50" r="30" opacity="0.95" />
-                <circle cx="190" cy="50" r="30" opacity="0.95" />
-                <circle cx="100" cy="45" r="35" />
-                <circle cx="160" cy="45" r="35" />
-                <circle cx="130" cy="38" r="38" />
-                <rect x="70" y="45" width="120" height="30" rx="15" />
-              </g>
-            </svg>
-          </div>
-        </div>
-      </div>
+      {/* ── CENTER SECTION (Removed as it is now in GlobalCompanion) ── */}
 
       {/* ── BOTTOM DOCK (Unified Symmetric Row of 7 Modules) ── */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-5xl px-4 z-30 pointer-events-auto">

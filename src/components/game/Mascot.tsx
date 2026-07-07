@@ -15,7 +15,16 @@ export type Mood =
   | "sleepy"
   | "sad"
   | "crying"
-  | "sleep";
+  | "sleep"
+  | "write"
+  | "yawn"
+  | "hop"
+  | "stretch"
+  | "look_around"
+  | "tilt"
+  | "swing_feet"
+  | "breathe"
+  | "petting";
 
 interface Props {
   mood?: Mood;
@@ -56,10 +65,15 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
       const cy = r.top + r.height / 2;
       const dx = (e.clientX - cx) / window.innerWidth;
       const dy = (e.clientY - cy) / window.innerHeight;
+      if (mood === "look_around") return; // look_around state takes over
       const max = 2.0;
+      // Increase responsiveness when closer
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const intensity = dist < 0.2 ? 15 : 10;
+      
       setLook({
-        x: Math.max(-max, Math.min(max, dx * 10)),
-        y: Math.max(-max, Math.min(max, dy * 8)),
+        x: Math.max(-max, Math.min(max, dx * intensity)),
+        y: Math.max(-max, Math.min(max, dy * (intensity - 2))),
       });
     }
     window.addEventListener("mousemove", onMove);
@@ -82,28 +96,7 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
     };
   }, []);
 
-  // random idle behaviors: yawn, little hop
-  useEffect(() => {
-    if (mood !== "idle") return;
-    let alive = true;
-    function loop() {
-      if (!alive) return;
-      const r = Math.random();
-      if (r < 0.4) {
-        setYawn(true);
-        setTimeout(() => setYawn(false), 1200);
-      } else {
-        setHop(true);
-        setTimeout(() => setHop(false), 700);
-      }
-      setTimeout(loop, 6000 + Math.random() * 8000);
-    }
-    const t = setTimeout(loop, 4000);
-    return () => {
-      alive = false;
-      clearTimeout(t);
-    };
-  }, [mood]);
+  // Random idle behaviors removed here because they are now managed by GlobalCompanion
 
   const isSleeping = mood === "sleep";
   const isPraying = mood === "pray";
@@ -111,17 +104,44 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
   const isWaving = mood === "wave";
   const isSad = mood === "sad";
   const isCrying = mood === "crying";
-  const isSleepy = mood === "sleepy" || yawn;
-  const isThink = mood === "think";
+  const isSleepy = mood === "sleepy" || yawn || mood === "yawn";
+  const isThink = mood === "think" || mood === "look_around";
   const isHappy =
     mood === "happy" ||
     mood === "very_happy" ||
     mood === "excited" ||
     mood === "evolve" ||
-    mood === "celebrate";
+    mood === "celebrate" ||
+    mood === "petting";
   const isWink = mood === "wink";
+  const isWriting = mood === "write";
+  const isPetting = mood === "petting";
+  const isTilt = mood === "tilt" || mood === "petting";
 
-  const animatingHop = hop || mood === "excited" || mood === "evolve" || mood === "celebrate";
+  const animatingHop = hop || mood === "excited" || mood === "evolve" || mood === "celebrate" || mood === "hop";
+
+  // Override look for reading or look_around
+  let activeLook = look;
+  if (isReading) {
+    activeLook = { x: 0, y: 1.5 };
+  }
+  
+  // Random look around loop
+  useEffect(() => {
+    if (mood !== "look_around") return;
+    let alive = true;
+    const interval = setInterval(() => {
+      if (!alive) return;
+      setLook({
+        x: (Math.random() * 4) - 2,
+        y: (Math.random() * 4) - 2,
+      });
+    }, 1000);
+    return () => {
+      alive = false;
+      clearInterval(interval);
+    };
+  }, [mood]);
 
   return (
     <div
@@ -224,10 +244,17 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
             ? "lumi-runin .9s cubic-bezier(.2,.9,.3,1.2) both"
             : animatingHop
               ? "lumi-hop .65s cubic-bezier(.2,.9,.3,1.3)"
-              : "lumi-breath 3.6s ease-in-out infinite",
+              : mood === "breathe"
+                ? "lumi-breath 3.6s ease-in-out infinite, scale-pulse 2s ease-in-out infinite"
+                : "lumi-breath 3.6s ease-in-out infinite",
         }}
       >
         <svg viewBox="0 0 140 140" width="120" height="120">
+          <g style={{
+            transformOrigin: "70px 90px",
+            transform: isTilt ? "rotate(6deg)" : "none",
+            transition: "transform 0.4s ease-in-out"
+          }}>
           <defs>
             <radialGradient id="jesusGlow" cx="50%" cy="50%" r="60%">
               <stop offset="0%" stopColor="#fff7cc" stopOpacity=".9" />
@@ -276,6 +303,19 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
             stroke="#cbd5e1"
             strokeWidth="1.2"
           />
+          
+          {/* Swinging Feet */}
+          {(mood === "swing_feet" || mood === "idle" || mood === "breathe" || isReading) && (
+            <g className={mood === "swing_feet" ? "animate-[swing_2s_ease-in-out_infinite]" : ""} style={{ transformOrigin: "55px 125px" }}>
+              <ellipse cx="55" cy="130" rx="4" ry="6" fill="#fed7aa" stroke="#fb923c" strokeWidth="0.5" />
+            </g>
+          )}
+          {(mood === "swing_feet" || mood === "idle" || mood === "breathe" || isReading) && (
+            <g className={mood === "swing_feet" ? "animate-[swing_2.2s_ease-in-out_infinite_reverse]" : ""} style={{ transformOrigin: "85px 125px" }}>
+              <ellipse cx="85" cy="130" rx="4" ry="6" fill="#fed7aa" stroke="#fb923c" strokeWidth="0.5" />
+            </g>
+          )}
+
           {/* Diagonal Red Sash (Faixa transversal) */}
           <path
             d="M 52,95 L 68,95 C 80,108 86,122 83,126 L 67,126 C 58,122 55,108 52,95 Z"
@@ -338,14 +378,14 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
             <>
               {/* Sleeping/Praying peaceful curved eyes */}
               <path
-                d="M 46,70 Q 54,77 62,70"
+                d={isPetting ? "M 46,68 Q 54,62 62,68" : "M 46,70 Q 54,77 62,70"}
                 fill="none"
                 stroke="#1f2937"
                 strokeWidth="2.8"
                 strokeLinecap="round"
               />
               <path
-                d="M 78,70 Q 86,77 94,70"
+                d={isPetting ? "M 78,68 Q 86,62 94,68" : "M 78,70 Q 86,77 94,70"}
                 fill="none"
                 stroke="#1f2937"
                 strokeWidth="2.8"
@@ -391,7 +431,7 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
             </>
           ) : (
             /* Default tracking round eyes (idle, sad, crying, think) */
-            <g transform={`translate(${look.x}, ${look.y})`}>
+            <g transform={`translate(${activeLook.x}, ${activeLook.y})`}>
               {/* Left eye */}
               <ellipse cx="54" cy="70" rx="8" ry="8" fill="#1f2937" />
               <circle cx="56.5" cy="67.5" r="2.2" fill="#fff" />
@@ -423,7 +463,7 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
               fill="none"
               strokeLinecap="round"
             />
-          ) : isThink ? (
+          ) : isThink || isWriting ? (
             /* Side smirk thinking line */
             <path
               d="M 66,85 Q 71,83 74,86"
@@ -444,7 +484,7 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
           ) : (
             /* Default happy smile */
             <path
-              d="M 62,84 Q 70,92 78,84"
+              d={mood === "stretch" ? "M 66,86 Q 70,89 74,86" : "M 62,84 Q 70,92 78,84"}
               stroke="#7c2d12"
               strokeWidth="2.2"
               fill="none"
@@ -533,6 +573,14 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
                 strokeWidth="0.5"
               />
             </>
+          ) : mood === "stretch" ? (
+            /* Stretching arms high up */
+            <>
+              <ellipse cx="24" cy="75" rx="6" ry="12" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" style={{ transformOrigin: "32px 86px", transform: "rotate(160deg)" }} />
+              <circle cx="16" cy="65" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+              <ellipse cx="116" cy="75" rx="6" ry="12" fill="#ffffff" stroke="#cbd5e1" strokeWidth="0.8" style={{ transformOrigin: "108px 86px", transform: "rotate(-160deg)" }} />
+              <circle cx="124" cy="65" r="4.5" fill="url(#jesusSkin)" stroke="#fed7aa" strokeWidth="0.5" />
+            </>
           ) : isThink ? (
             /* Thinking state: one hand resting, other hand at chin */
             <>
@@ -573,6 +621,66 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
                 fill="url(#jesusSkin)"
                 stroke="#fed7aa"
                 strokeWidth="0.5"
+              />
+            </>
+          ) : isWriting ? (
+            /* Writing state: arm moving */
+            <>
+              {/* Left arm resting */}
+              <ellipse
+                cx="22"
+                cy="94"
+                rx="7"
+                ry="5"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+              />
+              <circle
+                cx="16"
+                cy="94"
+                r="4"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+              />
+
+              {/* Right arm writing (animated) */}
+              <ellipse
+                cx="110"
+                cy="90"
+                rx="8"
+                ry="5"
+                fill="#ffffff"
+                stroke="#cbd5e1"
+                strokeWidth="0.8"
+                style={{
+                  transformOrigin: "118px 90px",
+                  animation: "lumi-wave 0.8s ease-in-out infinite",
+                }}
+              />
+              <circle
+                cx="102"
+                cy="90"
+                r="4.5"
+                fill="url(#jesusSkin)"
+                stroke="#fed7aa"
+                strokeWidth="0.5"
+                style={{
+                  transformOrigin: "110px 90px",
+                  animation: "lumi-wave 0.8s ease-in-out infinite",
+                }}
+              />
+              {/* Tiny quill pen */}
+              <path
+                d="M 100,90 Q 95,75 105,70 Q 102,80 102,90 Z"
+                fill="#fcd34d"
+                stroke="#b45309"
+                strokeWidth="0.8"
+                style={{
+                  transformOrigin: "102px 90px",
+                  animation: "lumi-wave 0.8s ease-in-out infinite",
+                }}
               />
             </>
           ) : (
@@ -646,6 +754,7 @@ export function Mascot({ mood = "idle", x = 50, y = 70, scale = 1, onClick, mess
               <line x1="24" y1="18" x2="34" y2="18" stroke="#cbd5e1" strokeWidth="1" />
             </g>
           )}
+          </g>
         </svg>
       </div>
     </div>

@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster } from "@/components/ui/sonner";
 import { AudioProvider } from "@/components/audio/AudioProvider";
 import { PageTransition } from "@/components/transitions/PageTransition";
+import { CompanionProvider } from "@/components/game/CompanionProvider";
+import { GlobalCompanion } from "@/components/game/GlobalCompanion";
 
 function NotFoundComponent() {
   return (
@@ -154,9 +156,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AudioProvider>
-        <PageTransition>
-          <Outlet />
-        </PageTransition>
+        <CompanionProvider>
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
+          <GlobalCompanion />
+        </CompanionProvider>
         <Toaster richColors position="top-center" />
       </AudioProvider>
     </QueryClientProvider>

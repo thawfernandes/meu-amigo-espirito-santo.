@@ -20,7 +20,14 @@ export type Sfx =
   | "page"
   | "marker"
   | "levelup"
-  | "achievement";
+  | "achievement"
+  | "companion_yawn"
+  | "companion_giggle"
+  | "companion_hop"
+  | "companion_sigh"
+  | "companion_page_flip"
+  | "companion_write"
+  | "companion_hmm";
 
 export type Mood =
   | "idle"
@@ -51,6 +58,12 @@ export type AudioCtx = {
   setMusicVolume: (v: number) => void;
   setSfxVolume: (v: number) => void;
   setAutoAdapt: (v: boolean) => void;
+  companionAnimationsEnabled: boolean;
+  companionSoundsEnabled: boolean;
+  companionVolume: number;
+  setCompanionAnimationsEnabled: (v: boolean) => void;
+  setCompanionSoundsEnabled: (v: boolean) => void;
+  setCompanionVolume: (v: number) => void;
   setContext: (c: "dashboard" | "biblia" | "vida" | "estudos") => void;
   setMood: (m: Mood) => void;
   toggle: () => void;
@@ -74,6 +87,12 @@ export function useAudio() {
       setMusicVolume: () => {},
       setSfxVolume: () => {},
       setAutoAdapt: () => {},
+      companionAnimationsEnabled: true,
+      companionSoundsEnabled: true,
+      companionVolume: 0.5,
+      setCompanionAnimationsEnabled: () => {},
+      setCompanionSoundsEnabled: () => {},
+      setCompanionVolume: () => {},
       setContext: () => {},
       setMood: () => {},
       toggle: () => {},
@@ -302,6 +321,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     const v = localStorage.getItem("audio.autoAdapt");
     return v === null ? true : v === "true";
   });
+  const [companionAnimationsEnabled, setCompanionAnimationsEnabledState] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const v = localStorage.getItem("audio.companionAnimationsEnabled");
+    return v === null ? true : v === "true";
+  });
+  const [companionSoundsEnabled, setCompanionSoundsEnabledState] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const v = localStorage.getItem("audio.companionSoundsEnabled");
+    return v === null ? true : v === "true";
+  });
+  const [companionVolume, setCompanionVolumeState] = useState(() => {
+    if (typeof window === "undefined") return 0.5;
+    const v = localStorage.getItem("audio.companionVolume");
+    return v === null ? 0.5 : parseFloat(v);
+  });
 
   // Master mute state (controlled by floating sound button)
   const [muted, setMuted] = useState(() => {
@@ -344,6 +378,18 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         if (s.autoAdapt !== undefined) {
           setAutoAdaptState(s.autoAdapt);
           localStorage.setItem("audio.autoAdapt", String(s.autoAdapt));
+        }
+        if (s.companionAnimationsEnabled !== undefined) {
+          setCompanionAnimationsEnabledState(s.companionAnimationsEnabled);
+          localStorage.setItem("audio.companionAnimationsEnabled", String(s.companionAnimationsEnabled));
+        }
+        if (s.companionSoundsEnabled !== undefined) {
+          setCompanionSoundsEnabledState(s.companionSoundsEnabled);
+          localStorage.setItem("audio.companionSoundsEnabled", String(s.companionSoundsEnabled));
+        }
+        if (s.companionVolume !== undefined) {
+          setCompanionVolumeState(s.companionVolume);
+          localStorage.setItem("audio.companionVolume", String(s.companionVolume));
         }
         if (s.muted !== undefined) {
           setMuted(s.muted);
@@ -776,6 +822,33 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     [uid, syncSettings],
   );
 
+  const setCompanionAnimationsEnabled = useCallback(
+    (v: boolean) => {
+      setCompanionAnimationsEnabledState(v);
+      localStorage.setItem("audio.companionAnimationsEnabled", String(v));
+      if (uid) syncSettings(uid, { companionAnimationsEnabled: v });
+    },
+    [uid, syncSettings],
+  );
+
+  const setCompanionSoundsEnabled = useCallback(
+    (v: boolean) => {
+      setCompanionSoundsEnabledState(v);
+      localStorage.setItem("audio.companionSoundsEnabled", String(v));
+      if (uid) syncSettings(uid, { companionSoundsEnabled: v });
+    },
+    [uid, syncSettings],
+  );
+
+  const setCompanionVolume = useCallback(
+    (v: number) => {
+      setCompanionVolumeState(v);
+      localStorage.setItem("audio.companionVolume", String(v));
+      if (uid) syncSettings(uid, { companionVolume: v });
+    },
+    [uid, syncSettings],
+  );
+
   const play = useCallback(
     (s: Sfx) => {
       if (!sfxEnabled || (muted && s !== "click")) return; // always allow clicks
@@ -948,9 +1021,125 @@ export function AudioProvider({ children }: { children: ReactNode }) {
           });
           break;
         }
+        case "companion_yawn": {
+          if (!companionSoundsEnabled) break;
+          const duration = 1.2;
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(150, now + duration);
+          gain.gain.setValueAtTime(0.0001, now);
+          gain.gain.linearRampToValueAtTime(0.05 * companionVolume, now + 0.2);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          osc.connect(gain).connect(ac.destination);
+          osc.start(now);
+          osc.stop(now + duration + 0.1);
+          break;
+        }
+        case "companion_giggle": {
+          if (!companionSoundsEnabled) break;
+          // small sequence of 3 quick notes
+          [800, 950, 1100].forEach((f, idx) => {
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.type = "sine";
+            osc.frequency.value = f + (Math.random() * 50);
+            gain.gain.setValueAtTime(0.0001, now + idx * 0.1);
+            gain.gain.linearRampToValueAtTime(0.04 * companionVolume, now + idx * 0.1 + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.1 + 0.15);
+            osc.connect(gain).connect(ac.destination);
+            osc.start(now + idx * 0.1);
+            osc.stop(now + idx * 0.1 + 0.2);
+          });
+          break;
+        }
+        case "companion_hop": {
+          if (!companionSoundsEnabled) break;
+          o.type = "sine";
+          o.frequency.setValueAtTime(400, now);
+          o.frequency.exponentialRampToValueAtTime(700, now + 0.1);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.03 * companionVolume, now + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + 0.15);
+          o.start(now);
+          o.stop(now + 0.15);
+          break;
+        }
+        case "companion_sigh": {
+          if (!companionSoundsEnabled) break;
+          const duration = 1.0;
+          const noiseBuffer = createNoiseBuffer(ac);
+          const src = ac.createBufferSource();
+          src.buffer = noiseBuffer;
+          const filter = ac.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.frequency.setValueAtTime(800, now);
+          filter.frequency.exponentialRampToValueAtTime(300, now + duration);
+          filter.Q.value = 1.0;
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.02 * companionVolume, now + 0.2);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          src.connect(filter).connect(g);
+          src.start(now);
+          src.stop(now + duration + 0.1);
+          break;
+        }
+        case "companion_hmm": {
+          if (!companionSoundsEnabled) break;
+          const duration = 0.8;
+          o.type = "triangle";
+          o.frequency.setValueAtTime(250, now);
+          o.frequency.linearRampToValueAtTime(280, now + 0.3);
+          o.frequency.linearRampToValueAtTime(260, now + duration);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.04 * companionVolume, now + 0.1);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          o.start(now);
+          o.stop(now + duration + 0.1);
+          break;
+        }
+        case "companion_page_flip": {
+          if (!companionSoundsEnabled) break;
+          const duration = 0.3;
+          const noiseBuffer = createNoiseBuffer(ac);
+          const src = ac.createBufferSource();
+          src.buffer = noiseBuffer;
+          const filter = ac.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.frequency.setValueAtTime(1400, now);
+          filter.frequency.exponentialRampToValueAtTime(400, now + duration);
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.03 * companionVolume, now + 0.05);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          src.connect(filter).connect(g);
+          src.start(now);
+          src.stop(now + duration + 0.05);
+          break;
+        }
+        case "companion_write": {
+          if (!companionSoundsEnabled) break;
+          const duration = 0.4;
+          const noiseBuffer = createNoiseBuffer(ac);
+          const src = ac.createBufferSource();
+          src.buffer = noiseBuffer;
+          const filter = ac.createBiquadFilter();
+          filter.type = "bandpass";
+          filter.frequency.setValueAtTime(800, now);
+          filter.frequency.linearRampToValueAtTime(1200, now + duration);
+          filter.Q.value = 5.0; // tight scratchy sound
+          g.gain.setValueAtTime(0.0001, now);
+          g.gain.linearRampToValueAtTime(0.015 * companionVolume, now + 0.1);
+          g.gain.linearRampToValueAtTime(0.01 * companionVolume, now + 0.2);
+          g.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+          src.connect(filter).connect(g);
+          src.start(now);
+          src.stop(now + duration + 0.05);
+          break;
+        }
       }
     },
-    [sfxEnabled, sfxVolume, muted, ensure],
+    [sfxEnabled, sfxVolume, muted, ensure, companionSoundsEnabled, companionVolume],
   );
 
   // Auto-start music if not muted on first client interaction
@@ -1008,6 +1197,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
         setMusicVolume,
         setSfxVolume,
         setAutoAdapt,
+        companionAnimationsEnabled,
+        companionSoundsEnabled,
+        companionVolume,
+        setCompanionAnimationsEnabled,
+        setCompanionSoundsEnabled,
+        setCompanionVolume,
         setContext,
         setMood,
         toggle,

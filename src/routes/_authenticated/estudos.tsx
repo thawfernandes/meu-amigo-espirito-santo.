@@ -389,6 +389,7 @@ export function EstudosPage() {
       .select()
       .single();
     if (error) {
+      console.error("Supabase insert error:", error);
       toast.error("Erro ao criar caderno.");
       return;
     }
