@@ -221,7 +221,7 @@
       const SUPABASE_URL = "https://jmtavlozxkmkeubekbjd.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8";
 
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       const BIBLE_BOOKS = [
         { abbr: "gn", name: "Gênesis", chapters: 50 },
@@ -300,17 +300,29 @@
         refreshIcon.classList.add("animate-spin");
         
         try {
-          // 1. Fetch translation_jobs
-          const { data: jobs, error } = await supabase
-            .from("translation_jobs")
-            .select("*")
-            .order("id", { ascending: true });
-          
-          if (error) throw error;
+          // 1. Fetch translation_jobs in pages of 1000 to bypass PostgREST limit
+          let jobs = [];
+          let page = 0;
+          let fetching = true;
+          while (fetching) {
+            const { data, error } = await supabaseClient
+              .from("translation_jobs")
+              .select("*")
+              .range(page * 1000, (page + 1) * 1000 - 1)
+              .order("id", { ascending: true });
+            
+            if (error) throw error;
+            if (!data || data.length === 0) {
+              fetching = false;
+            } else {
+              jobs.push(...data);
+              page++;
+            }
+          }
           allJobsData = jobs || [];
 
           // 2. Count Total Verses translated directly from original_bible_verses
-          const { count: totalVersesCount, error: countError } = await supabase
+          const { count: totalVersesCount, error: countError } = await supabaseClient
             .from("original_bible_verses")
             .select("*", { count: "exact", head: true });
           

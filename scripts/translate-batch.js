@@ -147,14 +147,22 @@ function validateTranslation(verses, originalCount) {
     throw new Error(`Esperava ${originalCount} versículos, mas vieram ${verses.length}`);
   }
 
+  const verseNumbers = verses.map(v => v.verse);
+  for (let v = 1; v <= originalCount; v++) {
+    if (!verseNumbers.includes(v)) {
+      throw new Error(`Número de versículo ${v} está ausente na resposta da tradução.`);
+    }
+  }
+
   for (let i = 0; i < verses.length; i++) {
     const v = verses[i];
     if (!v.text || v.text.trim() === "") throw new Error(`Versículo ${v.verse} está vazio`);
 
-    // Regra rígida anti-parênteses
-    if (v.text.includes("(") || v.text.includes(")")) {
+    // Regra rígida anti-parênteses (permitindo parênteses dentro de {{palavras-chave}})
+    const textWithoutKeywords = (v.text || "").replace(/\{\{.*?\}\}/g, "");
+    if (textWithoutKeywords.includes("(") || textWithoutKeywords.includes(")")) {
       throw new Error(
-        `Texto do versículo ${v.verse} contém parênteses, o que é estritamente proibido nesta tradução.`
+        `Texto do versículo ${v.verse} contém parênteses fora de marcações {{}}, o que é estritamente proibido nesta tradução.`
       );
     }
 
@@ -182,7 +190,7 @@ async function translateChapter(bookAbbr, chapter, versesObj, testament, bookInd
   const originalData = await fetchOriginalText(bookIndex, chapter, testament);
   const originalListText = originalData.map((v) => `v.${v.verse}: ${v.text}`).join("\n");
   const versesListText = Object.entries(versesObj)
-    .map(([v, txt]) => `v.${v}: ${txt}`)
+    .map(([v, txt]) => `v.${parseInt(v, 10) + 1}: ${txt}`)
     .join("\n");
   const expectedCount = Object.keys(versesObj).length;
 
@@ -216,7 +224,10 @@ Diretrizes rigorosas (NÃO VIOLE NENHUMA):
 6. INTERATIVIDADE: Para permitir o estudo, você deve OBRIGATORIAMENTE envolver palavras-chave importantes e nomes próprios na tradução em chaves duplas. Exemplo: "E {{Elimeleque}} foi para {{Beth-Lechem}}". Cada termo mapeado deve estar no JSON.
 7. CONSISTÊNCIA DE TERMOS: Mantenha a tradução consistente baseada no glossário abaixo:
 ${glossaryText}
-8. NUMERAÇÃO: Mapeie de volta para a numeração exigida.
+8. ALINHAMENTO COM A NUMERAÇÃO ACF (CRÍTICO): A sua resposta JSON final deve conter exatamente a mesma quantidade de versículos que o "Texto ACF" fornecido abaixo (exatamente os versículos numerados de 1 até ${expectedCount}). 
+   - Se o "Texto Original" fornecido tiver MENOS versículos que o "Texto ACF" (ex: o Texto Original tem 54 versículos mas a ACF espera ${expectedCount}), utilize sua inteligência e conhecimento do original hebraico/grego da passagem para traduzir o versículo faltante (ex: traduzindo o versículo 55 a partir de seu conhecimento da passagem "E levantou-se Labão pela manhã de madrugada, e beijou seus filhos...") e garantir que o JSON resultante tenha exatamente ${expectedCount} versículos (1 a ${expectedCount}).
+   - Se o "Texto Original" tiver MAIS versículos que a ACF, agrupe ou ajuste os versículos para corresponder exatamente à divisão de 1 a ${expectedCount} da ACF.
+   A sua resposta JSON final PRECISA ter exatamente os versículos de 1 a ${expectedCount}. Não ignore nenhum número e não termine antes.
 
 Retorne APENAS um array JSON estruturado com os campos:
 - "verse" (inteiro)
@@ -257,7 +268,12 @@ ${versesListText}`;
   const rawJsonText = result.candidates[0].content.parts[0].text.trim();
   const parsedVerses = JSON.parse(rawJsonText);
 
-  validateTranslation(parsedVerses, expectedCount);
+  try {
+    validateTranslation(parsedVerses, expectedCount);
+  } catch (err) {
+    console.error("DEBUG: Resposta bruta do Gemini que falhou na validação:", rawJsonText);
+    throw err;
+  }
 
   return parsedVerses;
 }

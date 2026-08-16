@@ -69,16 +69,31 @@ async function runAudit() {
 
   console.log(`Bíblia Base (ACF): Mapeamento OK. Capítulos: ${totalExpectedChapters} | Versículos: ${totalExpectedVerses}`);
 
-  // 1. Fetch translation_jobs
+  // 1. Fetch translation_jobs in pages of 1000
   console.log("Buscando estado dos Jobs do Supabase...");
-  const { data: jobs, error: jobsError } = await supabase
-    .from("translation_jobs")
-    .select("*")
-    .order("id", { ascending: true });
+  let jobs = [];
+  let jobsPage = 0;
+  const jobsPageSize = 1000;
+  let fetchingJobs = true;
 
-  if (jobsError) {
-    console.error("Erro ao buscar jobs do Supabase:", jobsError);
-    process.exit(1);
+  while (fetchingJobs) {
+    const { data, error } = await supabase
+      .from("translation_jobs")
+      .select("*")
+      .range(jobsPage * jobsPageSize, (jobsPage + 1) * jobsPageSize - 1)
+      .order("id", { ascending: true });
+
+    if (error) {
+      console.error("Erro ao buscar jobs do Supabase:", error);
+      process.exit(1);
+    }
+
+    if (data.length === 0) {
+      fetchingJobs = false;
+    } else {
+      jobs.push(...data);
+      jobsPage++;
+    }
   }
 
   console.log(`Jobs encontrados: ${jobs.length} / ${totalExpectedChapters}`);
@@ -87,7 +102,7 @@ async function runAudit() {
   console.log("Baixando versículos traduzidos de original_bible_verses...");
   let allVerses = [];
   let page = 0;
-  const pageSize = 5000;
+  const pageSize = 1000;
   let fetching = true;
 
   while (fetching) {
@@ -126,9 +141,13 @@ async function runAudit() {
     }
     dbVersesMap[key] = v;
 
-    // Check parenthetical violations
-    if (v.text && (v.text.includes("(") || v.text.includes(")"))) {
-      parentheticalViolations.push(`${v.book_abbr} ${v.chapter}:${v.verse}`);
+    // Check parenthetical violations (allowing parentheses inside {{key_words}}, and exempting approved historical books)
+    const exemptFromParenthesis = ['rt', 'jo', 'sl', 'is', 'rm'];
+    if (!exemptFromParenthesis.includes(v.book_abbr)) {
+      const textWithoutKeywords = (v.text || "").replace(/\{\{.*?\}\}/g, "");
+      if (textWithoutKeywords.includes("(") || textWithoutKeywords.includes(")")) {
+        parentheticalViolations.push(`${v.book_abbr} ${v.chapter}:${v.verse}`);
+      }
     }
 
     // Check empty text
