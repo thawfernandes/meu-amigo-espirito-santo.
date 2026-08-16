@@ -9,6 +9,8 @@ on:
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,3 +30,14 @@ jobs:
           VITE_SUPABASE_URL: "https://jmtavlozxkmkeubekbjd.supabase.co"
           VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8"
         run: node scripts/keep-alive.js
+
+      - name: Update Activity Timestamp
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin
+          git checkout supabase-keepalive 2>/dev/null || git checkout -b supabase-keepalive
+          date > keepalive.txt
+          git add keepalive.txt
+          git commit -m "chore: keepalive ping [skip ci]" || exit 0
+          git push -u origin supabase-keepalive
