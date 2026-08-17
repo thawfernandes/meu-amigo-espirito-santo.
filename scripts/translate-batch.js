@@ -363,12 +363,20 @@ ${chapBlocks}`;
 
   const result = await response.json();
   const rawJsonText = result.candidates[0].content.parts[0].text.trim();
-  const parsed = JSON.parse(rawJsonText);
+
+  let parsed;
+  try {
+    parsed = JSON.parse(rawJsonText);
+  } catch (jsonErr) {
+    throw new Error(`JSON inválido do Gemini: ${jsonErr.message}. Primeiros 200 chars: ${rawJsonText.substring(0, 200)}`);
+  }
 
   if (isSingle) {
+    // Single chapter: validate and throw on failure (caller handles)
     validateTranslation(parsed, chapterData[0].expectedCount);
-    return [{ req: chapterRequests[0], verses: parsed }];
+    return [{ req: chapterRequests[0], verses: parsed, validationError: null }];
   } else {
+    // Multi-chapter: validate each independently — return partial results
     if (!parsed.chapters || !Array.isArray(parsed.chapters)) {
       throw new Error("Resposta multi-capítulo não contém campo 'chapters'.");
     }
@@ -377,11 +385,19 @@ ${chapBlocks}`;
       const cd = chapterData[i];
       const expectedKey = `${cd.req.bookAbbr}_${cd.req.chapter}`;
       const chap = parsed.chapters[i] || parsed.chapters.find(c => c.key === expectedKey);
+
       if (!chap || !chap.verses) {
-        throw new Error(`Capítulo ${cd.req.bookName} ${cd.req.chapter} ausente na resposta multi-capítulo.`);
+        results.push({ req: chapterRequests[i], verses: null, validationError: `Capítulo ausente na resposta do Gemini` });
+        continue;
       }
-      validateTranslation(chap.verses, cd.expectedCount);
-      results.push({ req: chapterRequests[i], verses: chap.verses });
+
+      try {
+        validateTranslation(chap.verses, cd.expectedCount);
+        results.push({ req: chapterRequests[i], verses: chap.verses, validationError: null });
+      } catch (valErr) {
+        // Partial failure: this chapter failed but others may be fine
+        results.push({ req: chapterRequests[i], verses: null, validationError: valErr.message });
+      }
     }
     return results;
   }
@@ -436,6 +452,29 @@ async function markJobPendingOrFailed(jobId, attempts, errMessage) {
     last_error: errMessage,
     updated_at: new Date().toISOString(),
   }).eq("id", jobId);
+}
+
+// Erros temporários (rede, 5xx, timeouts) NÃO incrementam tentativas
+async function markJobTemporaryError(jobId, errMessage) {
+  await supabase.from("translation_jobs").update({
+    status: "pending",
+    last_error: `[temp] ${errMessage.substring(0, 500)}`,
+    updated_at: new Date().toISOString(),
+  }).eq("id", jobId);
+}
+
+// Classifica o tipo de erro do Gemini para tratamento correto
+function classifyGeminiError(errMessage) {
+  if (errMessage.includes("429") || errMessage.includes("RESOURCE_EXHAUSTED") || errMessage.includes("Quota exceeded"))
+    return "rate_limit";
+  if (errMessage.includes("503") || errMessage.includes("502") || errMessage.includes("500") ||
+      errMessage.includes("UNAVAILABLE") || errMessage.includes("Service Unavailable") ||
+      errMessage.includes("ECONNRESET") || errMessage.includes("ETIMEDOUT") || errMessage.includes("ENOTFOUND"))
+    return "temporary";
+  if (!errMessage.includes("Erro API Gemini") && (errMessage.includes("fetch") || errMessage.includes("network") ||
+      errMessage.includes("socket") || errMessage.includes("connect")))
+    return "network"; // Pure network failure — no response received, quota not consumed
+  return "validation"; // JSON parse, wrong verse count, missing field, etc.
 }
 
 // ----- MAIN BATCH RUNNER -----
@@ -594,49 +633,85 @@ async function run() {
       bookIndex: j.bookIndex,
     }));
 
+    let callSucceeded = false;
     try {
-      const translatedChapters = await translateBatch(chapterRequests, glossary);
-      geminiCallsMade++;
+      const partialResults = await translateBatch(chapterRequests, glossary);
 
-      // --- Step 5: Persist each chapter ---
-      for (const result of translatedChapters) {
+      // --- Step 5: Count the call and persist each valid chapter ---
+      geminiCallsMade++;
+      callSucceeded = true;
+
+      let validSaved = 0;
+      let validationFailed = 0;
+
+      for (const result of partialResults) {
         const matched = batchJobs.find(j => j.bookAbbr === result.req.bookAbbr && j.chapter === result.req.chapter);
         if (!matched) continue;
-        console.log(`[Supabase] Salvando ${result.verses.length} versículos de ${result.req.bookName} ${result.req.chapter}...`);
-        await saveToSupabase(result.req.bookAbbr, result.req.chapter, result.verses);
-        await markJobCompleted(matched.job.id, result.verses.length);
-        console.log(`✓ ${result.req.bookName} ${result.req.chapter} traduzido e persistido!`);
+
+        if (result.validationError) {
+          // This chapter failed validation — increment attempts, mark pending or failed
+          console.warn(`[Validação Parcial] ${result.req.bookName} ${result.req.chapter}: ${result.validationError}`);
+          await markJobPendingOrFailed(matched.job.id, matched.job.attempts, result.validationError);
+          validationFailed++;
+        } else {
+          // Valid chapter — save immediately
+          console.log(`[Supabase] Salvando ${result.verses.length} versículos de ${result.req.bookName} ${result.req.chapter}...`);
+          await saveToSupabase(result.req.bookAbbr, result.req.chapter, result.verses);
+          await markJobCompleted(matched.job.id, result.verses.length);
+          console.log(`✓ ${result.req.bookName} ${result.req.chapter} traduzido e persistido!`);
+          validSaved++;
+        }
       }
 
+      if (validationFailed > 0 && validSaved === 0) {
+        // All chapters in this batch failed validation — stop to avoid wasting calls
+        console.warn(`[Stop] Todos os ${validationFailed} capítulos do lote falharam na validação. Encerrando para não desperdiçar chamadas.`);
+        break;
+      }
+
+      // Continue loop only if we saved at least one chapter
       if (geminiCallsMade < geminiCallLimit) await sleep(3000);
 
     } catch (err) {
       const errMessage = err.message || String(err);
-      console.error(`Erro na chamada Gemini (${chaptersDesc}):`, errMessage);
+      const errType = classifyGeminiError(errMessage);
 
-      const isRateLimit =
-        errMessage.includes("429") ||
-        errMessage.includes("RESOURCE_EXHAUSTED") ||
-        errMessage.includes("Quota exceeded");
+      if (errType === "network") {
+        // Pure network failure: no response received, quota very likely NOT consumed
+        console.warn(`[Rede] Sem resposta do servidor (${errMessage.substring(0, 100)}). Fila preservada sem penalidade.`);
+        for (const bj of batchJobs) await markJobTemporaryError(bj.job.id, errMessage);
+        break; // Stop this run cleanly
+      }
 
-      if (isRateLimit) {
+      // Got an HTTP response (even an error one) — count as a used call
+      if (!callSucceeded) geminiCallsMade++;
+
+      if (errType === "rate_limit") {
         console.warn(`[Rate Limit] Cota diária atingida. Encerrando limpo para retomar amanhã.`);
         for (const bj of batchJobs) await markJobRateLimited(bj.job.id, errMessage);
-        process.exit(0);
-      } else if (batchJobs.length > 1) {
-        // Multi-chapter call failed — release all back so they retry individually next run
-        console.warn(`[Fallback] Lote multi-capítulo falhou. Devolvendo para tentar individualmente.`);
-        for (const bj of batchJobs)
-          await markJobPendingOrFailed(bj.job.id, bj.job.attempts, `[lote falhou] ${errMessage}`);
-        process.exit(1);
+        process.exit(0); // Clean exit for scheduler
+      } else if (errType === "temporary") {
+        console.warn(`[Erro Temporário] Servidor indisponível (${errMessage.substring(0, 80)}). Fila preservada sem penalidade.`);
+        for (const bj of batchJobs) await markJobTemporaryError(bj.job.id, errMessage);
+        break; // Stop this run without penalizing jobs
       } else {
-        await markJobPendingOrFailed(batchJobs[0].job.id, batchJobs[0].job.attempts, errMessage);
-        process.exit(1);
+        // Validation/parse error: log, increment attempts for single, temporary for multi
+        if (batchJobs.length === 1) {
+          console.warn(`[Validação] ${batchJobs[0].bookName} ${batchJobs[0].chapter}: ${errMessage.substring(0, 200)}`);
+          await markJobPendingOrFailed(batchJobs[0].job.id, batchJobs[0].job.attempts, errMessage);
+        } else {
+          // Multi-chapter JSON/parse failure — no penalty (issue may be transient)
+          console.warn(`[Parse] Lote multi-capítulo: erro de parse/estrutura. Sem penalidade.`);
+          for (const bj of batchJobs) await markJobTemporaryError(bj.job.id, `[parse] ${errMessage.substring(0, 300)}`);
+        }
+        break; // Stop this run to avoid re-acquiring the same failed job
       }
     }
   }
 
-  console.log(`\nLote finalizado. Chamadas Gemini realizadas: ${geminiCallsMade}/${geminiCallLimit}.`);
+  console.log(`\n====== FIM DA EXECUÇÃO ======`);
+  console.log(`Chamadas Gemini realizadas: ${geminiCallsMade}/${geminiCallLimit}`);
+  console.log(`Chamadas não utilizadas: ${geminiCallLimit - geminiCallsMade}`);
   process.exit(0);
 }
 
