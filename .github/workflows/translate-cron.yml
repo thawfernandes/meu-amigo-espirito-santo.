@@ -1,9 +1,9 @@
-name: Incremental Bible Translation Cron
+name: Incremental Bible Translation (Daily)
 
 on:
   schedule:
-    # Run every 30 minutes to process small batches incrementally
-    - cron: '*/30 * * * *'
+    # Run once daily at 07:00 UTC — within the Gemini free quota reset window
+    - cron: '0 7 * * *'
   workflow_dispatch: # Allows manual execution from the GitHub Actions tab
 
 jobs:
@@ -22,13 +22,17 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Translate Batch
+      - name: Run Translate Batch (18 Gemini calls, up to ~54 chapters)
         env:
-          # Supabase credentials (uses anon key fallback if service role is not defined)
           SUPABASE_URL: "https://jmtavlozxkmkeubekbjd.supabase.co"
           VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8"
-          
-          # Secrets (Must be configured in your GitHub Repository Secrets)
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node scripts/translate-batch.js --limit=3
+        # --limit=18: leave 2 calls as safety buffer from the 20 free daily quota
+        run: node scripts/translate-batch.js --limit=18
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "=== Translation batch complete ==="
+          echo "Check Supabase dashboard for progress."

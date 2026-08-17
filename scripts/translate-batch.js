@@ -175,6 +175,7 @@ function validateTranslation(verses, originalCount) {
       if (!exists) {
         // 1. Tenta achar no mesmo versículo um termo muito parecido (ex: homem vs homens)
         const similarInVerse = v.key_words.find(k => {
+          if (!k.term) return false;
           const t1 = k.term.toLowerCase().replace(/s$/, "");
           const t2 = term.toLowerCase().replace(/s$/, "");
           return t1 === t2 || term.toLowerCase().includes(k.term.toLowerCase()) || k.term.toLowerCase().includes(term.toLowerCase());
@@ -227,66 +228,76 @@ function validateTranslation(verses, originalCount) {
   }
 }
 
-// ----- TRANSLATION CALL -----
-async function translateChapter(bookAbbr, chapter, versesObj, testament, bookIndex) {
-  const book = BIBLE_BOOKS.find((b) => b.abbr === bookAbbr);
-  const bookName = book?.name || bookAbbr;
-  const isAT = testament === "AT";
 
-  let glossaryText = "   - Nenhuma palavra-chave mapeada para este capítulo.";
-  const originalData = await fetchOriginalText(bookIndex, chapter, testament);
-  const originalListText = originalData.map((v) => `v.${v.verse}: ${v.text}`).join("\n");
-  const versesListText = Object.entries(versesObj)
-    .map(([v, txt]) => `v.${parseInt(v, 10) + 1}: ${txt}`)
-    .join("\n");
-  const expectedCount = Object.keys(versesObj).length;
 
+// ---- TOKEN/SIZE ESTIMATION FOR BATCHING ----
+// Classify chapters by verse count to decide batch grouping:
+// <= 30 verses → "small"  → up to 3 per Gemini call
+// 31-60 verses → "medium" → up to 2 per Gemini call
+// > 60 verses  → "large"  → always alone
+function maxChaptersPerCall(verseCount) {
+  if (verseCount <= 30) return 3;
+  if (verseCount <= 60) return 2;
+  return 1;
+}
+
+// ----- GLOSSARY LOADER -----
+function loadGlossary() {
   try {
     const glossaryPath = path.resolve(process.cwd(), "scripts", "glossary.json");
-    if (fs.existsSync(glossaryPath)) {
-      const glossary = JSON.parse(fs.readFileSync(glossaryPath, "utf-8"));
-      const terms = isAT ? glossary.hebraico : glossary.grego;
+    if (fs.existsSync(glossaryPath)) return JSON.parse(fs.readFileSync(glossaryPath, "utf-8"));
+  } catch (e) {}
+  return null;
+}
 
+// ----- TRANSLATION CALL — SINGLE OR MULTI-CHAPTER -----
+async function translateBatch(chapterRequests, glossary) {
+  const isSingle = chapterRequests.length === 1;
+
+  // Pre-fetch all original texts (from cache or bolls.life)
+  const chapterData = [];
+  for (const req of chapterRequests) {
+    const originalData = await fetchOriginalText(req.bookIndex, req.chapter, req.testament);
+    const originalListText = originalData.map((v) => `v.${v.verse}: ${v.text}`).join("\n");
+    const versesListText = Object.entries(req.versesObj)
+      .map(([v, txt]) => `v.${parseInt(v, 10) + 1}: ${txt}`)
+      .join("\n");
+    const expectedCount = Object.keys(req.versesObj).length;
+    const isAT = req.testament === "AT";
+
+    let glossaryText = "   - Nenhuma palavra-chave mapeada.";
+    if (glossary) {
+      const terms = isAT ? glossary.hebraico : glossary.grego;
       if (terms) {
-        const relevantTerms = Object.entries(terms).filter(([k]) =>
-          originalListText.includes(k)
-        );
-        if (relevantTerms.length > 0) {
+        const relevantTerms = Object.entries(terms).filter(([k]) => originalListText.includes(k));
+        if (relevantTerms.length > 0)
           glossaryText = relevantTerms.map(([k, v]) => `   - "${k}" -> "${v}"`).join("\n");
-        }
       }
     }
-  } catch (e) {}
+    chapterData.push({ req, originalListText, versesListText, expectedCount, glossaryText });
+  }
 
-  const prompt = `Você é um tradutor especialista em grego koiné, hebraico antigo e aramaico bíblico.
-Traduza o seguinte capítulo da Bíblia (${bookName} ${chapter}) EXCLUSIVAMENTE a partir do texto original fornecido abaixo para o português.
-Para o Antigo Testamento, o texto fornecido é o Texto Massorético (WLC). Para o Novo Testamento, é o SBLGNT (Society of Biblical Literature Greek New Testament).
+  let prompt;
+  if (isSingle) {
+    const { req, originalListText, versesListText, expectedCount, glossaryText } = chapterData[0];
+    prompt = `Você é um tradutor especialista em grego koiné, hebraico antigo e aramaico bíblico.
+Traduza o seguinte capítulo da Bíblia (${req.bookName} ${req.chapter}) EXCLUSIVAMENTE a partir do texto original fornecido abaixo para o português.
+Para o Antigo Testamento, o texto fornecido é o Texto Massorético (WLC). Para o Novo Testamento, é o SBLGNT.
 
 Diretrizes rigorosas (NÃO VIOLE NENHUMA):
-1. FONTE PRIMÁRIA: Traduza diretamente do texto original fornecido. O texto da ACF é apenas para numeração.
-2. LITERALIDADE EXTREMA: Busque o sentido literal mais fiel e preciso. Preserve repetições, expressões rudes e construções brutas. Não tente deixar o português elegante.
-3. PROIBIDO PARÊNTESES (MAS PRESERVE A INFORMAÇÃO): É expressamente proibido usar os caracteres "(" e ")". Se o texto original contiver um aposto geográfico, identificação ou explicação que faça parte do texto original (ex: "esta é Zoar"), NÃO OMITA a informação. Apenas reescreva a frase integrando a informação com vírgulas ou travessões, NUNCA usando parênteses.
-4. NOMES PRÓPRIOS E TÍTULOS: Preserve nomes próprios e títulos divinos (Yeshua, Miryam, Beth-Lechem, Yerushalayim, YHWH, Elohim, Shaddai, etc.).
-5. FIGURAS DE LINGUAGEM CONCRETAS: Preserve imagens físicas originais (ex: "encher a mão", "levantar a face").
-6. INTERATIVIDADE: Para permitir o estudo, você deve OBRIGATORIAMENTE envolver palavras-chave importantes e nomes próprios na tradução em chaves duplas. Exemplo: "E {{Elimeleque}} foi para {{Beth-Lechem}}". Cada termo mapeado deve estar no JSON.
-7. CONSISTÊNCIA DE TERMOS: Mantenha a tradução consistente baseada no glossário abaixo:
+1. FONTE PRIMÁRIA: Traduza diretamente do texto original. O texto da ACF é apenas para numeração.
+2. LITERALIDADE EXTREMA: Sentido literal fiel. Preserve repetições e construções brutas.
+3. PROIBIDO PARÊNTESES: É expressamente proibido usar "(" e ")". Integre explicações com vírgulas ou travessões.
+4. NOMES PRÓPRIOS E TÍTULOS: Preserve nomes e títulos divinos (YHWH, Elohim, Yeshua, etc.).
+5. FIGURAS DE LINGUAGEM: Preserve imagens físicas originais.
+6. INTERATIVIDADE: Envolva palavras-chave e nomes próprios em chaves duplas {{Palavra}}. Cada termo deve estar em key_words.
+7. GLOSSÁRIO:
 ${glossaryText}
-8. ALINHAMENTO COM A NUMERAÇÃO ACF (CRÍTICO): A sua resposta JSON final deve conter exatamente a mesma quantidade de versículos que o "Texto ACF" fornecido abaixo (exatamente os versículos numerados de 1 até ${expectedCount}). 
-   - Se o "Texto Original" fornecido tiver MENOS versículos que o "Texto ACF" (ex: o Texto Original tem 54 versículos mas a ACF espera ${expectedCount}), utilize sua inteligência e conhecimento do original hebraico/grego da passagem para traduzir o versículo faltante (ex: traduzindo o versículo 55 a partir de seu conhecimento da passagem "E levantou-se Labão pela manhã de madrugada, e beijou seus filhos...") e garantir que o JSON resultante tenha exatamente ${expectedCount} versículos (1 a ${expectedCount}).
-   - Se o "Texto Original" tiver MAIS versículos que a ACF, agrupe ou ajuste os versículos para corresponder exatamente à divisão de 1 a ${expectedCount} da ACF.
-   A sua resposta JSON final PRECISA ter exatamente os versículos de 1 a ${expectedCount}. Não ignore nenhum número e não termine antes.
+8. ALINHAMENTO ACF (CRÍTICO): Resposta deve ter EXATAMENTE ${expectedCount} versículos (1 a ${expectedCount}). Se o original tiver menos versículos, complete com seu conhecimento do texto. Se tiver mais, agrupe.
 
-Retorne APENAS um array JSON estruturado com os campos:
-- "verse" (inteiro)
-- "text" (texto com os marcadores {{Palavra}})
-- "original_text" (a string original)
-- "notes" (nota exegética se necessário, ou null)
-- "original_lang" ("hebraico", "grego" ou "aramaico")
-- "key_words" (array: [{"term": "Exata palavra entre as chaves", "word": "original", "transliteration": "translit", "meaning": "significado"}])
-
-Formato:
+Retorne APENAS um array JSON:
 [
-  { "verse": 1, "text": "...", "original_text": "...", "notes": "...", "original_lang": "...", "key_words": [] }
+  { "verse": 1, "text": "...", "original_text": "...", "notes": null, "original_lang": "hebraico", "key_words": [{"term": "...", "word": "...", "transliteration": "...", "meaning": "..."}] }
 ]
 
 Texto Original:
@@ -294,9 +305,48 @@ ${originalListText}
 
 Texto ACF (USE APENAS PARA NUMERAÇÃO):
 ${versesListText}`;
+  } else {
+    // Multi-chapter prompt
+    const chapCountList = chapterData.map((cd, i) =>
+      `${i+1}. ${cd.req.bookName} ${cd.req.chapter}: ${cd.expectedCount} versículos esperados`
+    ).join("\n");
+
+    const chapBlocks = chapterData.map(cd => `
+=== CAPÍTULO: ${cd.req.bookName} ${cd.req.chapter} (${cd.expectedCount} versículos esperados) ===
+Glossário:
+${cd.glossaryText}
+Texto Original:
+${cd.originalListText}
+Texto ACF (APENAS PARA NUMERAÇÃO):
+${cd.versesListText}`).join("\n");
+
+    prompt = `Você é um tradutor especialista em grego koiné, hebraico antigo e aramaico bíblico.
+Traduza os seguintes ${chapterRequests.length} capítulos da Bíblia para o português, EXCLUSIVAMENTE a partir dos textos originais.
+Para o AT, o texto é o Texto Massorético (WLC). Para o NT, é o SBLGNT.
+
+Capítulos a traduzir:
+${chapCountList}
+
+Diretrizes (aplicar a TODOS os capítulos):
+1. LITERALIDADE EXTREMA. 2. PROIBIDO parênteses. 3. Preserve nomes (YHWH, Elohim, etc.). 4. Use {{chaves duplas}} nas palavras-chave. 5. Cada capítulo deve ter EXATAMENTE o número de versículos indicado.
+
+Retorne APENAS um objeto JSON:
+{
+  "chapters": [
+    {
+      "key": "ABREV_CAPITULO",
+      "verses": [
+        { "verse": 1, "text": "...", "original_text": "...", "notes": null, "original_lang": "hebraico", "key_words": [] }
+      ]
+    }
+  ]
+}
+
+Chaves esperadas para os capítulos (na ordem): ${chapterData.map(cd => `"${cd.req.bookAbbr}_${cd.req.chapter}"`).join(", ")}
+${chapBlocks}`;
+  }
 
   const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
-
   const response = await fetch(geminiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -313,19 +363,31 @@ ${versesListText}`;
 
   const result = await response.json();
   const rawJsonText = result.candidates[0].content.parts[0].text.trim();
-  const parsedVerses = JSON.parse(rawJsonText);
+  const parsed = JSON.parse(rawJsonText);
 
-  try {
-    validateTranslation(parsedVerses, expectedCount);
-  } catch (err) {
-    console.error("DEBUG: Resposta bruta do Gemini que falhou na validação:", rawJsonText);
-    throw err;
+  if (isSingle) {
+    validateTranslation(parsed, chapterData[0].expectedCount);
+    return [{ req: chapterRequests[0], verses: parsed }];
+  } else {
+    if (!parsed.chapters || !Array.isArray(parsed.chapters)) {
+      throw new Error("Resposta multi-capítulo não contém campo 'chapters'.");
+    }
+    const results = [];
+    for (let i = 0; i < chapterRequests.length; i++) {
+      const cd = chapterData[i];
+      const expectedKey = `${cd.req.bookAbbr}_${cd.req.chapter}`;
+      const chap = parsed.chapters[i] || parsed.chapters.find(c => c.key === expectedKey);
+      if (!chap || !chap.verses) {
+        throw new Error(`Capítulo ${cd.req.bookName} ${cd.req.chapter} ausente na resposta multi-capítulo.`);
+      }
+      validateTranslation(chap.verses, cd.expectedCount);
+      results.push({ req: chapterRequests[i], verses: chap.verses });
+    }
+    return results;
   }
-
-  return parsedVerses;
 }
 
-// ----- DATABASE OPERATIONS -----
+// ----- DATABASE HELPERS -----
 async function saveToSupabase(bookAbbr, chapter, verses) {
   const records = verses.map((v) => ({
     book_abbr: bookAbbr,
@@ -340,200 +402,241 @@ async function saveToSupabase(bookAbbr, chapter, verses) {
     model_used: "gemini-2.5-flash",
     review_status: "Gerado pela IA",
   }));
-
   const { error } = await supabase
     .from("original_bible_verses")
     .upsert(records, { onConflict: "book_abbr,chapter,verse" });
-
-  if (error) {
-    throw error;
-  }
+  if (error) throw error;
 }
 
-// ----- MAIN BATCH BIBLE RUNNER -----
+async function markJobCompleted(jobId, verseCount) {
+  await supabase.from("translation_jobs").update({
+    status: "completed",
+    verses_completed: verseCount,
+    total_verses: verseCount,
+    completed_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }).eq("id", jobId);
+}
+
+async function markJobRateLimited(jobId, errMessage) {
+  await supabase.from("translation_jobs").update({
+    status: "rate_limited",
+    last_error: errMessage,
+    updated_at: new Date().toISOString(),
+  }).eq("id", jobId);
+}
+
+async function markJobPendingOrFailed(jobId, attempts, errMessage) {
+  const nextAttempts = attempts + 1;
+  const nextStatus = nextAttempts >= 5 ? "failed" : "pending";
+  console.warn(`[Falha] Tentativa ${nextAttempts}/5. Status → '${nextStatus}'.`);
+  await supabase.from("translation_jobs").update({
+    status: nextStatus,
+    attempts: nextAttempts,
+    last_error: errMessage,
+    updated_at: new Date().toISOString(),
+  }).eq("id", jobId);
+}
+
+// ----- MAIN BATCH RUNNER -----
 async function run() {
   const args = process.argv.slice(2);
   const isForce = args.includes("--force");
-  
-  let limit = 1;
-  const limitArg = args.find(a => a.startsWith("--limit="));
-  if (limitArg) {
-    limit = parseInt(limitArg.split("=")[1], 10);
-  }
 
-  // Parse direct targets if given (e.g. "gn 1" or "gn")
+  // --limit=N = max N Gemini API calls (each may process 1-3 chapters)
+  let geminiCallLimit = 1;
+  const limitArg = args.find(a => a.startsWith("--limit="));
+  if (limitArg) geminiCallLimit = parseInt(limitArg.split("=")[1], 10);
+
   let targetBook = null;
   let targetChapter = null;
   if (args[0] && !args[0].startsWith("--")) {
     targetBook = args[0].toLowerCase();
-    if (args[1] && !args[1].startsWith("--")) {
-      targetChapter = parseInt(args[1], 10);
-    }
+    if (args[1] && !args[1].startsWith("--")) targetChapter = parseInt(args[1], 10);
   }
 
-  console.log(`Iniciando tradutor em lote. Limite: ${limit} capítulos. Forçar: ${isForce}`);
+  console.log(`Iniciando tradutor. Limite de chamadas Gemini: ${geminiCallLimit}. Forçar: ${isForce}`);
 
   const acfBible = await fetchAcfBible();
-  let chaptersProcessed = 0;
+  const glossary = loadGlossary();
+  let geminiCallsMade = 0;
 
-  while (chaptersProcessed < limit) {
-    console.log(`\n[Lote] Solicitando aquisição atômica do próximo capítulo...`);
-    
-    // Acquire next job atomically
-    const { data: jobArray, error: acquireError } = await supabase
-      .rpc("acquire_next_translation_job", {
-        p_force: isForce,
-        p_target_book: targetBook,
-        p_target_chapter: targetChapter
-      });
+  while (geminiCallsMade < geminiCallLimit) {
+    // --- Step 1: Acquire up to 3 jobs to evaluate batching ---
+    const acquiredJobs = [];
+    const MAX_TO_FETCH = 3;
 
-    if (acquireError) {
-      console.error(`Erro ao adquirir o próximo job:`, acquireError);
-      process.exit(1);
+    for (let i = 0; i < MAX_TO_FETCH; i++) {
+      const { data: jobArray, error: acquireError } = await supabase
+        .rpc("acquire_next_translation_job", {
+          p_force: isForce,
+          p_target_book: i === 0 ? targetBook : null,
+          p_target_chapter: i === 0 ? targetChapter : null,
+        });
+
+      if (acquireError) {
+        console.error(`Erro ao adquirir job:`, acquireError);
+        for (const j of acquiredJobs) {
+          await supabase.from("translation_jobs")
+            .update({ status: "pending", updated_at: new Date().toISOString() }).eq("id", j.id);
+        }
+        process.exit(1);
+      }
+      if (!jobArray || jobArray.length === 0) break;
+      acquiredJobs.push(jobArray[0]);
     }
 
-    if (!jobArray || jobArray.length === 0) {
-      console.log(`Nenhum capítulo pendente ou qualificado para processamento.`);
+    if (acquiredJobs.length === 0) {
+      console.log(`\nNenhum capítulo pendente. Tradução pode estar completa!`);
       break;
     }
 
-    const job = jobArray[0];
-    const book = BIBLE_BOOKS.find(b => b.abbr === job.book);
-    const bookName = book?.name || job.book;
-
-    console.log(`Adquirido: ${bookName} Capítulo ${job.chapter} (ID: ${job.id}, Tentativa: ${job.attempts + 1})`);
-
-    const bookData = acfBible.find((b) => b.abbrev.toLowerCase() === job.book || (job.book === "at" && b.abbrev.toLowerCase() === "atos"));
-    if (!bookData) {
-      const errorMsg = `Dados do livro ACF não encontrados para abbrev: ${job.book}`;
-      console.error(errorMsg);
-      await supabase
-        .from("translation_jobs")
-        .update({ status: "failed", last_error: errorMsg, updated_at: new Date().toISOString() })
-        .eq("id", job.id);
-      process.exit(1);
-    }
-
-    const chapterIndex = job.chapter - 1;
-    const chapterVersesObj = bookData.chapters[chapterIndex];
-    if (!chapterVersesObj) {
-      const errorMsg = `Capítulo ${job.chapter} não encontrado no livro ACF ${job.book}`;
-      console.error(errorMsg);
-      await supabase
-        .from("translation_jobs")
-        .update({ status: "failed", last_error: errorMsg, updated_at: new Date().toISOString() })
-        .eq("id", job.id);
-      process.exit(1);
-    }
-
-    const expectedVerseCount = Object.keys(chapterVersesObj).length;
-
-    // Check if we already have this chapter completed locally/db without --force
-    if (!isForce) {
-      const { count: existingCount, error: checkError } = await supabase
-        .from("original_bible_verses")
-        .select("*", { count: "exact", head: true })
-        .eq("book_abbr", job.book)
-        .eq("chapter", job.chapter);
-
-      if (!checkError && existingCount === expectedVerseCount) {
-        console.log(`[Cache-DB] Capítulo ${bookName} ${job.chapter} já está completo no banco de dados (${existingCount}/${expectedVerseCount} versículos).`);
-        await supabase
-          .from("translation_jobs")
-          .update({
-            status: "completed",
-            verses_completed: expectedVerseCount,
-            total_verses: expectedVerseCount,
-            completed_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", job.id);
-        chaptersProcessed++;
-        continue;
-      }
-    }
-
-    // Call Gemini
-    try {
-      const bookIndex = BIBLE_BOOKS.findIndex((b) => b.abbr === job.book) + 1;
-      
-      console.log(`[Gemini] Enviando ${bookName} ${job.chapter} para tradução...`);
-      const translatedVerses = await translateChapter(
-        job.book,
-        job.chapter,
-        chapterVersesObj,
-        book.testament,
-        bookIndex
+    // --- Step 2: Enrich with ACF data, handle cache hits ---
+    const enrichedJobs = [];
+    for (const job of acquiredJobs) {
+      const book = BIBLE_BOOKS.find(b => b.abbr === job.book);
+      const bookName = book?.name || job.book;
+      const bookData = acfBible.find(
+        b => (b.abbrev?.toLowerCase() === job.book) || (job.book === "at" && b.abbrev?.toLowerCase() === "atos")
       );
 
-      console.log(`[Supabase] Salvando ${translatedVerses.length} versículos de ${bookName} ${job.chapter}...`);
-      await saveToSupabase(job.book, job.chapter, translatedVerses);
-
-      // Only mark as completed AFTER successful save/validation
-      await supabase
-        .from("translation_jobs")
-        .update({
-          status: "completed",
-          verses_completed: translatedVerses.length,
-          total_verses: expectedVerseCount,
-          completed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq("id", job.id);
-
-      console.log(`✓ Capítulo ${bookName} ${job.chapter} traduzido e persistido com sucesso!`);
-      chaptersProcessed++;
-
-      // Small delay between calls in the same batch
-      if (chaptersProcessed < limit) {
-        await sleep(5000);
+      if (!bookData) {
+        const errorMsg = `ACF: livro não encontrado: ${job.book}`;
+        await supabase.from("translation_jobs")
+          .update({ status: "failed", last_error: errorMsg, updated_at: new Date().toISOString() }).eq("id", job.id);
+        for (const other of acquiredJobs.filter(j => j.id !== job.id)) {
+          await supabase.from("translation_jobs")
+            .update({ status: "pending", updated_at: new Date().toISOString() }).eq("id", other.id);
+        }
+        process.exit(1);
       }
+
+      const chapterVersesObj = bookData.chapters[job.chapter - 1];
+      if (!chapterVersesObj) {
+        const errorMsg = `ACF: capítulo ${job.chapter} não encontrado em ${job.book}`;
+        await supabase.from("translation_jobs")
+          .update({ status: "failed", last_error: errorMsg, updated_at: new Date().toISOString() }).eq("id", job.id);
+        for (const other of acquiredJobs.filter(j => j.id !== job.id)) {
+          await supabase.from("translation_jobs")
+            .update({ status: "pending", updated_at: new Date().toISOString() }).eq("id", other.id);
+        }
+        process.exit(1);
+      }
+
+      const expectedVerseCount = Object.keys(chapterVersesObj).length;
+
+      // DB cache check (free — no Gemini call)
+      if (!isForce) {
+        const { count: existingCount, error: checkError } = await supabase
+          .from("original_bible_verses")
+          .select("*", { count: "exact", head: true })
+          .eq("book_abbr", job.book)
+          .eq("chapter", job.chapter);
+
+        if (!checkError && existingCount === expectedVerseCount) {
+          console.log(`[Cache-DB] ${bookName} ${job.chapter} já completo. Marcando sem chamar Gemini.`);
+          await markJobCompleted(job.id, expectedVerseCount);
+          continue; // skip — no Gemini call consumed
+        }
+      }
+
+      if (!book) {
+        const errorMsg = `BIBLE_BOOKS: livro não encontrado para abbr: ${job.book}`;
+        await supabase.from("translation_jobs")
+          .update({ status: "failed", last_error: errorMsg, updated_at: new Date().toISOString() }).eq("id", job.id);
+        for (const other of acquiredJobs.filter(j => j.id !== job.id)) {
+          await supabase.from("translation_jobs")
+            .update({ status: "pending", updated_at: new Date().toISOString() }).eq("id", other.id);
+        }
+        process.exit(1);
+      }
+
+      enrichedJobs.push({
+        job,
+        book,
+        bookName,
+        bookAbbr: job.book,
+        chapter: job.chapter,
+        versesObj: chapterVersesObj,
+        testament: book.testament,
+        bookIndex: BIBLE_BOOKS.findIndex(b => b.abbr === job.book) + 1,
+        expectedVerseCount,
+      });
+    }
+
+    if (enrichedJobs.length === 0) {
+      // All were cache hits — loop to pick more without consuming a Gemini call
+      continue;
+    }
+
+    // --- Step 3: Decide batch size based on first chapter's verse count ---
+    const batchSize = Math.min(enrichedJobs.length, maxChaptersPerCall(enrichedJobs[0].expectedVerseCount));
+
+    // Release extra acquired jobs back to pending
+    for (let i = batchSize; i < enrichedJobs.length; i++) {
+      console.log(`[Devolução] ${enrichedJobs[i].bookName} ${enrichedJobs[i].chapter} devolvido para a fila.`);
+      await supabase.from("translation_jobs")
+        .update({ status: "pending", updated_at: new Date().toISOString() }).eq("id", enrichedJobs[i].job.id);
+    }
+
+    const batchJobs = enrichedJobs.slice(0, batchSize);
+    const chaptersDesc = batchJobs.map(j => `${j.bookName} ${j.chapter}`).join(" + ");
+
+    // --- Step 4: Call Gemini ---
+    console.log(`\n[Gemini] Chamada ${geminiCallsMade + 1}/${geminiCallLimit}: ${chaptersDesc}`);
+
+    const chapterRequests = batchJobs.map(j => ({
+      bookAbbr: j.bookAbbr,
+      bookName: j.bookName,
+      chapter: j.chapter,
+      versesObj: j.versesObj,
+      testament: j.testament,
+      bookIndex: j.bookIndex,
+    }));
+
+    try {
+      const translatedChapters = await translateBatch(chapterRequests, glossary);
+      geminiCallsMade++;
+
+      // --- Step 5: Persist each chapter ---
+      for (const result of translatedChapters) {
+        const matched = batchJobs.find(j => j.bookAbbr === result.req.bookAbbr && j.chapter === result.req.chapter);
+        if (!matched) continue;
+        console.log(`[Supabase] Salvando ${result.verses.length} versículos de ${result.req.bookName} ${result.req.chapter}...`);
+        await saveToSupabase(result.req.bookAbbr, result.req.chapter, result.verses);
+        await markJobCompleted(matched.job.id, result.verses.length);
+        console.log(`✓ ${result.req.bookName} ${result.req.chapter} traduzido e persistido!`);
+      }
+
+      if (geminiCallsMade < geminiCallLimit) await sleep(3000);
 
     } catch (err) {
       const errMessage = err.message || String(err);
-      console.error(`Erro ao traduzir ${bookName} ${job.chapter}:`, errMessage);
+      console.error(`Erro na chamada Gemini (${chaptersDesc}):`, errMessage);
 
       const isRateLimit =
-        errMessage.includes("429") || 
-        errMessage.includes("RESOURCE_EXHAUSTED") || 
+        errMessage.includes("429") ||
+        errMessage.includes("RESOURCE_EXHAUSTED") ||
         errMessage.includes("Quota exceeded");
 
       if (isRateLimit) {
-        // Mark job as rate_limited, stop batch immediately
-        console.warn(`[Rate Limit] Gemini atingido (429). Encerrando o lote atual.`);
-        await supabase
-          .from("translation_jobs")
-          .update({
-            status: "rate_limited",
-            last_error: errMessage,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", job.id);
-        
-        process.exit(0); // Exit cleanly, let the next cron run resume
+        console.warn(`[Rate Limit] Cota diária atingida. Encerrando limpo para retomar amanhã.`);
+        for (const bj of batchJobs) await markJobRateLimited(bj.job.id, errMessage);
+        process.exit(0);
+      } else if (batchJobs.length > 1) {
+        // Multi-chapter call failed — release all back so they retry individually next run
+        console.warn(`[Fallback] Lote multi-capítulo falhou. Devolvendo para tentar individualmente.`);
+        for (const bj of batchJobs)
+          await markJobPendingOrFailed(bj.job.id, bj.job.attempts, `[lote falhou] ${errMessage}`);
+        process.exit(1);
       } else {
-        // Validation/JSON or other errors: increment attempts
-        const nextAttempts = job.attempts + 1;
-        const nextStatus = nextAttempts >= 5 ? "failed" : "pending";
-        
-        console.warn(`[Falha] Tentativa ${nextAttempts}/5. Definindo status como '${nextStatus}'.`);
-        
-        await supabase
-          .from("translation_jobs")
-          .update({
-            status: nextStatus,
-            attempts: nextAttempts,
-            last_error: errMessage,
-            updated_at: new Date().toISOString()
-          })
-          .eq("id", job.id);
-
-        process.exit(1); // Exit with error for other types of failures to alert monitoring
+        await markJobPendingOrFailed(batchJobs[0].job.id, batchJobs[0].job.attempts, errMessage);
+        process.exit(1);
       }
     }
   }
 
-  console.log(`\nLote finalizado. Processados ${chaptersProcessed} capítulos.`);
+  console.log(`\nLote finalizado. Chamadas Gemini realizadas: ${geminiCallsMade}/${geminiCallLimit}.`);
   process.exit(0);
 }
 
