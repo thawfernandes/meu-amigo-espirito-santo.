@@ -500,6 +500,26 @@ async function run() {
   const glossary = loadGlossary();
   let geminiCallsMade = 0;
 
+  // --- Reset rate_limited jobs → pending (nova janela de cota) ---
+  // Toda vez que o script inicia, a cota pode ter sido renovada.
+  // Jobs marcados como rate_limited devem voltar para pending para serem reprocessados.
+  const { data: rateLimitedJobs, error: rlError } = await supabase
+    .from("translation_jobs")
+    .select("id, book, chapter")
+    .eq("status", "rate_limited");
+
+  if (!rlError && rateLimitedJobs && rateLimitedJobs.length > 0) {
+    console.log(`[Reset] ${rateLimitedJobs.length} job(s) rate_limited → pending (nova janela de cota).`);
+    const ids = rateLimitedJobs.map((j) => j.id);
+    await supabase
+      .from("translation_jobs")
+      .update({ status: "pending", last_error: null, updated_at: new Date().toISOString() })
+      .in("id", ids);
+    rateLimitedJobs.forEach((j) => console.log(`  ↩ ${j.book} ${j.chapter} recolocado na fila`));
+  } else if (!rlError) {
+    console.log(`[Reset] Nenhum job rate_limited encontrado. Fila limpa.`);
+  }
+
   while (geminiCallsMade < geminiCallLimit) {
     // --- Step 1: Acquire up to 3 jobs to evaluate batching ---
     const acquiredJobs = [];
