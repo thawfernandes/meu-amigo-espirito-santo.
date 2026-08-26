@@ -109,7 +109,8 @@ async function runAudit() {
     const { data, error } = await supabase
       .from("original_bible_verses")
       .select("book_abbr, chapter, verse, text, key_words, original_lang")
-      .range(page * pageSize, (page + 1) * pageSize - 1);
+      .range(page * pageSize, (page + 1) * pageSize - 1)
+      .order("id", { ascending: true });
 
     if (error) {
       console.error("Erro ao buscar versículos:", error);

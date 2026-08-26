@@ -76,7 +76,7 @@ async function runAudit() {
   // Since fetching 31000 rows might be heavy, we'll fetch them in pages.
   let allVerses = [];
   let page = 0;
-  const pageSize = 5000;
+  const pageSize = 1000;
   let fetching = true;
 
   console.log("Baixando dados do banco para validação profunda...");

@@ -5,7 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { BIBLE_BOOKS, getBook, TRANSLATIONS, getVerses } from "@/lib/bible-data";
 import { getOriginalVerse } from "@/lib/original-translation";
-import { getChapterQuiz, BibleQuestion, recordAnswer, recordQuizCompletion } from "@/lib/quiz-data";
+import { getChapterQuiz, BibleQuestion, recordAnswer, recordQuizCompletion, isBookStudyCompleted } from "@/lib/quiz-data";
 import { useAudio } from "@/components/audio/AudioProvider";
 import {
   BookOpen,
@@ -367,6 +367,7 @@ export default function Bible() {
 
   // Quiz states
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showIncompleteModal, setShowIncompleteModal] = useState(false);
   const [quizQuestions, setQuizQuestions] = useState<BibleQuestion[]>([]);
   const [quizStep, setQuizStep] = useState(0);
   const [selectedAns, setSelectedAns] = useState<string | null>(null);
@@ -578,6 +579,10 @@ export default function Bible() {
 
   // Quiz helper handlers
   const handleStartChapterQuiz = () => {
+    if (!isBookStudyCompleted(book.abbr)) {
+      setShowIncompleteModal(true);
+      return;
+    }
     const questions = getChapterQuiz(book.name, ch, 3);
     setQuizQuestions(questions);
     setQuizStep(0);
@@ -932,22 +937,39 @@ export default function Bible() {
 
         {/* Chapter test button */}
         <div className="mt-8 pt-6 border-t border-white/5 flex justify-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleStartChapterQuiz();
-            }}
-            className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
-            style={{
-              background:
-                "linear-gradient(135deg, oklch(0.65 0.18 255 / 0.2), oklch(0.58 0.2 280 / 0.1))",
-              border: "1px solid oklch(0.65 0.18 255 / 0.35)",
-              boxShadow: "0 4px 20px oklch(0.65 0.18 255 / 0.15)",
-            }}
-          >
-            <Award className="w-4 h-4 text-violet-300" />
-            <span>🎯 Testar meus conhecimentos (Cap. {ch})</span>
-          </button>
+          {isBookStudyCompleted(book.abbr) ? (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleStartChapterQuiz();
+              }}
+              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.65 0.18 255 / 0.2), oklch(0.58 0.2 280 / 0.1))",
+                border: "1px solid oklch(0.65 0.18 255 / 0.35)",
+                boxShadow: "0 4px 20px oklch(0.65 0.18 255 / 0.15)",
+              }}
+            >
+              <Award className="w-4 h-4 text-violet-300" />
+              <span>🎯 Testar meus conhecimentos (Cap. {ch})</span>
+            </button>
+          ) : (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowIncompleteModal(true);
+              }}
+              className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-xs font-medium text-white/60 transition-all hover:text-white/80 active:scale-95"
+              style={{
+                background: "oklch(1 0 0 / 0.05)",
+                border: "1px solid oklch(1 0 0 / 0.1)",
+              }}
+            >
+              <Award className="w-4 h-4 text-white/30" />
+              <span>🔒 Estudo em Construção (Cap. {ch})</span>
+            </button>
+          )}
         </div>
 
         {/* Verse action menu */}
@@ -1561,6 +1583,77 @@ export default function Bible() {
                   </div>
                 </div>
               )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ── Study Incomplete Modal ── */}
+      <AnimatePresence>
+        {showIncompleteModal && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md"
+              onClick={() => setShowIncompleteModal(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-[60] rounded-3xl p-6 max-w-md mx-auto space-y-4 text-left"
+              style={{
+                background: "oklch(0.14 0.03 270 / 0.98)",
+                border: "1px solid oklch(0.65 0.18 280 / 0.3)",
+                boxShadow: "0 32px 80px oklch(0 0 0 / 0.7)",
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/5 pb-3">
+                <h3 className="font-display text-md text-white font-medium flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-amber-300 animate-pulse" />
+                  Estudo em Construção
+                </h3>
+                <button
+                  onClick={() => setShowIncompleteModal(false)}
+                  className="p-1 rounded-full hover:bg-white/10 text-white/30"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="space-y-3 py-2">
+                <div className="flex items-center justify-center py-4">
+                  <span className="text-5xl animate-bounce">🚧</span>
+                </div>
+                <p className="text-sm font-semibold text-white text-center">
+                  Estudo de {book.name} em processo de desenvolvimento
+                </p>
+                <p className="text-xs text-white/60 leading-relaxed text-center">
+                  As perguntas, insights exegéticos e reflexões exclusivas do livro de <strong>{book.name}</strong> estão sendo ativamente preparados pela nossa equipe de teologia e conteúdo bíblico.
+                </p>
+                <p className="text-[11px] text-amber-400/80 text-center font-medium">
+                  Em breve, todos os capítulos estarão disponíveis completos!
+                </p>
+              </div>
+
+              {/* Footer */}
+              <div className="flex justify-center pt-2">
+                <button
+                  onClick={() => setShowIncompleteModal(false)}
+                  className="rounded-xl px-5 py-2 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, oklch(0.58 0.2 280), oklch(0.50 0.22 300))",
+                  }}
+                >
+                  Entendi, aguardar!
+                </button>
+              </div>
             </motion.div>
           </>
         )}

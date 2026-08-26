@@ -2,13 +2,14 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <title>Painel de Controle - Tradução da Bíblia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel de Controle da Tradução Bíblica Autônoma</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap');
       
       body {
         font-family: 'Outfit', sans-serif;
@@ -17,206 +18,284 @@
       .mono {
         font-family: 'JetBrains Mono', monospace;
       }
+      .glass {
+        background: rgba(24, 24, 27, 0.6);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(63, 63, 70, 0.4);
+      }
+      .glass-card {
+        background: rgba(18, 18, 20, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(39, 39, 42, 0.8);
+      }
       .glow-green {
-        box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
-        animation: pulse 2s infinite;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+        animation: pulse-glow 2s infinite ease-in-out;
       }
       .glow-yellow {
-        box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
-        animation: pulse 2s infinite;
+        box-shadow: 0 0 20px rgba(234, 179, 8, 0.5);
+        animation: pulse-glow 1.5s infinite ease-in-out;
+      }
+      .glow-orange {
+        box-shadow: 0 0 20px rgba(249, 115, 22, 0.5);
+        animation: pulse-glow 2s infinite ease-in-out;
       }
       .glow-red {
-        box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
-        animation: pulse 2s infinite;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        animation: pulse-glow 2s infinite ease-in-out;
       }
-      @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.1); opacity: 0.7; }
-        100% { transform: scale(1); opacity: 1; }
+      @keyframes pulse-glow {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.08); }
+      }
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-track {
+        background: #18181b;
+        border-radius: 9999px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #3f3f46;
+        border-radius: 9999px;
+      }
+      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #52525b;
       }
     </style>
   </head>
-  <body class="text-zinc-100 min-h-screen p-6 md:p-10 flex flex-col gap-6">
+  <body class="text-zinc-100 min-h-screen p-4 md:p-8 flex flex-col gap-6 selection:bg-violet-500 selection:text-white">
     
     <!-- Top Header -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-zinc-900/50 border border-zinc-800 rounded-2xl p-6 backdrop-blur-md">
-      <div class="flex items-center gap-4">
-        <div id="status-dot" class="w-4 h-4 rounded-full bg-zinc-600"></div>
+    <header class="glass rounded-2xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-5 shadow-2xl relative overflow-hidden">
+      <div class="absolute -right-20 -top-20 w-64 h-64 bg-violet-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <div class="flex items-center gap-4 z-10">
+        <div id="status-dot" class="w-4 h-4 rounded-full bg-zinc-600 transition-all duration-300"></div>
         <div>
-          <h1 class="text-xl md:text-2xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-indigo-400 bg-clip-text text-transparent">
-            Tradução Exegética - Bíblia Sagrada
-          </h1>
-          <p class="text-zinc-400 text-sm mt-0.5" id="engine-status">Iniciando conexão com o Supabase...</p>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-purple-300 to-indigo-400 bg-clip-text text-transparent">
+              Tradução Autônoma da Bíblia Sagrada
+            </h1>
+            <span class="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-violet-500/20 text-violet-300 border border-violet-500/30">
+              Cloud + Gemini 2.5
+            </span>
+          </div>
+          <p class="text-zinc-400 text-xs md:text-sm mt-1 flex items-center gap-2" id="engine-status">
+            Conectando ao Supabase em tempo real...
+          </p>
         </div>
       </div>
-      <div class="flex gap-3">
-        <button onclick="fetchData()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-700 hover:border-zinc-600 text-xs font-semibold rounded-lg transition-all duration-200 cursor-pointer flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3.5 h-3.5" id="refresh-icon">
+
+      <div class="flex items-center gap-3 z-10 w-full md:w-auto justify-between md:justify-end">
+        <div class="text-right text-[11px] text-zinc-400 hidden sm:block">
+          <div class="text-zinc-300 font-semibold" id="last-sync-time">Sincronizado agora</div>
+          <div class="text-zinc-500">Auto-refresh a cada 10s</div>
+        </div>
+        <button onclick="fetchData()" class="px-4 py-2.5 bg-zinc-800/90 hover:bg-zinc-700 active:bg-zinc-600 border border-zinc-700 hover:border-zinc-600 text-xs font-semibold rounded-xl transition-all duration-200 cursor-pointer flex items-center gap-2 shadow-lg hover:shadow-zinc-900/50">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4 text-violet-400" id="refresh-icon">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
-          Sincronizar Agora
+          Sincronizar
         </button>
       </div>
-    </div>
+    </header>
 
-    <!-- Main Grid Metrics -->
+    <!-- Main Metrics Grid -->
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
       
-      <!-- Progress Metric Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 relative overflow-hidden group hover:border-zinc-750 transition-all">
-        <div class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Progresso Geral</div>
-        <div class="flex items-baseline gap-2 mt-1">
-          <div class="text-3xl font-extrabold" id="metric-percent">0.00%</div>
-        </div>
-        <div class="w-full bg-zinc-800 h-1.5 rounded-full overflow-hidden mt-3">
-          <div id="metric-progress-bar" class="bg-gradient-to-r from-violet-500 to-indigo-500 h-full rounded-full w-0 transition-all duration-500"></div>
-        </div>
-        <div class="text-[10px] text-zinc-550 mt-1" id="metric-chapters-ratio">0 / 1189 Capítulos</div>
-      </div>
-
-      <!-- Verses Count Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 hover:border-zinc-750 transition-all">
-        <div class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Versículos Traduzidos</div>
-        <div class="text-3xl font-extrabold mt-1" id="metric-verses">0</div>
-        <div class="text-[10px] text-zinc-500 mt-2">Salvos no Banco de Dados</div>
-      </div>
-
-      <!-- Pending Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 hover:border-zinc-750 transition-all">
-        <div class="text-xs text-zinc-400 font-semibold tracking-wider uppercase">Pendentes</div>
-        <div class="text-3xl font-extrabold mt-1 text-zinc-400" id="metric-pending">0</div>
-        <div class="text-[10px] text-zinc-500 mt-2">Aguardando tradução</div>
-      </div>
-
-      <!-- Processing Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 hover:border-zinc-750 transition-all">
-        <div class="text-xs text-yellow-400/90 font-semibold tracking-wider uppercase">Processando</div>
-        <div class="text-3xl font-extrabold mt-1 text-yellow-450" id="metric-processing">0</div>
-        <div class="text-[10px] text-zinc-500 mt-2">Ativos no lote atual</div>
-      </div>
-
-      <!-- Rate Limited Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 hover:border-zinc-750 transition-all">
-        <div class="text-xs text-orange-400/90 font-semibold tracking-wider uppercase">Rate Limited</div>
-        <div class="text-3xl font-extrabold mt-1 text-orange-450" id="metric-limited">0</div>
-        <div class="text-[10px] text-zinc-500 mt-2">Aguardando cota da API</div>
-      </div>
-
-      <!-- Failed Card -->
-      <div class="bg-zinc-900/40 border border-zinc-800/80 p-5 rounded-2xl flex flex-col justify-between h-32 hover:border-zinc-750 transition-all">
-        <div class="text-xs text-red-400/90 font-semibold tracking-wider uppercase">Falhados</div>
-        <div class="text-3xl font-extrabold mt-1 text-red-450" id="metric-failed">0</div>
-        <div class="text-[10px] text-zinc-500 mt-2">Excederam tentativas</div>
-      </div>
-
-    </div>
-
-    <!-- Interactive Grid of Books -->
-    <div class="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-4">
-      <div class="flex justify-between items-center border-b border-zinc-800/80 pb-4">
+      <!-- 1. Progresso Geral -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 relative overflow-hidden group hover:border-violet-500/50 transition-all shadow-lg">
+        <div class="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">Progresso Geral</div>
         <div>
-          <h2 class="text-lg font-bold text-zinc-200">Mapa Visual de Tradução</h2>
-          <p class="text-xs text-zinc-500 mt-0.5">Selecione um livro para ver o estado de cada capítulo</p>
-        </div>
-        <div class="flex flex-wrap gap-2 text-xs">
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-850 border border-zinc-800 rounded-full">
-            <span class="w-2.5 h-2.5 rounded-full bg-zinc-700 inline-block"></span>
-            <span class="text-zinc-400">Pendente</span>
-          </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-850 border border-zinc-800 rounded-full">
-            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500 inline-block"></span>
-            <span class="text-zinc-400">Processando</span>
-          </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-850 border border-zinc-800 rounded-full">
-            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-            <span class="text-zinc-400">Completo</span>
-          </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-850 border border-zinc-800 rounded-full">
-            <span class="w-2.5 h-2.5 rounded-full bg-orange-500 inline-block"></span>
-            <span class="text-zinc-400">Rate Limited</span>
-          </div>
-          <div class="flex items-center gap-1.5 px-2.5 py-1 bg-zinc-850 border border-zinc-800 rounded-full">
-            <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
-            <span class="text-zinc-400">Falha</span>
+          <div class="text-3xl md:text-4xl font-extrabold text-white tracking-tight" id="metric-percent">0.00%</div>
+          <div class="w-full bg-zinc-800/80 h-2 rounded-full overflow-hidden mt-3">
+            <div id="metric-progress-bar" class="bg-gradient-to-r from-violet-500 via-purple-500 to-indigo-500 h-full rounded-full w-0 transition-all duration-700"></div>
           </div>
         </div>
+        <div class="text-[10px] text-zinc-400 font-medium" id="metric-chapters-ratio">0 / 1.189 Capítulos</div>
       </div>
 
-      <!-- Books Selection Container -->
-      <div id="books-grid" class="grid grid-cols-3 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-2 max-h-40 overflow-y-auto pr-2 scrollbar-thin">
-        <!-- Will be filled dynamically -->
-        <div class="text-zinc-500 text-xs py-4 col-span-full text-center">Carregando livros...</div>
+      <!-- 2. Versículos Traduzidos -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-emerald-500/50 transition-all shadow-lg">
+        <div class="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">Versículos Prontos</div>
+        <div class="text-3xl md:text-4xl font-extrabold text-emerald-400 tracking-tight" id="metric-verses">0</div>
+        <div class="text-[10px] text-zinc-400 font-medium">Texto Original + Key Words</div>
       </div>
 
-      <!-- Chapters Detail Area -->
-      <div id="chapters-detail-panel" class="bg-zinc-950/40 border border-zinc-800/80 rounded-xl p-5 mt-2 hidden flex-col gap-3">
-        <h3 class="text-sm font-semibold text-zinc-300 flex justify-between items-center">
-          <span id="selected-book-title">Gênesis</span>
-          <span class="text-xs text-zinc-500 font-normal" id="selected-book-progress">0% Concluído</span>
-        </h3>
-        <div id="chapters-box" class="flex flex-wrap gap-2 mt-2">
-          <!-- Will be filled dynamically -->
+      <!-- 3. Última Execução GitHub Actions -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-indigo-500/50 transition-all shadow-lg">
+        <div class="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">Última Execução</div>
+        <div>
+          <div class="text-sm font-bold text-zinc-200 truncate" id="metric-last-run-time">-</div>
+          <div class="text-[11px] text-violet-400 font-medium mt-1" id="metric-last-run-source">GitHub Actions (Cloud)</div>
         </div>
+        <div class="text-[10px] text-zinc-400 font-medium" id="metric-last-run-calls">0 / 18 chamadas Gemini</div>
+      </div>
+
+      <!-- 4. Próxima Execução Prevista -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-blue-500/50 transition-all shadow-lg">
+        <div class="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">Próxima Execução</div>
+        <div>
+          <div class="text-lg font-bold text-blue-400" id="metric-next-run-countdown">07:00 UTC</div>
+          <div class="text-[10px] text-zinc-400 mt-0.5">04:00 (Horário de Brasília)</div>
+        </div>
+        <div class="text-[10px] text-zinc-500 font-medium">Cron Automático Diário</div>
+      </div>
+
+      <!-- 5. Capítulos Pendentes -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-zinc-600 transition-all shadow-lg">
+        <div class="text-[11px] text-zinc-400 font-semibold tracking-wider uppercase">Capítulos Pendentes</div>
+        <div class="text-3xl md:text-4xl font-extrabold text-zinc-300 tracking-tight" id="metric-pending">0</div>
+        <div class="text-[10px] text-zinc-500 font-medium">Na fila ordenada</div>
+      </div>
+
+      <!-- 6. Rate Limited / Erros -->
+      <div class="glass-card p-5 rounded-2xl flex flex-col justify-between h-36 hover:border-orange-500/50 transition-all shadow-lg">
+        <div class="text-[11px] text-orange-400/90 font-semibold tracking-wider uppercase">Fila com Alerta</div>
+        <div class="flex items-baseline gap-2">
+          <div class="text-3xl md:text-4xl font-extrabold text-orange-400 tracking-tight" id="metric-limited">0</div>
+          <span class="text-xs text-zinc-500 font-normal">/ <span id="metric-failed" class="text-red-400 font-bold">0</span> falhas</span>
+        </div>
+        <div class="text-[10px] text-zinc-500 font-medium">Auto-retomada na janela</div>
       </div>
 
     </div>
 
-    <!-- Logs and Active Problems -->
+    <!-- Active Engine Status Banner -->
+    <div id="active-batch-banner" class="glass-card p-4 rounded-2xl border-l-4 border-l-violet-500 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div class="flex items-center gap-3">
+        <span class="relative flex h-3 w-3">
+          <span id="batch-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+          <span id="batch-dot" class="relative inline-flex rounded-full h-3 w-3 bg-violet-500"></span>
+        </span>
+        <div>
+          <span class="text-xs font-semibold text-zinc-400">Status do Motor de Tradução:</span>
+          <span class="text-xs md:text-sm font-bold text-zinc-100 ml-1.5" id="active-batch-name">Aguardando execução agendada</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="text-zinc-400">Limite configurado: <strong class="text-zinc-200 mono">18 chamadas/dia</strong> (Cota gratuita Gemini)</span>
+      </div>
+    </div>
+
+    <!-- Visual Interactive Bible Grid -->
+    <div class="glass rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+      <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b border-zinc-800 pb-4">
+        <div>
+          <h2 class="text-lg font-bold text-zinc-100 flex items-center gap-2">
+            <span>📖</span> Mapa Visual dos 66 Livros da Bíblia
+          </h2>
+          <p class="text-xs text-zinc-400 mt-0.5">Clique em qualquer livro para inspecionar o status detalhado de cada capítulo</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            <span class="text-zinc-300 font-medium">Concluído</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
+            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+            <span class="text-zinc-300 font-medium">Processando</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
+            <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span>
+            <span class="text-zinc-300 font-medium">Rate Limit</span>
+          </div>
+          <div class="flex items-center gap-1.5 px-3 py-1 bg-zinc-900 border border-zinc-800 rounded-full">
+            <span class="w-2.5 h-2.5 rounded-full bg-zinc-600"></span>
+            <span class="text-zinc-400 font-medium">Pendente</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Books Grid Selection Container -->
+      <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-11 gap-2 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+        <div class="text-zinc-500 text-xs py-8 col-span-full text-center">Carregando mapa bíblico...</div>
+      </div>
+
+      <!-- Chapters Detail Accordion Panel -->
+      <div id="chapters-detail-panel" class="bg-zinc-950/70 border border-zinc-800/90 rounded-xl p-5 mt-2 hidden flex-col gap-3 shadow-inner">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-zinc-800/80 pb-3">
+          <div class="flex items-center gap-3">
+            <h3 class="text-base font-bold text-violet-300" id="selected-book-title">Gênesis</h3>
+            <span class="text-xs px-2.5 py-0.5 rounded-full bg-zinc-800 text-zinc-300 font-medium border border-zinc-700" id="selected-book-testament">Antigo Testamento</span>
+          </div>
+          <span class="text-xs text-emerald-400 font-semibold" id="selected-book-progress">0% Concluído</span>
+        </div>
+        <div id="chapters-box" class="flex flex-wrap gap-2 pt-1">
+          <!-- Chapters rendered dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Incidents & Execution History -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Recent Errors or Blocked Jobs -->
-      <div class="lg:col-span-2 bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-4">
-        <div class="border-b border-zinc-800/80 pb-3">
-          <h2 class="text-md font-bold text-zinc-200">Incidentes e Alertas do Banco</h2>
-          <p class="text-xs text-zinc-500 mt-0.5">Últimos erros, rate limits ou falhas registradas na fila de jobs</p>
+      <!-- Incident Alerts -->
+      <div class="lg:col-span-2 glass rounded-2xl p-6 flex flex-col gap-4 shadow-xl">
+        <div class="border-b border-zinc-800 pb-3 flex justify-between items-center">
+          <div>
+            <h2 class="text-md font-bold text-zinc-200">Alertas e Histórico da Fila</h2>
+            <p class="text-xs text-zinc-400 mt-0.5">Registro de auto-recuperação, rate limits e logs do banco</p>
+          </div>
+          <span class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold">Tempo Real</span>
         </div>
-        <div id="incidents-list" class="flex flex-col gap-3 max-h-80 overflow-y-auto pr-2">
-          <!-- Will be filled dynamically -->
-          <div class="text-zinc-500 text-xs py-10 text-center">Buscando alertas de jobs...</div>
+        <div id="incidents-list" class="flex flex-col gap-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+          <div class="text-zinc-500 text-xs py-10 text-center">Buscando alertas do Supabase...</div>
         </div>
       </div>
 
-      <!-- Bible stats / quick settings -->
-      <div class="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 flex flex-col gap-4 justify-between">
+      <!-- Autonomous Cloud Specs -->
+      <div class="glass rounded-2xl p-6 flex flex-col gap-4 justify-between shadow-xl">
         <div>
-          <div class="border-b border-zinc-800/80 pb-3 mb-4">
-            <h2 class="text-md font-bold text-zinc-200">Próximos Lotes</h2>
-            <p class="text-xs text-zinc-500 mt-0.5">Parâmetros e status da fila incremental</p>
+          <div class="border-b border-zinc-800 pb-3 mb-4">
+            <h2 class="text-md font-bold text-zinc-200">Infraestrutura 100% Nuvem</h2>
+            <p class="text-xs text-zinc-400 mt-0.5">Execução autônoma sem depender do computador</p>
           </div>
           <div class="flex flex-col gap-3 text-xs">
-            <div class="flex justify-between border-b border-zinc-805 py-2">
-              <span class="text-zinc-400">Total na Bíblia</span>
-              <span class="font-bold text-zinc-205">66 Livros | 1.189 Capítulos</span>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Orquestrador</span>
+              <span class="font-bold text-zinc-200">GitHub Actions (Ubuntu)</span>
             </div>
-            <div class="flex justify-between border-b border-zinc-805 py-2">
-              <span class="text-zinc-400">Tamanho Recomendado Lote</span>
-              <span class="font-bold text-zinc-205 mono">--limit=3</span>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Banco de Dados</span>
+              <span class="font-bold text-emerald-400">Supabase PostgreSQL</span>
             </div>
-            <div class="flex justify-between border-b border-zinc-805 py-2">
-              <span class="text-zinc-400">Frequência Segura Cron</span>
-              <span class="font-bold text-zinc-205">A cada 30 min (GitHub Actions)</span>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Modelo IA</span>
+              <span class="font-bold text-violet-400 mono">gemini-2.5-flash</span>
             </div>
-            <div class="flex justify-between border-b border-zinc-805 py-2">
-              <span class="text-zinc-400">API Utilizada</span>
-              <span class="font-bold text-zinc-205 mono text-violet-400">gemini-2.5-flash</span>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Agrupamento</span>
+              <span class="font-bold text-zinc-200">Multi-capítulo (1 a 3/req)</span>
             </div>
-            <div class="flex justify-between border-b border-zinc-805 py-2">
-              <span class="text-zinc-400">Fila Restante</span>
-              <span class="font-bold text-zinc-205" id="val-remaining-jobs">0 / 1189</span>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Frequência Cron</span>
+              <span class="font-bold text-zinc-200">Diário (07:00 UTC)</span>
+            </div>
+            <div class="flex justify-between border-b border-zinc-800/80 py-2">
+              <span class="text-zinc-400">Cota Gratuita Segura</span>
+              <span class="font-bold text-emerald-400 mono">18 / 20 chamadas/dia</span>
             </div>
           </div>
         </div>
-        <div class="bg-zinc-950/40 p-4 border border-zinc-800/60 rounded-xl mt-4">
-          <span class="text-[10px] text-zinc-500 uppercase block tracking-wider font-bold">Fórmula de Keep-Alive</span>
-          <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
-            O banco é a fonte da verdade. O agendamento roda periodicamente em pequenos lotes e desliga. Não existem processos infinitos mantidos ativos.
+
+        <div class="bg-zinc-950/60 p-4 border border-zinc-800/80 rounded-xl mt-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span class="text-[11px] text-zinc-300 font-bold uppercase tracking-wider">Persistência Garantida</span>
+          </div>
+          <p class="text-[11px] text-zinc-400 mt-1.5 leading-relaxed">
+            Você pode fechar o editor e desligar o computador. O GitHub Actions lê o estado do Supabase e salva os resultados diariamente na nuvem.
           </p>
         </div>
       </div>
 
     </div>
 
-    <!-- Credentials Script Injection & Supabase Init -->
+    <!-- Credentials Script & Logic -->
     <script>
       const SUPABASE_URL = "https://jmtavlozxkmkeubekbjd.supabase.co";
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8";
@@ -224,83 +303,98 @@
       const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       const BIBLE_BOOKS = [
-        { abbr: "gn", name: "Gênesis", chapters: 50 },
-        { abbr: "ex", name: "Êxodo", chapters: 40 },
-        { abbr: "lv", name: "Levítico", chapters: 27 },
-        { abbr: "nm", name: "Números", chapters: 36 },
-        { abbr: "dt", name: "Deuteronômio", chapters: 34 },
-        { abbr: "js", name: "Josué", chapters: 24 },
-        { abbr: "jz", name: "Juízes", chapters: 21 },
-        { abbr: "rt", name: "Rute", chapters: 4 },
-        { abbr: "1sm", name: "1 Samuel", chapters: 31 },
-        { abbr: "2sm", name: "2 Samuel", chapters: 24 },
-        { abbr: "1rs", name: "1 Reis", chapters: 22 },
-        { abbr: "2rs", name: "2 Reis", chapters: 25 },
-        { abbr: "1cr", name: "1 Crônicas", chapters: 29 },
-        { abbr: "2cr", name: "2 Crônicas", chapters: 36 },
-        { abbr: "ed", name: "Esdras", chapters: 10 },
-        { abbr: "ne", name: "Neemias", chapters: 13 },
-        { abbr: "et", name: "Ester", chapters: 10 },
-        { abbr: "jó", name: "Jó", chapters: 42 },
-        { abbr: "sl", name: "Salmos", chapters: 150 },
-        { abbr: "pv", name: "Provérbios", chapters: 31 },
-        { abbr: "ec", name: "Eclesiastes", chapters: 12 },
-        { abbr: "ct", name: "Cantares", chapters: 8 },
-        { abbr: "is", name: "Isaías", chapters: 66 },
-        { abbr: "jr", name: "Jeremias", chapters: 52 },
-        { abbr: "lm", name: "Lamentações", chapters: 5 },
-        { abbr: "ez", name: "Ezequiel", chapters: 48 },
-        { abbr: "dn", name: "Daniel", chapters: 12 },
-        { abbr: "os", name: "Oséias", chapters: 14 },
-        { abbr: "jl", name: "Joel", chapters: 3 },
-        { abbr: "am", name: "Amós", chapters: 9 },
-        { abbr: "ob", name: "Obadias", chapters: 1 },
-        { abbr: "jn", name: "Jonas", chapters: 4 },
-        { abbr: "mq", name: "Miquéias", chapters: 7 },
-        { abbr: "na", name: "Naum", chapters: 3 },
-        { abbr: "hc", name: "Habacuque", chapters: 3 },
-        { abbr: "sf", name: "Sofonias", chapters: 3 },
-        { abbr: "ag", name: "Ageu", chapters: 2 },
-        { abbr: "zc", name: "Zacarias", chapters: 14 },
-        { abbr: "ml", name: "Malaquias", chapters: 4 },
-        { abbr: "mt", name: "Mateus", chapters: 28 },
-        { abbr: "mc", name: "Marcos", chapters: 16 },
-        { abbr: "lc", name: "Lucas", chapters: 24 },
-        { abbr: "jo", name: "João", chapters: 21 },
-        { abbr: "at", name: "Atos", chapters: 28 },
-        { abbr: "rm", name: "Romanos", chapters: 16 },
-        { abbr: "1co", name: "1 Coríntios", chapters: 16 },
-        { abbr: "2co", name: "2 Coríntios", chapters: 13 },
-        { abbr: "gl", name: "Gálatas", chapters: 6 },
-        { abbr: "ef", name: "Efésios", chapters: 6 },
-        { abbr: "fp", name: "Filipenses", chapters: 4 },
-        { abbr: "cl", name: "Colossenses", chapters: 4 },
-        { abbr: "1ts", name: "1 Tessalonicenses", chapters: 5 },
-        { abbr: "2ts", name: "2 Tessalonicenses", chapters: 3 },
-        { abbr: "1tm", name: "1 Timóteo", chapters: 6 },
-        { abbr: "2tm", name: "2 Timóteo", chapters: 4 },
-        { abbr: "tt", name: "Tito", chapters: 3 },
-        { abbr: "fm", name: "Filemom", chapters: 1 },
-        { abbr: "hb", name: "Hebreus", chapters: 13 },
-        { abbr: "tg", name: "Tiago", chapters: 5 },
-        { abbr: "1pe", name: "1 Pedro", chapters: 5 },
-        { abbr: "2pe", name: "2 Pedro", chapters: 3 },
-        { abbr: "1jo", name: "1 João", chapters: 5 },
-        { abbr: "2jo", name: "2 João", chapters: 1 },
-        { abbr: "3jo", name: "3 João", chapters: 1 },
-        { abbr: "jd", name: "Judas", chapters: 1 },
-        { abbr: "ap", name: "Apocalipse", chapters: 22 }
+        { abbr: "gn", name: "Gênesis", testament: "AT", chapters: 50 },
+        { abbr: "ex", name: "Êxodo", testament: "AT", chapters: 40 },
+        { abbr: "lv", name: "Levítico", testament: "AT", chapters: 27 },
+        { abbr: "nm", name: "Números", testament: "AT", chapters: 36 },
+        { abbr: "dt", name: "Deuteronômio", testament: "AT", chapters: 34 },
+        { abbr: "js", name: "Josué", testament: "AT", chapters: 24 },
+        { abbr: "jz", name: "Juízes", testament: "AT", chapters: 21 },
+        { abbr: "rt", name: "Rute", testament: "AT", chapters: 4 },
+        { abbr: "1sm", name: "1 Samuel", testament: "AT", chapters: 31 },
+        { abbr: "2sm", name: "2 Samuel", testament: "AT", chapters: 24 },
+        { abbr: "1rs", name: "1 Reis", testament: "AT", chapters: 22 },
+        { abbr: "2rs", name: "2 Reis", testament: "AT", chapters: 25 },
+        { abbr: "1cr", name: "1 Crônicas", testament: "AT", chapters: 29 },
+        { abbr: "2cr", name: "2 Crônicas", testament: "AT", chapters: 36 },
+        { abbr: "ed", name: "Esdras", testament: "AT", chapters: 10 },
+        { abbr: "ne", name: "Neemias", testament: "AT", chapters: 13 },
+        { abbr: "et", name: "Ester", testament: "AT", chapters: 10 },
+        { abbr: "jó", name: "Jó", testament: "AT", chapters: 42 },
+        { abbr: "sl", name: "Salmos", testament: "AT", chapters: 150 },
+        { abbr: "pv", name: "Provérbios", testament: "AT", chapters: 31 },
+        { abbr: "ec", name: "Eclesiastes", testament: "AT", chapters: 12 },
+        { abbr: "ct", name: "Cantares", testament: "AT", chapters: 8 },
+        { abbr: "is", name: "Isaías", testament: "AT", chapters: 66 },
+        { abbr: "jr", name: "Jeremias", testament: "AT", chapters: 52 },
+        { abbr: "lm", name: "Lamentações", testament: "AT", chapters: 5 },
+        { abbr: "ez", name: "Ezequiel", testament: "AT", chapters: 48 },
+        { abbr: "dn", name: "Daniel", testament: "AT", chapters: 12 },
+        { abbr: "os", name: "Oséias", testament: "AT", chapters: 14 },
+        { abbr: "jl", name: "Joel", testament: "AT", chapters: 3 },
+        { abbr: "am", name: "Amós", testament: "AT", chapters: 9 },
+        { abbr: "ob", name: "Obadias", testament: "AT", chapters: 1 },
+        { abbr: "jn", name: "Jonas", testament: "AT", chapters: 4 },
+        { abbr: "mq", name: "Miquéias", testament: "AT", chapters: 7 },
+        { abbr: "na", name: "Naum", testament: "AT", chapters: 3 },
+        { abbr: "hc", name: "Habacuque", testament: "AT", chapters: 3 },
+        { abbr: "sf", name: "Sofonias", testament: "AT", chapters: 3 },
+        { abbr: "ag", name: "Ageu", testament: "AT", chapters: 2 },
+        { abbr: "zc", name: "Zacarias", testament: "AT", chapters: 14 },
+        { abbr: "ml", name: "Malaquias", testament: "AT", chapters: 4 },
+        { abbr: "mt", name: "Mateus", testament: "NT", chapters: 28 },
+        { abbr: "mc", name: "Marcos", testament: "NT", chapters: 16 },
+        { abbr: "lc", name: "Lucas", testament: "NT", chapters: 24 },
+        { abbr: "jo", name: "João", testament: "NT", chapters: 21 },
+        { abbr: "at", name: "Atos", testament: "NT", chapters: 28 },
+        { abbr: "rm", name: "Romanos", testament: "NT", chapters: 16 },
+        { abbr: "1co", name: "1 Coríntios", testament: "NT", chapters: 16 },
+        { abbr: "2co", name: "2 Coríntios", testament: "NT", chapters: 13 },
+        { abbr: "gl", name: "Gálatas", testament: "NT", chapters: 6 },
+        { abbr: "ef", name: "Efésios", testament: "NT", chapters: 6 },
+        { abbr: "fp", name: "Filipenses", testament: "NT", chapters: 4 },
+        { abbr: "cl", name: "Colossenses", testament: "NT", chapters: 4 },
+        { abbr: "1ts", name: "1 Tessalonicenses", testament: "NT", chapters: 5 },
+        { abbr: "2ts", name: "2 Tessalonicenses", testament: "NT", chapters: 3 },
+        { abbr: "1tm", name: "1 Timóteo", testament: "NT", chapters: 6 },
+        { abbr: "2tm", name: "2 Timóteo", testament: "NT", chapters: 4 },
+        { abbr: "tt", name: "Tito", testament: "NT", chapters: 3 },
+        { abbr: "fm", name: "Filemom", testament: "NT", chapters: 1 },
+        { abbr: "hb", name: "Hebreus", testament: "NT", chapters: 13 },
+        { abbr: "tg", name: "Tiago", testament: "NT", chapters: 5 },
+        { abbr: "1pe", name: "1 Pedro", testament: "NT", chapters: 5 },
+        { abbr: "2pe", name: "2 Pedro", testament: "NT", chapters: 3 },
+        { abbr: "1jo", name: "1 João", testament: "NT", chapters: 5 },
+        { abbr: "2jo", name: "2 João", testament: "NT", chapters: 1 },
+        { abbr: "3jo", name: "3 João", testament: "NT", chapters: 1 },
+        { abbr: "jd", name: "Judas", testament: "NT", chapters: 1 },
+        { abbr: "ap", name: "Apocalipse", testament: "NT", chapters: 22 }
       ];
 
       let allJobsData = [];
-      let selectedBookAbbr = null;
+      let selectedBookAbbr = "gn";
+
+      function formatTimeAgo(dateString) {
+        if (!dateString) return "-";
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffMins = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffMins < 1) return "Agora mesmo";
+        if (diffMins < 60) return `Há ${diffMins} min`;
+        if (diffHours < 24) return `Há ${diffHours}h`;
+        return `Há ${diffDays} dia(s)`;
+      }
 
       async function fetchData() {
         const refreshIcon = document.getElementById("refresh-icon");
         refreshIcon.classList.add("animate-spin");
-        
+
         try {
-          // 1. Fetch translation_jobs in pages of 1000 to bypass PostgREST limit
+          // 1. Fetch all 1189 translation_jobs
           let jobs = [];
           let page = 0;
           let fetching = true;
@@ -310,7 +404,7 @@
               .select("*")
               .range(page * 1000, (page + 1) * 1000 - 1)
               .order("id", { ascending: true });
-            
+
             if (error) throw error;
             if (!data || data.length === 0) {
               fetching = false;
@@ -321,14 +415,27 @@
           }
           allJobsData = jobs || [];
 
-          // 2. Count Total Verses translated directly from original_bible_verses
+          // 2. Count Verses translated
           const { count: totalVersesCount, error: countError } = await supabaseClient
             .from("original_bible_verses")
             .select("*", { count: "exact", head: true });
-          
           if (countError) throw countError;
 
-          // 3. Process states metrics
+          // 3. Fetch system_health telemetry
+          const { data: healthData, error: healthError } = await supabaseClient
+            .from("system_health")
+            .select("*")
+            .eq("id", "translation_engine")
+            .maybeSingle();
+
+          let engineTelemetry = null;
+          if (healthData && healthData.notes) {
+            try {
+              engineTelemetry = JSON.parse(healthData.notes);
+            } catch (e) {}
+          }
+
+          // 4. Compute metrics
           const metrics = {
             total: 1189,
             pending: 0,
@@ -341,7 +448,7 @@
           let activeProcessingJob = null;
           const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-          allJobsData.forEach(j => {
+          allJobsData.forEach((j) => {
             metrics[j.status] = (metrics[j.status] || 0) + 1;
             if (j.status === "processing") {
               const updatedAtDate = new Date(j.updated_at);
@@ -351,61 +458,82 @@
             }
           });
 
-          // 4. Update UI cards values
+          // 5. Update UI cards
           const percent = ((metrics.completed / metrics.total) * 100).toFixed(2);
           document.getElementById("metric-percent").textContent = `${percent}%`;
           document.getElementById("metric-progress-bar").style.width = `${percent}%`;
           document.getElementById("metric-chapters-ratio").textContent = `${metrics.completed} / ${metrics.total} Capítulos`;
-          document.getElementById("metric-verses").textContent = (totalVersesCount || 0).toLocaleString();
-          document.getElementById("metric-pending").textContent = metrics.pending;
-          document.getElementById("metric-processing").textContent = metrics.processing;
-          document.getElementById("metric-limited").textContent = metrics.rate_limited;
-          document.getElementById("metric-failed").textContent = metrics.failed;
-          
-          document.getElementById("val-remaining-jobs").textContent = `${metrics.pending + metrics.rate_limited + metrics.failed} / ${metrics.total} Capítulos`;
+          document.getElementById("metric-verses").textContent = (totalVersesCount || 0).toLocaleString("pt-BR");
+          document.getElementById("metric-pending").textContent = metrics.pending.toLocaleString("pt-BR");
+          document.getElementById("metric-limited").textContent = metrics.rate_limited.toLocaleString("pt-BR");
+          document.getElementById("metric-failed").textContent = metrics.failed.toLocaleString("pt-BR");
 
-          // 5. Update glow status dot
+          // Telemetry cards update
+          if (engineTelemetry) {
+            const lastRunDate = engineTelemetry.last_run_at ? new Date(engineTelemetry.last_run_at).toLocaleString("pt-BR") : "-";
+            const timeAgo = formatTimeAgo(engineTelemetry.last_run_at);
+            document.getElementById("metric-last-run-time").textContent = `${timeAgo} (${lastRunDate})`;
+            document.getElementById("metric-last-run-calls").textContent = `${engineTelemetry.gemini_calls_made || 0} / ${engineTelemetry.gemini_calls_limit || 18} chamadas Gemini`;
+            document.getElementById("metric-last-run-source").textContent = engineTelemetry.last_run_source === "github-actions" ? "GitHub Actions (Cloud)" : "Local";
+          } else {
+            // Fallback from jobs data
+            const lastCompleted = allJobsData.filter(j => j.completed_at).sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))[0];
+            if (lastCompleted) {
+              document.getElementById("metric-last-run-time").textContent = formatTimeAgo(lastCompleted.completed_at);
+            }
+          }
+
+          // 6. Engine Status Banner & Glow Dot
           const statusDot = document.getElementById("status-dot");
           const engineStatus = document.getElementById("engine-status");
-          
+          const activeBatchName = document.getElementById("active-batch-name");
+          const batchPing = document.getElementById("batch-ping");
+          const batchDot = document.getElementById("batch-dot");
+
           statusDot.className = "w-4 h-4 rounded-full transition-all duration-300 ";
-          
-          if (activeProcessingJob) {
-            const activeBookName = BIBLE_BOOKS.find(b => b.abbr === activeProcessingJob.book)?.name || activeProcessingJob.book;
-            statusDot.classList.add("bg-yellow-500", "glow-yellow");
-            engineStatus.textContent = `Processador Ativo: Traduzindo ${activeBookName} ${activeProcessingJob.chapter}...`;
-          } else if (metrics.failed > 0) {
-            statusDot.classList.add("bg-red-500", "glow-red");
-            engineStatus.textContent = `Aguardando próximo lote (Existem ${metrics.failed} jobs com falha que precisam de revisão).`;
-          } else if (metrics.rate_limited > 0) {
-            statusDot.classList.add("bg-orange-500");
-            engineStatus.textContent = `Lote anterior bloqueado por Rate Limit. Próximo lote tentará continuar automaticamente.`;
-          } else if (metrics.completed === metrics.total) {
+
+          const isEngineActive = activeProcessingJob || (engineTelemetry && engineTelemetry.status === "active");
+
+          if (metrics.completed === metrics.total) {
             statusDot.classList.add("bg-emerald-500", "glow-green");
-            engineStatus.textContent = `✓ Tradução completa concluída! Toda a Bíblia foi finalizada.`;
+            engineStatus.textContent = "✓ Bíblia Completa! Todos os 1.189 capítulos traduzidos e salvos.";
+            activeBatchName.textContent = "Tradução 100% Concluída";
+            batchPing.className = "hidden";
+            batchDot.className = "inline-flex rounded-full h-3 w-3 bg-emerald-500";
+          } else if (isEngineActive) {
+            const currentDesc = engineTelemetry?.current_batch || (activeProcessingJob ? `${BIBLE_BOOKS.find(b => b.abbr === activeProcessingJob.book)?.name} ${activeProcessingJob.chapter}` : "Processando lote");
+            statusDot.classList.add("bg-yellow-500", "glow-yellow");
+            engineStatus.textContent = `Motor Ativo na Nuvem: Traduzindo ${currentDesc}...`;
+            activeBatchName.textContent = `Traduzindo: ${currentDesc}`;
+            batchPing.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75";
+            batchDot.className = "relative inline-flex rounded-full h-3 w-3 bg-yellow-500";
+          } else if (metrics.rate_limited > 0 || (engineTelemetry && engineTelemetry.status === "rate_limited")) {
+            statusDot.classList.add("bg-orange-500", "glow-orange");
+            engineStatus.textContent = "Cota diária do Gemini atingida. Aguardando a próxima execução automática (07:00 UTC).";
+            activeBatchName.textContent = "Aguardando próxima janela da cota gratuita";
+            batchPing.className = "hidden";
+            batchDot.className = "inline-flex rounded-full h-3 w-3 bg-orange-500";
           } else {
-            statusDot.classList.add("bg-zinc-650");
-            engineStatus.textContent = `Aguardando próximo lote (Execução sob demanda via agendador).`;
+            statusDot.classList.add("bg-emerald-500");
+            engineStatus.textContent = "Motor em espera na Nuvem. Próxima rodada agendada via GitHub Actions.";
+            activeBatchName.textContent = "Pronto / Aguardando próxima execução agendada";
+            batchPing.className = "hidden";
+            batchDot.className = "inline-flex rounded-full h-3 w-3 bg-zinc-500";
           }
 
-          // 6. Build the visual books grid
+          document.getElementById("last-sync-time").textContent = `Atualizado às ${new Date().toLocaleTimeString("pt-BR")}`;
+
+          // 7. Render Books and Detail Panel
           buildBooksGrid();
+          showChaptersForBook(selectedBookAbbr);
 
-          // 7. Update active book chapters detail if one selected
-          if (selectedBookAbbr) {
-            showChaptersForBook(selectedBookAbbr);
-          } else {
-            // Select Genesis by default on first load
-            selectBook("gn");
-          }
-
-          // 8. Populate Incidents list
+          // 8. Populate Incidents List
           populateIncidents();
 
         } catch (err) {
           console.error("Erro na sincronização:", err);
-          document.getElementById("engine-status").textContent = `Erro ao carregar dados do banco: ${err.message || err}`;
-          document.getElementById("status-dot").className = "w-4 h-4 rounded-full bg-red-650 glow-red";
+          document.getElementById("engine-status").textContent = `Erro de conexão: ${err.message || err}`;
+          document.getElementById("status-dot").className = "w-4 h-4 rounded-full bg-red-500 glow-red";
         } finally {
           refreshIcon.classList.remove("animate-spin");
         }
@@ -414,32 +542,35 @@
       function buildBooksGrid() {
         const container = document.getElementById("books-grid");
         container.innerHTML = "";
-        
-        BIBLE_BOOKS.forEach(book => {
-          const bookJobs = allJobsData.filter(j => j.book === book.abbr);
-          const completedCount = bookJobs.filter(j => j.status === 'completed').length;
-          const bookPercent = bookJobs.length > 0 ? (completedCount / bookJobs.length * 100) : 0;
-          
-          let colorClass = "bg-zinc-900/80 border-zinc-800 text-zinc-400";
+
+        BIBLE_BOOKS.forEach((book) => {
+          const bookJobs = allJobsData.filter((j) => j.book === book.abbr);
+          const completedCount = bookJobs.filter((j) => j.status === "completed").length;
+          const bookPercent = bookJobs.length > 0 ? (completedCount / bookJobs.length) * 100 : 0;
+
+          let colorClass = "bg-zinc-900/90 border-zinc-850 text-zinc-400 hover:border-zinc-700";
           if (bookPercent === 100) {
-            colorClass = "bg-emerald-950/20 border-emerald-900/60 text-emerald-350 hover:bg-emerald-950/30";
-          } else if (bookJobs.some(j => j.status === 'failed')) {
-            colorClass = "bg-red-950/20 border-red-900/60 text-red-350 hover:bg-red-950/30";
-          } else if (bookJobs.some(j => j.status === 'processing')) {
-            colorClass = "bg-yellow-950/20 border-yellow-900/60 text-yellow-350 hover:bg-yellow-950/30";
+            colorClass = "bg-emerald-950/30 border-emerald-800/60 text-emerald-300 hover:bg-emerald-950/50";
+          } else if (bookJobs.some((j) => j.status === "failed")) {
+            colorClass = "bg-red-950/30 border-red-800/60 text-red-300 hover:bg-red-950/50";
+          } else if (bookJobs.some((j) => j.status === "processing")) {
+            colorClass = "bg-yellow-950/30 border-yellow-800/60 text-yellow-300 hover:bg-yellow-950/50 animate-pulse";
           } else if (bookPercent > 0) {
-            colorClass = "bg-zinc-850/50 border-zinc-700/60 text-zinc-300 hover:bg-zinc-800/80";
+            colorClass = "bg-violet-950/30 border-violet-800/60 text-violet-300 hover:bg-violet-950/50";
           }
 
           const isSelected = selectedBookAbbr === book.abbr;
-          const selectionBorder = isSelected ? "ring-2 ring-violet-500" : "";
+          const selectionBorder = isSelected ? "ring-2 ring-violet-400 border-transparent shadow-lg shadow-violet-900/30" : "";
 
           const card = document.createElement("button");
-          card.className = `flex flex-col p-2.5 rounded-lg border text-left cursor-pointer transition-all duration-200 ${colorClass} ${selectionBorder}`;
+          card.className = `flex flex-col p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-200 ${colorClass} ${selectionBorder}`;
           card.onclick = () => selectBook(book.abbr);
           card.innerHTML = `
-            <span class="text-xs font-bold">${book.name}</span>
-            <span class="text-[9px] text-zinc-400 mt-1">${completedCount}/${book.chapters} cap (${bookPercent.toFixed(0)}%)</span>
+            <div class="flex justify-between items-center w-full">
+              <span class="text-xs font-extrabold truncate">${book.name}</span>
+              <span class="text-[9px] font-bold opacity-75">${book.testament}</span>
+            </div>
+            <span class="text-[10px] text-zinc-400 mt-1">${completedCount}/${book.chapters} cap (${bookPercent.toFixed(0)}%)</span>
           `;
           container.appendChild(card);
         });
@@ -447,43 +578,44 @@
 
       function selectBook(abbr) {
         selectedBookAbbr = abbr;
-        buildBooksGrid(); // Redraw selection borders
+        buildBooksGrid();
         showChaptersForBook(abbr);
       }
 
       function showChaptersForBook(abbr) {
         const panel = document.getElementById("chapters-detail-panel");
-        const book = BIBLE_BOOKS.find(b => b.abbr === abbr);
+        const book = BIBLE_BOOKS.find((b) => b.abbr === abbr);
         if (!book) return;
-        
+
         panel.classList.remove("hidden");
         panel.classList.add("flex");
-        
+
         document.getElementById("selected-book-title").textContent = book.name;
-        
-        const bookJobs = allJobsData.filter(j => j.book === abbr);
-        const completedCount = bookJobs.filter(j => j.status === 'completed').length;
-        const bookPercent = bookJobs.length > 0 ? (completedCount / bookJobs.length * 100) : 0;
-        
+        document.getElementById("selected-book-testament").textContent = book.testament === "AT" ? "Antigo Testamento (Hebraico Massorético)" : "Novo Testamento (Grego SBLGNT)";
+
+        const bookJobs = allJobsData.filter((j) => j.book === abbr);
+        const completedCount = bookJobs.filter((j) => j.status === "completed").length;
+        const bookPercent = bookJobs.length > 0 ? (completedCount / bookJobs.length) * 100 : 0;
+
         document.getElementById("selected-book-progress").textContent = `${bookPercent.toFixed(1)}% Concluído (${completedCount} de ${book.chapters} Capítulos)`;
-        
+
         const chaptersBox = document.getElementById("chapters-box");
         chaptersBox.innerHTML = "";
 
-        bookJobs.forEach(job => {
-          let statusColor = "bg-zinc-800 border-zinc-700 text-zinc-400 hover:bg-zinc-750";
+        bookJobs.forEach((job) => {
+          let statusColor = "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-600";
           if (job.status === "completed") {
-            statusColor = "bg-emerald-500 text-zinc-950 font-bold border-emerald-450 hover:bg-emerald-400";
+            statusColor = "bg-emerald-500 text-zinc-950 font-extrabold border-emerald-400 hover:bg-emerald-400";
           } else if (job.status === "processing") {
-            statusColor = "bg-yellow-500 text-zinc-950 font-bold border-yellow-450 animate-pulse hover:bg-yellow-400";
+            statusColor = "bg-yellow-400 text-zinc-950 font-extrabold border-yellow-300 animate-pulse hover:bg-yellow-300";
           } else if (job.status === "rate_limited") {
-            statusColor = "bg-orange-500 text-zinc-950 font-bold border-orange-450 hover:bg-orange-400";
+            statusColor = "bg-orange-500 text-zinc-950 font-extrabold border-orange-400 hover:bg-orange-400";
           } else if (job.status === "failed") {
-            statusColor = "bg-red-500 text-zinc-950 font-bold border-red-450 hover:bg-red-400";
+            statusColor = "bg-red-500 text-zinc-950 font-extrabold border-red-400 hover:bg-red-400";
           }
 
           const square = document.createElement("div");
-          square.className = `px-3 py-1.5 rounded-md border text-xs cursor-help transition-all ${statusColor}`;
+          square.className = `px-3 py-1.5 rounded-lg border text-xs cursor-help transition-all shadow-sm ${statusColor}`;
           square.title = `Capítulo ${job.chapter}: Status ${job.status.toUpperCase()}\nVersículos: ${job.verses_completed}/${job.total_verses}\nTentativas: ${job.attempts}\nÚltimo Erro: ${job.last_error || "Nenhum"}`;
           square.textContent = job.chapter;
           chaptersBox.appendChild(square);
@@ -494,45 +626,44 @@
         const container = document.getElementById("incidents-list");
         container.innerHTML = "";
 
-        const failedOrLimitedJobs = allJobsData.filter(j => j.status === 'failed' || j.status === 'rate_limited' || j.last_error);
+        const failedOrLimitedJobs = allJobsData.filter((j) => j.status === "failed" || j.status === "rate_limited" || (j.last_error && j.status !== "completed"));
 
         if (failedOrLimitedJobs.length === 0) {
           container.innerHTML = `
-            <div class="flex flex-col items-center justify-center p-8 bg-zinc-950/20 border border-zinc-850 rounded-xl text-center">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8 text-emerald-500">
+            <div class="flex flex-col items-center justify-center p-8 bg-zinc-950/40 border border-zinc-850 rounded-xl text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8 text-emerald-400">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
               </svg>
-              <span class="text-xs text-zinc-400 font-semibold mt-2">Nenhum incidente ativo</span>
-              <p class="text-[10px] text-zinc-650 mt-1 max-w-[280px]">Todos os jobs processados até o momento estão limpos e sem registros de erro.</p>
+              <span class="text-xs text-zinc-300 font-bold mt-2">Nenhum incidente ativo na fila</span>
+              <p class="text-[11px] text-zinc-500 mt-1 max-w-[320px]">Todos os jobs processados estão íntegros e persistidos no Supabase.</p>
             </div>
           `;
           return;
         }
 
-        // Sort by updatedAt DESC
         failedOrLimitedJobs.sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at));
 
-        failedOrLimitedJobs.slice(0, 10).forEach(job => {
-          const bookName = BIBLE_BOOKS.find(b => b.abbr === job.book)?.name || job.book;
-          const statusColors = job.status === "failed" ? "border-red-900/60 bg-red-950/10 text-red-400" : "border-orange-900/60 bg-orange-950/10 text-orange-400";
-          const statusBadge = job.status === "failed" ? "bg-red-900/30 text-red-300 border-red-800/40" : "bg-orange-900/30 text-orange-300 border-orange-800/40";
+        failedOrLimitedJobs.slice(0, 10).forEach((job) => {
+          const bookName = BIBLE_BOOKS.find((b) => b.abbr === job.book)?.name || job.book;
+          const statusColors = job.status === "failed" ? "border-red-900/60 bg-red-950/20 text-red-300" : "border-orange-900/60 bg-orange-950/20 text-orange-300";
+          const statusBadge = job.status === "failed" ? "bg-red-900/40 text-red-300 border-red-800" : "bg-orange-900/40 text-orange-300 border-orange-800";
 
           const item = document.createElement("div");
-          item.className = `p-4 border rounded-xl flex flex-col gap-2 ${statusColors}`;
+          item.className = `p-4 border rounded-xl flex flex-col gap-2 shadow-md ${statusColors}`;
           item.innerHTML = `
             <div class="flex justify-between items-center text-xs">
-              <span class="font-bold flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full ${job.status === 'failed' ? 'bg-red-500' : 'bg-orange-500'}"></span>
+              <span class="font-bold flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full ${job.status === 'failed' ? 'bg-red-500' : 'bg-orange-500'}"></span>
                 ${bookName} Capítulo ${job.chapter}
               </span>
-              <span class="px-2 py-0.5 border text-[9px] rounded-full uppercase font-bold tracking-wider ${statusBadge}">${job.status}</span>
+              <span class="px-2.5 py-0.5 border text-[9px] rounded-full uppercase font-bold tracking-wider ${statusBadge}">${job.status}</span>
             </div>
-            <div class="mono text-[10px] bg-zinc-950/60 p-2.5 rounded border border-zinc-900 text-zinc-450 leading-relaxed overflow-x-auto whitespace-pre-wrap">
-              ${job.last_error || "Sem mensagem de erro gravada."}
+            <div class="mono text-[10px] bg-zinc-950/80 p-3 rounded-lg border border-zinc-900 text-zinc-300 leading-relaxed overflow-x-auto whitespace-pre-wrap">
+              ${job.last_error || "Sem mensagem de erro."}
             </div>
-            <div class="text-[9px] text-zinc-500 flex justify-between mt-0.5">
+            <div class="text-[10px] text-zinc-400 flex justify-between mt-0.5">
               <span>Tentativas: ${job.attempts}/5</span>
-              <span>Atualizado em: ${new Date(job.updated_at).toLocaleString()}</span>
+              <span>Atualizado: ${new Date(job.updated_at).toLocaleString('pt-BR')}</span>
             </div>
           `;
           container.appendChild(item);
@@ -541,7 +672,7 @@
 
       // Initial Fetch & Auto Refresh
       fetchData();
-      setInterval(fetchData, 15000); // 15 seconds interval
+      setInterval(fetchData, 10000); // Auto-refresh a cada 10 segundos
     </script>
   </body>
 </html>

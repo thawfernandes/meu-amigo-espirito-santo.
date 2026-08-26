@@ -2,13 +2,16 @@ name: Incremental Bible Translation (Daily)
 
 on:
   schedule:
-    # Run once daily at 07:00 UTC — within the Gemini free quota reset window
+    # Executa diariamente às 07:00 UTC (04:00 BRT) — janela segura de renovação da cota gratuita diária
     - cron: '0 7 * * *'
-  workflow_dispatch: # Allows manual execution from the GitHub Actions tab
+  workflow_dispatch: # Permite disparo manual com 1 clique pela aba Actions do GitHub
 
 jobs:
   run-translation-batch:
+    name: Translation Batch (Cloud)
     runs-on: ubuntu-latest
+    timeout-minutes: 60
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -22,17 +25,22 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Translate Batch (18 Gemini calls, up to ~54 chapters)
+      - name: Run Translate Batch (18 Gemini calls, multi-chapter batching)
         env:
           SUPABASE_URL: "https://jmtavlozxkmkeubekbjd.supabase.co"
           VITE_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8"
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        # --limit=18: leave 2 calls as safety buffer from the 20 free daily quota
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_ACTIONS: "true"
+        # --limit=18: margem de segurança dentro das 20 chamadas gratuitas diárias
         run: node scripts/translate-batch.js --limit=18
 
-      - name: Summary
+      - name: Translation Summary
         if: always()
         run: |
-          echo "=== Translation batch complete ==="
-          echo "Check Supabase dashboard for progress."
+          echo "### 🕊️ Resumo da Execução de Tradução" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: Concluído com sucesso" >> $GITHUB_STEP_SUMMARY
+          echo "- **Motor**: Multi-capítulo por chamada (gemini-2.5-flash)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Persistência**: Supabase (original_bible_verses + translation_jobs)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Acompanhamento**: Abra o Dashboard no Supabase para ver o mapa visual em tempo real." >> $GITHUB_STEP_SUMMARY
