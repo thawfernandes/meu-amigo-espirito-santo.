@@ -18,14 +18,22 @@ if (fs.existsSync(envPath)) {
 }
 
 // 2. Initialize Supabase Client
-const supabaseUrl = process.env.SUPABASE_URL || env.SUPABASE_URL || env.VITE_SUPABASE_URL;
+const supabaseUrl =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  env.SUPABASE_URL ||
+  env.VITE_SUPABASE_URL ||
+  "https://jmtavlozxkmkeubekbjd.supabase.co";
+
 const supabaseKey =
   process.env.SUPABASE_SERVICE_ROLE_KEY ||
   env.SUPABASE_SERVICE_ROLE_KEY ||
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
   env.VITE_SUPABASE_ANON_KEY ||
-  env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImptdGF2bG96eGtta2V1YmVrYmpkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIxNzcwMzAsImV4cCI6MjA5Nzc1MzAzMH0.HW6-OjuevWDfnR2C5aJHthKpH0jBfx7R7vU_R3pznM8";
 
 const geminiApiKey = process.env.GEMINI_API_KEY || env.GEMINI_API_KEY;
 
