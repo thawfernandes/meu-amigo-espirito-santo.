@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Home, BookOpen, HeartHandshake, Target, GraduationCap, CalendarHeart } from "lucide-react";
-import type { ReactNode } from "react";
+import { Home, BookOpen, HeartHandshake, GraduationCap, CalendarHeart, Sparkles, Construction } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { TranslationProgressModal } from "./translation/TranslationProgressModal";
 
 const nav = [
   { to: "/dashboard", label: "Início", icon: Home, color: "from-blue-500 to-indigo-600" },
@@ -32,6 +33,7 @@ const PAGE_TITLES: Record<string, { label: string; sub?: string; accent: string 
 
 export function AppShell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const [showProgressModal, setShowProgressModal] = useState(false);
 
   const routeKey =
     Object.keys(PAGE_TITLES)
@@ -44,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       {/* ── Header ── */}
       <header className="sticky top-0 z-30 px-4 sm:px-6 pt-4 pb-1">
         <div
-          className="rounded-2xl px-5 py-3 flex items-center justify-between max-w-3xl mx-auto"
+          className="rounded-2xl px-4 sm:px-5 py-3 flex items-center justify-between max-w-3xl mx-auto gap-2"
           style={{
             background: "oklch(1 0 0 / 0.06)",
             backdropFilter: "blur(24px) saturate(160%)",
@@ -80,13 +82,32 @@ export function AppShell({ children }: { children: ReactNode }) {
             </div>
           </Link>
 
-          {/* Streak / indicator pill */}
-          <div
-            className="hidden sm:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-white/70"
-            style={{ background: "oklch(1 0 0 / 0.08)", border: "1px solid oklch(1 0 0 / 0.1)" }}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            ao vivo
+          {/* Construction & Progress Tracker Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowProgressModal(true)}
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-amber-300 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              style={{
+                background: "oklch(0.75 0.18 80 / 0.15)",
+                border: "1px solid oklch(0.75 0.18 80 / 0.3)",
+              }}
+              title="Acompanhar progresso da tradução dos 1.189 capítulos"
+            >
+              <Construction className="w-3.5 h-3.5 animate-bounce" />
+              <span className="font-semibold hidden xs:inline">Em Construção</span>
+              <span className="text-white/40 hidden sm:inline">•</span>
+              <span className="text-white/80 font-medium hidden sm:inline">Ver Progresso</span>
+              <Sparkles className="w-3 h-3 text-violet-300 hidden sm:inline" />
+            </button>
+
+            {/* Live Indicator pill */}
+            <div
+              className="hidden md:flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs text-white/70"
+              style={{ background: "oklch(1 0 0 / 0.08)", border: "1px solid oklch(1 0 0 / 0.1)" }}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              ao vivo
+            </div>
           </div>
         </div>
       </header>
@@ -149,6 +170,12 @@ export function AppShell({ children }: { children: ReactNode }) {
           })}
         </div>
       </nav>
+
+      {/* Modal de Acompanhamento do Progresso */}
+      <TranslationProgressModal
+        isOpen={showProgressModal}
+        onClose={() => setShowProgressModal(false)}
+      />
     </div>
   );
 }
